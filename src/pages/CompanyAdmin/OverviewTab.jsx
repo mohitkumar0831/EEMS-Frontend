@@ -109,9 +109,9 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
   return (
     <div className="flex flex-col gap-8">
       {/* Top KPI cards */}
-      <div className="flex xl:grid xl:grid-cols-7 gap-4 overflow-x-auto xl:overflow-visible pb-3 xl:pb-0 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {/* Total Employees */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-indigo-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-indigo-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Total Employees">
               Total Employees
@@ -124,7 +124,7 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
         </div>
 
         {/* Active Employees */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-emerald-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-emerald-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Active Employees">
               Active Employees
@@ -137,7 +137,7 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
         </div>
 
         {/* Pending Expense Claims */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-amber-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-amber-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Pending Expense Claims">
               Pending Claims
@@ -150,7 +150,7 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
         </div>
 
         {/* Pending Travel Requests */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-sky-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-sky-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Pending Travel Requests">
               Pending Travel
@@ -163,7 +163,7 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
         </div>
 
         {/* Total Company Expenses */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-emerald-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-emerald-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Total Company Expenses">
               Total Spend
@@ -176,7 +176,7 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
         </div>
 
         {/* Reimbursements Pending */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-indigo-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-indigo-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Reimbursements Pending">
               Reimb. Pending
@@ -189,7 +189,7 @@ export const OverviewTab = ({ tenantPolicies = [] }) => {
         </div>
 
         {/* Policy Violations */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[190px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-rose-500/30 transition-all duration-300">
+        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-rose-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Policy Violations">
               Violations

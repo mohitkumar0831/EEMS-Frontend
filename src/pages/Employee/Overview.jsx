@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
-import { 
-  FileSpreadsheet, 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  FileSpreadsheet,
+  AlertTriangle,
+  CheckCircle2,
   Wallet,
   ArrowRight,
   ShieldAlert,
@@ -46,7 +46,7 @@ export const Overview = () => {
   const categoryDetails = Object.entries(personalCategorySpend).map(([cat, amount]) => {
     let colorClass = 'bg-indigo-500';
     let icon = <FileText className="w-4 h-4 text-slate-450" />;
-    
+
     if (cat === 'Meals') {
       colorClass = 'bg-amber-500';
       icon = <Utensils className="w-4 h-4 text-amber-450" />;
@@ -57,7 +57,7 @@ export const Overview = () => {
       colorClass = 'bg-purple-500';
       icon = <Laptop className="w-4 h-4 text-purple-450" />;
     }
-    
+
     return {
       category: cat,
       amount,
@@ -70,12 +70,12 @@ export const Overview = () => {
   return (
     <div className="flex flex-col gap-8">
       {/* Title Header */}
-      <div className="flex flex-col gap-1">
+      {/* <div className="flex flex-col gap-1">
         <h3 className="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">Employee Overview</h3>
         <p className="text-slate-400 text-xs leading-relaxed">
           Monitor your submitted reimbursement claims, active travel requests, and corporate policy compliance standing.
         </p>
-      </div>
+      </div> */}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -126,10 +126,10 @@ export const Overview = () => {
 
       {/* Main Sections */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        
+
         {/* Left Columns (2/3 width): Lists of expenses & travel requests */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          
+
           {/* Recent Claims list card */}
           <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -137,14 +137,14 @@ export const Overview = () => {
                 <h3 className="text-sm font-bold text-slate-200">Recent Claims Activity</h3>
                 <p className="text-xs text-slate-500 mt-1">Audit status tracking on your latest expense claim submissions.</p>
               </div>
-              <button 
+              <button
                 onClick={() => navigate('/dashboard/employee/reimbursements')}
                 className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 View History <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            
+
             {myExpenses.length === 0 ? (
               <div className="py-10 text-center border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-xs text-slate-500">No expense claims filed yet.</p>
@@ -159,15 +159,14 @@ export const Overview = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-extrabold text-slate-200">₹{exp.amount.toFixed(2)}</span>
-                      <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${
-                        exp.status === 'Paid'
+                      <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${exp.status === 'Paid'
                           ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
                           : exp.status === 'Approved'
                             ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
                             : exp.status === 'Rejected'
                               ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
                               : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
-                      }`}>
+                        }`}>
                         {exp.status}
                       </span>
                     </div>
@@ -184,7 +183,7 @@ export const Overview = () => {
                 <h3 className="text-sm font-bold text-slate-200">Recent Travel Plans</h3>
                 <p className="text-xs text-slate-500 mt-1">Status of travel requests submitted for authorization.</p>
               </div>
-              <button 
+              <button
                 onClick={() => navigate('/dashboard/employee/reimbursements')}
                 className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
@@ -206,13 +205,12 @@ export const Overview = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-extrabold text-slate-200">₹{tr.estimatedCost.toFixed(2)}</span>
-                      <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${
-                        tr.status === 'Approved'
+                      <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${tr.status === 'Approved'
                           ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
                           : tr.status === 'Rejected'
                             ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
                             : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
-                      }`}>
+                        }`}>
                         {tr.status}
                       </span>
                     </div>
@@ -225,14 +223,14 @@ export const Overview = () => {
 
         {/* Right Column (1/3 width): Spend breakdwon & Roster of Policies */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Card 1: Compliance Standing Alert */}
           <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl flex flex-col gap-4">
             <div className="border-b border-white/5 pb-2.5">
               <h4 className="text-sm font-bold text-slate-200">Compliance Standing</h4>
               <p className="text-[10px] text-slate-500 mt-0.5">Current policy review standing for your claims.</p>
             </div>
-            
+
             {flaggedClaimsCount > 0 ? (
               <div className="p-4 bg-rose-500/5 border border-rose-500/25 text-rose-400 rounded-2xl flex flex-col gap-2.5 text-xs leading-normal">
                 <div className="flex items-center gap-2 font-bold text-[11px]">

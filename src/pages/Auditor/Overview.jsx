@@ -25,35 +25,35 @@ export const AuditorOverview = () => {
   const { currentUser, expenses, auditLogs } = useAppState();
 
   const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const companyLogs     = auditLogs.filter(l => l.tenantId === currentUser?.tenantId || l.tenantId === 'platform');
+  const companyLogs = auditLogs.filter(l => l.tenantId === currentUser?.tenantId || l.tenantId === 'platform');
 
   // Buckets
-  const auditedExpenses   = companyExpenses.filter(e => e.status === 'Audited');
-  const flaggedExpenses   = companyExpenses.filter(e => e.status === 'Flagged');
-  const pendingAudit      = companyExpenses.filter(e => e.status === 'Paid');
-  const underReview       = companyExpenses.filter(e => e.status === 'Under Review');
-  const rejectedExpenses  = companyExpenses.filter(e => e.status === 'Rejected');
-  const paidExpenses      = companyExpenses.filter(e => ['Paid','Audited'].includes(e.status));
+  const auditedExpenses = companyExpenses.filter(e => e.status === 'Audited');
+  const flaggedExpenses = companyExpenses.filter(e => e.status === 'Flagged');
+  const pendingAudit = companyExpenses.filter(e => e.status === 'Paid');
+  const underReview = companyExpenses.filter(e => e.status === 'Under Review');
+  const rejectedExpenses = companyExpenses.filter(e => e.status === 'Rejected');
+  const paidExpenses = companyExpenses.filter(e => ['Paid', 'Audited'].includes(e.status));
 
-  const totalClaims       = companyExpenses.length;
-  const violationCount    = underReview.length + rejectedExpenses.length + flaggedExpenses.length;
-  const complianceRate    = totalClaims > 0
+  const totalClaims = companyExpenses.length;
+  const violationCount = underReview.length + rejectedExpenses.length + flaggedExpenses.length;
+  const complianceRate = totalClaims > 0
     ? Math.round(((totalClaims - violationCount) / totalClaims) * 100)
     : 100;
 
-  const totalDisbursed    = paidExpenses.reduce((s, e) => s + e.amount, 0);
-  const flaggedValue      = flaggedExpenses.reduce((s, e) => s + e.amount, 0);
+  const totalDisbursed = paidExpenses.reduce((s, e) => s + e.amount, 0);
+  const flaggedValue = flaggedExpenses.reduce((s, e) => s + e.amount, 0);
   const pendingAuditValue = pendingAudit.reduce((s, e) => s + e.amount, 0);
 
   // Unique claimants
-  const uniqueClaimants   = [...new Set(companyExpenses.map(e => e.employeeId))].length;
+  const uniqueClaimants = [...new Set(companyExpenses.map(e => e.employeeId))].length;
 
   // Category breakdown
   const categories = ['Meals', 'Travel', 'Equipment'];
   const categoryData = categories.map(cat => {
-    const catExp   = companyExpenses.filter(e => e.category === cat);
-    const total    = catExp.reduce((s, e) => s + e.amount, 0);
-    const flagged  = catExp.filter(e => e.status === 'Flagged' || e.status === 'Under Review').length;
+    const catExp = companyExpenses.filter(e => e.category === cat);
+    const total = catExp.reduce((s, e) => s + e.amount, 0);
+    const flagged = catExp.filter(e => e.status === 'Flagged' || e.status === 'Under Review').length;
     return { name: cat, count: catExp.length, total, flagged };
   });
   const maxCatTotal = Math.max(...categoryData.map(c => c.total), 1);
@@ -65,17 +65,17 @@ export const AuditorOverview = () => {
 
   // Checklist items
   const checklistItems = [
-    { label: 'Role-Based Access Guard',      sub: 'Security separation verification',    ok: true  },
-    { label: 'Approval Workflow Trace',       sub: 'Multi-level validation tracking',     ok: true  },
-    { label: 'Payment Gateway Compliance',    sub: 'Reimbursement disbursement trail',    ok: true  },
-    { label: 'Policy Cap Enforcement',        sub: 'Category spend-limit rule binding',   ok: violationCount === 0 },
-    { label: 'Flagged Claims Investigation',  sub: 'Active investigation on flagged items', ok: flaggedExpenses.length === 0 },
+    { label: 'Role-Based Access Guard', sub: 'Security separation verification', ok: true },
+    { label: 'Approval Workflow Trace', sub: 'Multi-level validation tracking', ok: true },
+    { label: 'Payment Gateway Compliance', sub: 'Reimbursement disbursement trail', ok: true },
+    { label: 'Policy Cap Enforcement', sub: 'Category spend-limit rule binding', ok: violationCount === 0 },
+    { label: 'Flagged Claims Investigation', sub: 'Active investigation on flagged items', ok: flaggedExpenses.length === 0 },
   ];
 
   const getCategoryIcon = (cat) => {
-    if (cat === 'Meals')     return <Utensils className="w-3.5 h-3.5 text-amber-400" />;
-    if (cat === 'Travel')    return <Plane    className="w-3.5 h-3.5 text-sky-400" />;
-    if (cat === 'Equipment') return <Laptop   className="w-3.5 h-3.5 text-indigo-400" />;
+    if (cat === 'Meals') return <Utensils className="w-3.5 h-3.5 text-amber-400" />;
+    if (cat === 'Travel') return <Plane className="w-3.5 h-3.5 text-sky-400" />;
+    if (cat === 'Equipment') return <Laptop className="w-3.5 h-3.5 text-indigo-400" />;
     return <FileText className="w-3.5 h-3.5 text-slate-400" />;
   };
 
@@ -85,7 +85,7 @@ export const AuditorOverview = () => {
     <div className="flex flex-col gap-6">
 
       {/* Title */}
-      <div>
+      {/* <div>
         <h3 className="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
           <Shield className="w-5 h-5 text-violet-400" />
           Audit Dashboard
@@ -93,7 +93,7 @@ export const AuditorOverview = () => {
         <p className="text-slate-500 text-xs mt-1">
           Compliance standing, flagged investigations, and full audit trail coverage across the workspace.
         </p>
-      </div>
+      </div> */}
 
       {/* ── Row 1: Primary KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -186,15 +186,13 @@ export const AuditorOverview = () => {
           </div>
           <div className="flex flex-col gap-3 p-5">
             {checklistItems.map((item, idx) => (
-              <div key={idx} className={`flex justify-between items-center p-3.5 rounded-xl border text-xs transition-all ${
-                item.ok
+              <div key={idx} className={`flex justify-between items-center p-3.5 rounded-xl border text-xs transition-all ${item.ok
                   ? 'border-emerald-500/15 bg-emerald-500/[0.03]'
                   : 'border-rose-500/15 bg-rose-500/[0.03]'
-              }`}>
+                }`}>
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-                    item.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                  }`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                    }`}>
                     {item.ok
                       ? <CheckCircle2 className="w-3.5 h-3.5" />
                       : <AlertTriangle className="w-3.5 h-3.5" />
@@ -205,11 +203,10 @@ export const AuditorOverview = () => {
                     <span className="text-[10px] text-slate-500">{item.sub}</span>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase border shrink-0 ml-3 ${
-                  item.ok
+                <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase border shrink-0 ml-3 ${item.ok
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                     : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                }`}>
+                  }`}>
                   {item.ok ? 'VERIFIED' : 'ACTION NEEDED'}
                 </span>
               </div>
@@ -223,14 +220,12 @@ export const AuditorOverview = () => {
 
           {/* Big ring indicator */}
           <div className="flex flex-col items-center justify-center py-4 gap-2">
-            <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center font-extrabold text-2xl ${
-              complianceRate >= 80 ? 'border-emerald-500 text-emerald-400' : 'border-amber-500 text-amber-400'
-            }`}>
+            <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center font-extrabold text-2xl ${complianceRate >= 80 ? 'border-emerald-500 text-emerald-400' : 'border-amber-500 text-amber-400'
+              }`}>
               {complianceRate}%
             </div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${
-              complianceRate >= 80 ? 'text-emerald-500' : 'text-amber-500'
-            }`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${complianceRate >= 80 ? 'text-emerald-500' : 'text-amber-500'
+              }`}>
               {complianceRate >= 80 ? 'STRONG STANDING' : 'NEEDS ATTENTION'}
             </span>
           </div>
@@ -271,7 +266,7 @@ export const AuditorOverview = () => {
             {categoryData.map(cat => {
               const barWidth = (cat.total / maxCatTotal) * 100;
               const riskColor = cat.flagged > 0 ? 'bg-rose-400' : 'bg-violet-400';
-              const barBg     = cat.name === 'Meals' ? 'bg-amber-400' : cat.name === 'Travel' ? 'bg-sky-400' : 'bg-indigo-400';
+              const barBg = cat.name === 'Meals' ? 'bg-amber-400' : cat.name === 'Travel' ? 'bg-sky-400' : 'bg-indigo-400';
               return (
                 <div key={cat.name} className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs">

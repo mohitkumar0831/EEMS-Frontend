@@ -23,23 +23,23 @@ export const FinanceOverview = () => {
   const { currentUser, expenses, users } = useAppState();
 
   const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const approvedQueue  = companyExpenses.filter(e => e.status === 'Approved');
+  const approvedQueue = companyExpenses.filter(e => e.status === 'Approved');
   const violationsQueue = companyExpenses.filter(e => e.status === 'Under Review');
-  const paidHistory    = companyExpenses.filter(e => e.status === 'Paid');
-  const pendingQueue   = companyExpenses.filter(e => e.status === 'Pending');
-  const rejectedQueue  = companyExpenses.filter(e => e.status === 'Rejected');
+  const paidHistory = companyExpenses.filter(e => e.status === 'Paid');
+  const pendingQueue = companyExpenses.filter(e => e.status === 'Pending');
+  const rejectedQueue = companyExpenses.filter(e => e.status === 'Rejected');
 
-  const totalReimbursed   = paidHistory.reduce((sum, e) => sum + e.amount, 0);
+  const totalReimbursed = paidHistory.reduce((sum, e) => sum + e.amount, 0);
   const pendingPaymentSum = approvedQueue.reduce((sum, e) => sum + e.amount, 0);
-  const violationSum      = violationsQueue.reduce((sum, e) => sum + e.amount, 0);
-  const totalSubmitted    = companyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const violationSum = violationsQueue.reduce((sum, e) => sum + e.amount, 0);
+  const totalSubmitted = companyExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   // Category breakdown across ALL expenses
   const categories = ['Meals', 'Travel', 'Equipment'];
   const categoryData = categories.map(cat => {
     const catExpenses = companyExpenses.filter(e => e.category === cat);
     const total = catExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const paid  = catExpenses.filter(e => e.status === 'Paid').reduce((sum, e) => sum + e.amount, 0);
+    const paid = catExpenses.filter(e => e.status === 'Paid').reduce((sum, e) => sum + e.amount, 0);
     return { name: cat, total, paid, count: catExpenses.length };
   });
   const maxCategoryTotal = Math.max(...categoryData.map(c => c.total), 1);
@@ -59,19 +59,19 @@ export const FinanceOverview = () => {
 
   const statusBadge = (status) => {
     const map = {
-      Approved:     'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-      Paid:         'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-      Pending:      'bg-amber-500/10 text-amber-400 border-amber-500/20',
+      Approved: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+      Paid: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+      Pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
       'Under Review': 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-      Rejected:     'bg-slate-700/50 text-slate-400 border-slate-700',
+      Rejected: 'bg-slate-700/50 text-slate-400 border-slate-700',
     };
     return map[status] || 'bg-slate-800 text-slate-400 border-slate-700';
   };
 
   const getCategoryIcon = (cat) => {
-    if (cat === 'Meals')     return <Utensils className="w-3.5 h-3.5 text-amber-400" />;
-    if (cat === 'Travel')    return <Plane    className="w-3.5 h-3.5 text-sky-400" />;
-    if (cat === 'Equipment') return <Laptop   className="w-3.5 h-3.5 text-indigo-400" />;
+    if (cat === 'Meals') return <Utensils className="w-3.5 h-3.5 text-amber-400" />;
+    if (cat === 'Travel') return <Plane className="w-3.5 h-3.5 text-sky-400" />;
+    if (cat === 'Equipment') return <Laptop className="w-3.5 h-3.5 text-indigo-400" />;
     return <FileText className="w-3.5 h-3.5 text-slate-400" />;
   };
 
@@ -79,16 +79,6 @@ export const FinanceOverview = () => {
 
   return (
     <div className="flex flex-col gap-6">
-
-      {/* Page Title */}
-      <div>
-        <h3 className="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
-          Finance Dashboard
-        </h3>
-        <p className="text-slate-500 text-xs mt-1">
-          Real-time view of expense disbursements, compliance, and payment activity.
-        </p>
-      </div>
 
       {/* ── Row 1: 4 Primary KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -199,8 +189,8 @@ export const FinanceOverview = () => {
           ) : (
             <div className="divide-y divide-white/5">
               {approvedQueue.map(exp => (
-                <div key={exp.id} className="flex items-center justify-between px-6 py-4 hover:bg-white/[0.02] transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
+                <div key={exp.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-white/[0.02] transition-colors gap-3">
+                  <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                     <div className="w-8 h-8 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-center shrink-0">
                       {getCategoryIcon(exp.category)}
                     </div>
@@ -211,7 +201,7 @@ export const FinanceOverview = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 w-full sm:w-auto border-t border-white/[0.02] sm:border-0 pt-2 sm:pt-0">
                     <span className="text-xs font-extrabold text-slate-100">₹{exp.amount.toFixed(2)}</span>
                     <span className="text-[8px] font-bold px-2 py-0.5 rounded border bg-indigo-500/10 text-indigo-400 border-indigo-500/20 uppercase tracking-wider">
                       Approved
@@ -269,7 +259,7 @@ export const FinanceOverview = () => {
           <div className="flex flex-col gap-4">
             {categoryData.map(cat => {
               const barWidth = maxCategoryTotal > 0 ? (cat.total / maxCategoryTotal) * 100 : 0;
-              const paidPct  = cat.total > 0 ? (cat.paid / cat.total) * 100 : 0;
+              const paidPct = cat.total > 0 ? (cat.paid / cat.total) * 100 : 0;
               const barColor = cat.name === 'Meals' ? 'bg-amber-400' : cat.name === 'Travel' ? 'bg-sky-400' : 'bg-indigo-400';
               return (
                 <div key={cat.name} className="flex flex-col gap-1.5">
@@ -324,15 +314,17 @@ export const FinanceOverview = () => {
           ) : (
             <div className="divide-y divide-white/5">
               {recentActivity.map(exp => (
-                <div key={exp.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.02] transition-colors">
-                  <div className="w-8 h-8 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-center shrink-0">
-                    {getCategoryIcon(exp.category)}
+                <div key={exp.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors gap-3">
+                  <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+                    <div className="w-8 h-8 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-center shrink-0">
+                      {getCategoryIcon(exp.category)}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] font-bold text-slate-200 truncate">{exp.title}</span>
+                      <span className="text-[9px] text-slate-500">{exp.employeeName} · {exp.date}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col min-w-0 flex-grow">
-                    <span className="text-[11px] font-bold text-slate-200 truncate">{exp.title}</span>
-                    <span className="text-[9px] text-slate-500">{exp.employeeName} · {exp.date}</span>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-1.5 shrink-0 w-full sm:w-auto border-t border-white/[0.02] sm:border-0 pt-2 sm:pt-0">
                     <span className="text-[11px] font-bold text-slate-100">₹{exp.amount.toFixed(2)}</span>
                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${statusBadge(exp.status)}`}>
                       {exp.status}
