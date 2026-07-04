@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 import { 
   AlertTriangle, 
   Plus, 
@@ -20,7 +21,8 @@ import {
 
 export const FileExpenseClaim = () => {
   const navigate = useNavigate();
-  const { currentUser, policies, submitExpense, users } = useAppState();
+  const { currentUser, policies, submitExpense } = useAppState();
+  const [companyManagers, setCompanyManagers] = useState([]);
   
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Meals');
@@ -29,22 +31,38 @@ export const FileExpenseClaim = () => {
   const [receiptFile, setReceiptFile] = useState(null);
   const [assignedManagerId, setAssignedManagerId] = useState('');
 
-  // Get managers for the current tenant
-  const companyManagers = users.filter(
-    u => u.tenantId === currentUser?.tenantId && u.role === 'Manager'
-  );
-
-  // Set default manager to one in the same department, or the first available
   useEffect(() => {
-    if (companyManagers.length > 0) {
-      const deptManager = companyManagers.find(m => m.department === currentUser?.department);
-      if (deptManager) {
-        setAssignedManagerId(deptManager.id);
-      } else {
-        setAssignedManagerId(companyManagers[0].id);
+    const fetchManagers = async () => {
+      try {
+        const response = await fetch(EXPENSE_ENDPOINTS.GET_EMPLOYEES?.(currentUser.tenantSlug) || `http://localhost:4000/api/v1/users/tenant/${currentUser.tenantSlug}/employees`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          const fetchedUsers = data.data || [];
+          const managers = fetchedUsers.filter(u => u.role === 'manager' || u.role === 'Manager');
+          setCompanyManagers(managers);
+
+          if (managers.length > 0) {
+            const deptManager = managers.find(m => m.department === currentUser?.department);
+            if (deptManager) {
+              setAssignedManagerId(deptManager._id || deptManager.id);
+            } else {
+              setAssignedManagerId(managers[0]._id || managers[0].id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching managers:', err);
       }
+    };
+
+    if (currentUser?.tenantSlug) {
+      fetchManagers();
     }
-  }, [users, currentUser]);
+  }, [currentUser]);
 
   const activePolicy = policies.find(
     p => p.tenantId === currentUser?.tenantId && p.category.toLowerCase() === category.toLowerCase()
@@ -52,25 +70,85 @@ export const FileExpenseClaim = () => {
   
   const numericAmount = parseFloat(amount) || 0;
   const isOverPolicyLimit = activePolicy && numericAmount > activePolicy.limit;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFileClaim = (e) => {
+  const handleFileClaim = async (e) => {
     e.preventDefault();
     if (!title.trim() || !amount) return;
 
-    const receiptName = receiptFile ? receiptFile.name : `receipt_${category.toLowerCase()}_sample.png`;
-    
-    // Call submitExpense with assignedManagerId as the 6th argument
-    submitExpense(title, category, amount, description, receiptName, assignedManagerId);
+    setIsSubmitting(true);
+    let receiptId = null;
 
-    setTitle('');
-    setCategory('Meals');
-    setAmount('');
-    setDescription('');
-    setReceiptFile(null);
-    navigate('/dashboard/employee/reimbursements');
+    try {
+      const employeeId = currentUser?._id || currentUser?.id;
+      
+      // 1. Upload receipt if file is selected
+      if (receiptFile) {
+        const formData = new FormData();
+        formData.append('receipt', receiptFile);
+        formData.append('employeeId', employeeId);
+
+        const uploadRes = await fetch(EXPENSE_ENDPOINTS.UPLOAD_RECEIPT(currentUser.tenantSlug), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: formData
+        });
+
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.success) {
+          receiptId = uploadData.data._id;
+        } else {
+          console.error('Receipt upload failed:', uploadData);
+          // showToast('Receipt upload failed, continuing without receipt', 'warning');
+        }
+      }
+
+      // 2. Create the expense
+      const payload = {
+        title: title.trim(),
+        category: category,
+        amount: numericAmount,
+        description: description.trim() || undefined,
+        employeeId: employeeId,
+        assignedManagerId: assignedManagerId || undefined,
+        receiptId: receiptId || undefined,
+        policyId: activePolicy ? activePolicy._id || activePolicy.id : undefined,
+        status: 'Submitted'
+      };
+
+      const expenseRes = await fetch(EXPENSE_ENDPOINTS.CREATE_EXPENSE(currentUser.tenantSlug), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const expenseData = await expenseRes.json();
+      
+      if (expenseRes.ok && expenseData.success) {
+        setTitle('');
+        setCategory('Meals');
+        setAmount('');
+        setDescription('');
+        setReceiptFile(null);
+        navigate(`/${currentUser.tenantSlug}/dashboard/employee/reimbursements`);
+      } else {
+        console.error('Expense creation failed:', expenseData);
+        alert(expenseData.message || 'Failed to submit expense');
+      }
+    } catch (err) {
+      console.error('Error submitting expense:', err);
+      alert('Network error, please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const selectedManager = companyManagers.find(m => m.id === assignedManagerId);
+  const selectedManager = companyManagers.find(m => (m._id || m.id) === assignedManagerId);
 
   // Helper to match category to icon
   const getCategoryIcon = (cat) => {
@@ -172,8 +250,8 @@ export const FileExpenseClaim = () => {
                 >
                   <option value="" disabled>Select a manager from roster...</option>
                   {companyManagers.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.department || 'General'} Manager) — {m.email}
+                    <option key={m._id || m.id} value={m._id || m.id}>
+                      {m.firstName} {m.lastName} ({m.department || 'General'} Manager) — {m.email}
                     </option>
                   ))}
                 </select>
@@ -182,10 +260,10 @@ export const FileExpenseClaim = () => {
                 {selectedManager && (
                   <div className="flex items-center gap-3 p-3 bg-slate-950/30 border border-slate-850 rounded-2xl animate-fade-in">
                     <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs uppercase shadow-inner">
-                      {selectedManager.name.charAt(0)}
+                      {(selectedManager.firstName || selectedManager.name || 'M').charAt(0)}
                     </div>
                     <div className="flex flex-col min-w-0 text-[10px]">
-                      <span className="font-bold text-slate-350">{selectedManager.name}</span>
+                      <span className="font-bold text-slate-350">{selectedManager.firstName} {selectedManager.lastName}</span>
                       <span className="text-slate-500 uppercase mt-0.5 tracking-wider">{selectedManager.department || 'General'} • {selectedManager.email}</span>
                     </div>
                   </div>
@@ -213,10 +291,11 @@ export const FileExpenseClaim = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-650 px-6 py-3.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all hover:from-indigo-650 hover:to-purple-750 active:scale-95 cursor-pointer font-bold uppercase tracking-wider"
+              disabled={isSubmitting}
+              className={`mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-650 px-6 py-3.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all hover:from-indigo-650 hover:to-purple-750 active:scale-95 font-bold uppercase tracking-wider ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <Plus className="h-4 w-4" />
-              File Reimbursement Claim
+              {isSubmitting ? 'Filing Claim...' : 'File Reimbursement Claim'}
             </button>
           </form>
         </div>

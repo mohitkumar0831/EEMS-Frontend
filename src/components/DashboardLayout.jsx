@@ -215,8 +215,14 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
         <div className="p-4 border-t border-white/5">
           <button
             onClick={() => {
+              const slug = currentUser?.tenantSlug;
+              const isTenant = currentUser && currentUser.role !== 'SuperAdmin' && slug;
               logout();
-              window.location.href = '/login';
+              if (isTenant) {
+                navigate(`/${slug}`, { replace: true });
+              } else {
+                navigate('/login', { replace: true });
+              }
             }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/5 transition-all cursor-pointer"
           >
@@ -326,7 +332,16 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
                   {/* Sign out */}
                   <div className="p-2 border-t border-white/5">
                     <button
-                      onClick={() => { logout(); window.location.href = '/login'; }}
+                      onClick={() => {
+                        const slug = currentUser?.tenantSlug;
+                        const isTenant = currentUser && currentUser.role !== 'SuperAdmin' && slug;
+                        logout();
+                        if (isTenant) {
+                          navigate(`/${slug}`, { replace: true });
+                        } else {
+                          navigate('/login', { replace: true });
+                        }
+                      }}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/5 transition-all text-left cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />

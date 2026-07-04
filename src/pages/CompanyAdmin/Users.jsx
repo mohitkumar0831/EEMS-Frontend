@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { UsersTab } from './UsersTab';
+import { USER_ENDPOINTS } from '../../constants/apiConstants';
 
 const initialFormState = {
   firstName: '',
@@ -45,10 +46,32 @@ const initialFormState = {
 };
 
 export const Users = () => {
-  const { currentUser, registerUser, users, showToast } = useAppState();
+  const { currentUser, showToast } = useAppState();
   const [formData, setFormData] = useState(initialFormState);
+  const [tenantUsers, setTenantUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const tenantUsers = users.filter(u => u.tenantId === currentUser?.tenantId);
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setTenantUsers(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?.tenantSlug) {
+      fetchEmployees();
+    }
+  }, [currentUser]);
 
   const resetForm = () => {
     setFormData(initialFormState);
@@ -58,7 +81,7 @@ export const Users = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleRegisterUser = (e) => {
+  const handleRegisterUser = async (e) => {
     e.preventDefault();
 
     const {
@@ -84,68 +107,102 @@ export const Users = () => {
       return;
     }
 
-    // Prepare role-specific extra data to save in StateContext
-    let roleSpecificData = {};
-    if (role === 'Employee') {
-      roleSpecificData = {
-        costCenter: extraData.costCenter,
-        officeLocation: extraData.officeLocation,
-        panNumber: extraData.panNumber,
-        bankAccountNumber: extraData.bankAccountNumber,
-        ifscCode: extraData.ifscCode
+    // Map role enum
+    const roleMapping = {
+      'Employee': 'employee',
+      'Manager': 'manager',
+      'Finance Team': 'finance',
+      'Auditor': 'auditor',
+      'SuperAdmin': 'admin'
+    };
+    const mappedRole = roleMapping[role] || 'employee';
+
+    // Map employmentType
+    const employmentTypeMap = {
+      'Permanent': 'full-time',
+      'Contract': 'contract',
+      'Intern': 'intern'
+    };
+
+    // Prepare role-specific extra data matching Joi schema
+    let profile = {};
+    if (mappedRole === 'employee') {
+      profile = {
+        reportingManager: extraData.reportingManager || undefined,
+        expenseLimit: Number(extraData.expenseLimit) || 0,
+        costCenter: extraData.costCenter || undefined,
+        employmentType: employmentTypeMap[employmentType] || 'full-time',
+        officeLocation: extraData.officeLocation || undefined,
+        panNumber: extraData.panNumber || undefined,
+        bankAccountNumber: extraData.bankAccountNumber || undefined,
+        ifscCode: extraData.ifscCode || undefined
       };
-    } else if (role === 'Manager') {
-      roleSpecificData = {
-        team: extraData.team,
-        approvalLimit: extraData.approvalLimit,
-        canApproveExpenses: extraData.canApproveExpenses,
-        canRejectExpenses: extraData.canRejectExpenses
+    } else if (mappedRole === 'manager') {
+      profile = {
+        approvalLimit: Number(extraData.approvalLimit) || 0,
       };
-    } else if (role === 'Finance Team') {
-      roleSpecificData = {
-        financeRole: extraData.financeRole,
-        canProcessReimbursement: extraData.canProcessReimbursement,
-        canExportReports: extraData.canExportReports,
-        canManageExpenseCategories: extraData.canManageExpenseCategories,
-        canViewAllExpenses: extraData.canViewAllExpenses
+    } else if (mappedRole === 'finance') {
+      const financeRoleMap = {
+        'Finance Executive': 'accountant',
+        'Finance Manager': 'controller'
       };
-    } else if (role === 'Auditor') {
-      roleSpecificData = {
-        auditType: extraData.auditType,
-        canAuditExpenses: extraData.canAuditExpenses,
-        canDownloadReports: extraData.canDownloadReports,
-        canViewExpenseHistory: extraData.canViewExpenseHistory,
-        auditRegion: extraData.auditRegion
+      profile = {
+        financeRole: financeRoleMap[extraData.financeRole] || 'accountant',
+      };
+    } else if (mappedRole === 'auditor') {
+      profile = {
+        auditType: extraData.auditType ? extraData.auditType.toLowerCase() : 'internal',
+        auditRegion: extraData.auditRegion || undefined
       };
     }
 
-    const fullName = `${firstName.trim()} ${lastName.trim()}`;
-    // We are going to pass extraData at the end of the argument list for registerUser
-    const res = registerUser(
-      fullName,
-      email,
-      password,
-      role,
-      currentUser.tenantId,
-      department,
-      username || email.split('@')[0], // if username is empty, fallback to email prefix
-      employeeId,
-      phone,
-      profilePhoto,
-      designation,
-      reportingManager,
-      joiningDate,
-      employmentType,
-      expenseLimit,
-      expenseApprover,
-      travelApprovalRequired,
-      status,
-      forcePasswordChange,
-      roleSpecificData
-    );
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      employeeId: employeeId.trim(),
+      email: email.trim().toLowerCase(),
+      password: password,
+      phone: phone || undefined,
+      department: department.trim(),
+      designation: designation.trim(),
+      joiningDate: joiningDate ? new Date(joiningDate).toISOString() : undefined,
+      status: status.toLowerCase(),
+      role: mappedRole,
+      profilePhoto: profilePhoto.startsWith('http') ? profilePhoto : undefined,
+      profile: Object.keys(profile).length > 0 ? profile : undefined
+    };
 
-    if (res.success) {
-      resetForm();
+    setIsLoading(true);
+    try {
+      const response = await fetch(USER_ENDPOINTS.REGISTER_EMPLOYEE(currentUser.tenantSlug), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        showToast('User created successfully!', 'success');
+        resetForm();
+        fetchEmployees();
+      } else {
+        console.error('Validation/Creation failed:', data);
+        let errorMsg = data.message || 'User creation failed';
+        if (data.errors && Array.isArray(data.errors)) {
+          errorMsg = data.errors.map(err => err.message).join(' | ');
+        } else if (data.details) {
+          errorMsg = JSON.stringify(data.details);
+        }
+        showToast(errorMsg, 'error');
+      }
+    } catch (err) {
+      console.error('Create employee error:', err);
+      showToast('Network error, please try again.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 

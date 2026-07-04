@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAppState } from './context/StateContext';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -58,103 +58,160 @@ import { AuditorExportReports } from './pages/Auditor/ExportReports';
 import { ToastList } from './components/ToastList';
 import './App.css';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, info: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("ErrorBoundary caught an error:", error, info);
+    this.setState({ info });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '2rem', color: 'white', backgroundColor: '#111' }}>
+          <h2>Something went wrong rendering the page.</h2>
+          <pre style={{ color: 'red' }}>{this.state.error?.toString()}</pre>
+          <pre style={{ color: 'pink' }}>{this.state.info?.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const { currentUser } = useAppState();
 
-  const routeMap = {
-    SuperAdmin: '/dashboard/superadmin',
-    CompanyAdmin: '/dashboard/company-admin',
-    Manager: '/dashboard/manager',
-    Employee: '/dashboard/employee',
-    'Finance Team': '/dashboard/finance',
-    Auditor: '/dashboard/auditor'
+  const getDashboardPath = (role, slug) => {
+    if (role === 'SuperAdmin') return '/dashboard/superadmin';
+    const rolePaths = {
+      CompanyAdmin: 'dashboard/company-admin',
+      Manager: 'dashboard/manager',
+      Employee: 'dashboard/employee',
+      'Finance Team': 'dashboard/finance',
+      Auditor: 'dashboard/auditor'
+    };
+    return slug ? `/${slug}/${rolePaths[role]}` : '/login';
   };
 
   const DashboardRoute = ({ element, allowedRoles }) => {
+    const { slug } = useParams();
+    
     if (!currentUser) {
-      return <Navigate to="/login" replace />;
+      return <Navigate to={slug ? `/${slug}` : '/login'} replace />;
     }
+    
     if (!allowedRoles.includes(currentUser.role)) {
-      return <Navigate to={routeMap[currentUser.role] || '/login'} replace />;
+      return <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace />;
     }
+
+    // Ensure users cannot access another tenant's dashboard by changing the URL
+    if (currentUser.role !== 'SuperAdmin' && currentUser.tenantSlug !== slug) {
+      return <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace />;
+    }
+
     return element;
   };
 
   return (
     <Router>
-      <ToastList />
-      <Routes>
-        <Route path="/" element={currentUser ? <Navigate to={routeMap[currentUser.role] || '/login'} replace /> : <LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={currentUser ? <ProfilePage /> : <Navigate to="/login" replace />} />
-        <Route
-          path="/dashboard"
-          element={currentUser ? <Navigate to={routeMap[currentUser.role] || '/login'} replace /> : <Navigate to="/login" replace />}
-        />
-        <Route path="/dashboard/superadmin" element={<DashboardRoute element={<SuperAdmin />} allowedRoles={['SuperAdmin']} />}>
-          <Route index element={<SuperAdminOverview />} />
-          <Route path="overview" element={<SuperAdminOverview />} />
-          <Route path="tenants/companies" element={<SuperAdminTenantManagement />} />
-          <Route path="tenants/plans" element={<SuperAdminSubscriptionPlans />} />
-          <Route path="tenants/status" element={<SuperAdminTenantStatus />} />
-          <Route path="users/superadmins" element={<SuperAdminSuperAdmins />} />
-          <Route path="users/companyadmins" element={<SuperAdminCompanyAdmins />} />
-          <Route path="roles" element={<SuperAdminRolePermissions />} />
-          <Route path="policies" element={<SuperAdminGlobalPolicies />} />
-          <Route path="reports" element={<SuperAdminPlatformReports />} />
-          <Route path="auditlogs" element={<SuperAdminAuditLogs />} />
-          <Route path="monitoring" element={<SuperAdminSystemMonitoring />} />
-          <Route path="notifications" element={<SuperAdminNotifications />} />
-          <Route path="settings" element={<SuperAdminSettings />} />
-        </Route>
-        <Route path="/dashboard/company-admin" element={<DashboardRoute element={<CompanyAdmin />} allowedRoles={['CompanyAdmin']} />}>
-          <Route index element={<CompanyAdminOverview />} />
-          <Route path="overview" element={<CompanyAdminOverview />} />
-          <Route path="employees" element={<CompanyAdminEmployees />} />
-          <Route path="managers" element={<CompanyAdminManagers />} />
-          <Route path="finance-team" element={<CompanyAdminFinanceTeam />} />
-          <Route path="departments" element={<CompanyAdminDepartments />} />
-          <Route path="expense-categories" element={<CompanyAdminExpenseCategories />} />
-          <Route path="policies" element={<CompanyAdminPolicies />} />
-          <Route path="workflows" element={<CompanyAdminWorkflows />} />
-          <Route path="expenses" element={<CompanyAdminExpenses />} />
-          <Route path="travel-requests" element={<CompanyAdminTravelRequests />} />
-          <Route path="reimbursements" element={<CompanyAdminReimbursements />} />
-          <Route path="reports" element={<CompanyAdminReports />} />
-          <Route path="notifications" element={<CompanyAdminNotifications />} />
-        </Route>
-        <Route path="/dashboard/manager" element={<DashboardRoute element={<Manager />} allowedRoles={['Manager']} />}>
-          <Route index element={<ManagerOverview />} />
-          <Route path="overview" element={<ManagerOverview />} />
-          <Route path="expenses" element={<ManagerExpenses />} />
-          <Route path="travel" element={<ManagerTravel />} />
-          <Route path="team" element={<ManagerTeam />} />
-        </Route>
-        <Route path="/dashboard/employee" element={<DashboardRoute element={<Employee />} allowedRoles={['Employee']} />}>
-          <Route index element={<EmployeeOverview />} />
-          <Route path="overview" element={<EmployeeOverview />} />
-          <Route path="file-claim" element={<FileExpenseClaim />} />
-          <Route path="travel" element={<TravelRequest />} />
-          <Route path="reimbursements" element={<Reimbursements />} />
-          <Route path="policy"         element={<EmployeePolicy />} />
-        </Route>
-        <Route path="/dashboard/finance" element={<DashboardRoute element={<Finance />} allowedRoles={['Finance Team']} />}>
-          <Route index element={<FinanceOverview />} />
-          <Route path="overview" element={<FinanceOverview />} />
-          <Route path="process" element={<FinanceProcess />} />
-          <Route path="violations" element={<FinanceViolations />} />
-          <Route path="history" element={<FinanceHistory />} />
-        </Route>
-        <Route path="/dashboard/auditor" element={<DashboardRoute element={<Auditor />} allowedRoles={['Auditor']} />}>
-          <Route index element={<AuditorOverview />} />
-          <Route path="overview" element={<AuditorOverview />} />
-          <Route path="expenses" element={<AuditorExpenses />} />
-          <Route path="activity" element={<AuditorActivity />} />
-          <Route path="export" element={<AuditorExportReports />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <ErrorBoundary>
+        <ToastList />
+        <Routes>
+          <Route path="/" element={currentUser ? <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace /> : <LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/:slug" element={<Login />} />
+          <Route path="/profile" element={currentUser ? <ProfilePage /> : <Navigate to="/login" replace />} />
+          <Route
+            path="/dashboard"
+            element={currentUser ? <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/:slug/dashboard"
+            element={currentUser ? <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace /> : <Navigate to="/login" replace />}
+          />
+          
+          {/* Super Admin Routes (No slug) */}
+          <Route path="/dashboard/superadmin" element={<DashboardRoute element={<SuperAdmin />} allowedRoles={['SuperAdmin']} />}>
+            <Route index element={<SuperAdminOverview />} />
+            <Route path="overview" element={<SuperAdminOverview />} />
+            <Route path="tenants/companies" element={<SuperAdminTenantManagement />} />
+            <Route path="tenants/plans" element={<SuperAdminSubscriptionPlans />} />
+            <Route path="tenants/status" element={<SuperAdminTenantStatus />} />
+            <Route path="users/superadmins" element={<SuperAdminSuperAdmins />} />
+            <Route path="users/companyadmins" element={<SuperAdminCompanyAdmins />} />
+            <Route path="roles" element={<SuperAdminRolePermissions />} />
+            <Route path="policies" element={<SuperAdminGlobalPolicies />} />
+            <Route path="reports" element={<SuperAdminPlatformReports />} />
+            <Route path="auditlogs" element={<SuperAdminAuditLogs />} />
+            <Route path="monitoring" element={<SuperAdminSystemMonitoring />} />
+            <Route path="notifications" element={<SuperAdminNotifications />} />
+            <Route path="settings" element={<SuperAdminSettings />} />
+          </Route>
+
+          {/* Tenant Routes (Prefixed with /:slug) */}
+          <Route path="/:slug/dashboard/company-admin" element={<DashboardRoute element={<CompanyAdmin />} allowedRoles={['CompanyAdmin']} />}>
+            <Route index element={<CompanyAdminOverview />} />
+            <Route path="overview" element={<CompanyAdminOverview />} />
+            <Route path="employees" element={<CompanyAdminEmployees />} />
+            <Route path="managers" element={<CompanyAdminManagers />} />
+            <Route path="finance-team" element={<CompanyAdminFinanceTeam />} />
+            <Route path="departments" element={<CompanyAdminDepartments />} />
+            <Route path="expense-categories" element={<CompanyAdminExpenseCategories />} />
+            <Route path="policies" element={<CompanyAdminPolicies />} />
+            <Route path="workflows" element={<CompanyAdminWorkflows />} />
+            <Route path="expenses" element={<CompanyAdminExpenses />} />
+            <Route path="travel-requests" element={<CompanyAdminTravelRequests />} />
+            <Route path="reimbursements" element={<CompanyAdminReimbursements />} />
+            <Route path="reports" element={<CompanyAdminReports />} />
+            <Route path="notifications" element={<CompanyAdminNotifications />} />
+          </Route>
+          
+          <Route path="/:slug/dashboard/manager" element={<DashboardRoute element={<Manager />} allowedRoles={['Manager']} />}>
+            <Route index element={<ManagerOverview />} />
+            <Route path="overview" element={<ManagerOverview />} />
+            <Route path="expenses" element={<ManagerExpenses />} />
+            <Route path="travel" element={<ManagerTravel />} />
+            <Route path="team" element={<ManagerTeam />} />
+          </Route>
+          
+          <Route path="/:slug/dashboard/employee" element={<DashboardRoute element={<Employee />} allowedRoles={['Employee']} />}>
+            <Route index element={<EmployeeOverview />} />
+            <Route path="overview" element={<EmployeeOverview />} />
+            <Route path="file-claim" element={<FileExpenseClaim />} />
+            <Route path="travel" element={<TravelRequest />} />
+            <Route path="reimbursements" element={<Reimbursements />} />
+            <Route path="policy" element={<EmployeePolicy />} />
+          </Route>
+          
+          <Route path="/:slug/dashboard/finance" element={<DashboardRoute element={<Finance />} allowedRoles={['Finance Team']} />}>
+            <Route index element={<FinanceOverview />} />
+            <Route path="overview" element={<FinanceOverview />} />
+            <Route path="process" element={<FinanceProcess />} />
+            <Route path="violations" element={<FinanceViolations />} />
+            <Route path="history" element={<FinanceHistory />} />
+          </Route>
+          
+          <Route path="/:slug/dashboard/auditor" element={<DashboardRoute element={<Auditor />} allowedRoles={['Auditor']} />}>
+            <Route index element={<AuditorOverview />} />
+            <Route path="overview" element={<AuditorOverview />} />
+            <Route path="expenses" element={<AuditorExpenses />} />
+            <Route path="activity" element={<AuditorActivity />} />
+            <Route path="export" element={<AuditorExportReports />} />
+          </Route>
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ErrorBoundary>
     </Router>
   );
 }

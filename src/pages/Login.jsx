@@ -1,20 +1,121 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../context/StateContext';
-import { Shield, Lock, Mail, Users, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { AUTH_ENDPOINTS } from '../constants/apiConstants';
+import { Shield, Lock, Mail, Users, ArrowRight, Sparkles, CheckCircle2, Building } from 'lucide-react';
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAppState();
+  const { slug } = useParams();
+  const { login, setCurrentUser, showToast } = useAppState();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password'); // Default password for simplicity
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [workspaceSlug, setWorkspaceSlug] = useState(slug || '');
   const [focusedField, setFocusedField] = useState(null);
 
-  const handleSubmit = (e) => {
+  const isTenantRoute = !!slug;
+
+  useEffect(() => {
+    if (slug) {
+      setWorkspaceSlug(slug);
+      setIsSuperAdmin(false);
+    }
+  }, [slug]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = login(email, password);
-    if (res.success) {
-      navigate('/dashboard');
+
+    try {
+      const endpoint = isSuperAdmin 
+        ? AUTH_ENDPOINTS.LOGIN 
+        : AUTH_ENDPOINTS.TENANT_LOGIN(workspaceSlug);
+
+      if (!isSuperAdmin && !workspaceSlug.trim()) {
+        showToast('Workspace slug is required for company login', 'error');
+        return;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Assume API returns { data: { user: {...}, token: '...' }, message: '...' }
+        const userData = data.data?.user || data.user;
+        const token = data.data?.accessToken || data.accessToken || data.data?.token || data.token;
+        
+        if (userData) {
+          // Normalize role from backend format if needed
+          const roleMap = {
+            'super_admin': 'SuperAdmin',
+            'company_admin': 'CompanyAdmin',
+            'manager': 'Manager',
+            'employee': 'Employee',
+            'finance': 'Finance Team',
+            'auditor': 'Auditor'
+          };
+          if (roleMap[userData.role]) {
+            userData.role = roleMap[userData.role];
+          }
+          
+          const userWithToken = { ...userData, token };
+          setCurrentUser(userWithToken);
+          showToast(`Welcome back, ${userData.name}! Signed in successfully.`, 'success');
+          
+          if (userData.role === 'SuperAdmin' || isSuperAdmin) {
+            navigate('/dashboard/superadmin');
+          } else if (userData.role === 'CompanyAdmin') {
+            navigate(`/${userData.tenantSlug}/dashboard/company-admin`);
+          } else if (userData.role === 'Manager') {
+            navigate(`/${userData.tenantSlug}/dashboard/manager`);
+          } else if (userData.role === 'Finance Team') {
+            navigate(`/${userData.tenantSlug}/dashboard/finance`);
+          } else if (userData.role === 'Auditor') {
+            navigate(`/${userData.tenantSlug}/dashboard/auditor`);
+          } else if (userData.role === 'Employee') {
+            navigate(`/${userData.tenantSlug}/dashboard/employee`);
+          } else {
+            navigate(`/${userData.tenantSlug}/dashboard`);
+          }
+        } else {
+          // Fallback to local context login for demo if API doesn't return full user obj but succeeded
+          const res = login(email, password);
+          if (res.success) {
+            const userState = JSON.parse(localStorage.getItem('ems_current_user')) || {};
+            if (isSuperAdmin || userState.role === 'SuperAdmin') {
+              navigate('/dashboard/superadmin');
+            } else {
+              // Attempt to guess slug if not present in fake login
+              const fallbackSlug = userState.tenantSlug || workspaceSlug || 'demo-workspace';
+              navigate(`/${fallbackSlug}/dashboard/company-admin`);
+            }
+          }
+        }
+      } else {
+        showToast(data.message || 'Invalid credentials', 'error');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      showToast('Network error. Trying local demo login fallback...', 'warning');
+      
+      // Fallback for UI demo purposes if backend isn't fully ready
+      const res = login(email, password);
+      if (res.success) {
+        const userState = JSON.parse(localStorage.getItem('ems_current_user')) || {};
+        if (isSuperAdmin || userState.role === 'SuperAdmin') {
+          navigate('/dashboard/superadmin');
+        } else {
+          const fallbackSlug = userState.tenantSlug || workspaceSlug || 'demo-workspace';
+          navigate(`/${fallbackSlug}/dashboard/company-admin`);
+        }
+      }
     }
   };
 
@@ -24,7 +125,13 @@ export const Login = () => {
     setTimeout(() => {
       const res = login(roleEmail, 'password');
       if (res.success) {
-        navigate('/dashboard');
+        const userState = JSON.parse(localStorage.getItem('ems_current_user')) || {};
+        if (roleEmail === 'superadmin@ems.com') {
+          navigate('/dashboard/superadmin');
+        } else {
+          const fallbackSlug = userState.tenantSlug || workspaceSlug || 'demo-workspace';
+          navigate(`/${fallbackSlug}/dashboard`);
+        }
       }
     }, 100);
   };
@@ -87,17 +194,72 @@ export const Login = () => {
           <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-6 sm:p-8 rounded-[2rem] shadow-2xl flex flex-col gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
             
-            {/* Header info */}
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3" /> Secure Access Portal
-              </span>
-              <h2 className="text-2xl font-bold text-slate-100 mt-1">Welcome Back</h2>
-              <p className="text-slate-400 text-xs">Login with your credentials or choose a pre-configured profile.</p>
-            </div>
+              {/* Header info */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" /> Secure Access Portal
+                </span>
+                <h2 className="text-2xl font-bold text-slate-100 mt-1">
+                  {isTenantRoute ? `Welcome to ${slug}` : 'Welcome Back'}
+                </h2>
+                <p className="text-slate-400 text-xs">Login with your credentials or choose a pre-configured profile.</p>
+              </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {/* Login Type Toggle */}
+                {!isTenantRoute && (
+                  <div className="flex items-center gap-4 mb-2">
+                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="loginType"
+                        checked={!isSuperAdmin}
+                        onChange={() => setIsSuperAdmin(false)}
+                        className="w-3.5 h-3.5 bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500/20"
+                      />
+                      Company Login
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="loginType"
+                        checked={isSuperAdmin}
+                        onChange={() => setIsSuperAdmin(true)}
+                        className="w-3.5 h-3.5 bg-slate-900 border-slate-700 text-teal-500 focus:ring-teal-500/20"
+                      />
+                      Super Admin
+                    </label>
+                  </div>
+                )}
+
+                {isTenantRoute && (
+                  <div className="flex flex-col gap-1.5 mb-1">
+                    <div className="text-xs text-slate-400 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+                      Logging into workspace: <span className="text-cyan-400 font-bold ml-1">{workspaceSlug}</span>
+                    </div>
+                  </div>
+                )}
+
+                {!isSuperAdmin && !isTenantRoute && (
+                  <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
+                    <label className="text-xs font-semibold text-slate-400">Workspace Slug</label>
+                    <div className={`relative rounded-xl border transition-all duration-300 ${focusedField === 'workspace' ? 'border-cyan-500 bg-slate-950/60 ring-2 ring-cyan-500/10' : 'border-slate-800 bg-slate-950/30'}`}>
+                      <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <input
+                        type="text"
+                        value={workspaceSlug}
+                        onChange={(e) => setWorkspaceSlug(e.target.value)}
+                        onFocus={() => setFocusedField('workspace')}
+                        onBlur={() => setFocusedField(null)}
+                        placeholder="e.g. tech-nova-innovations"
+                        className="w-full bg-transparent py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none"
+                        required={!isSuperAdmin && !isTenantRoute}
+                      />
+                    </div>
+                  </div>
+                )}
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-400">Email Address</label>
                 <div className={`relative rounded-xl border transition-all duration-300 ${focusedField === 'email' ? 'border-cyan-500 bg-slate-950/60 ring-2 ring-cyan-500/10' : 'border-slate-800 bg-slate-950/30'}`}>

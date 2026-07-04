@@ -300,8 +300,8 @@ export const UsersTab = ({
                 </tr>
               ) : (
                 tenantUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-white/[0.02] transition-all">
-                    <td className="px-6 py-4 font-semibold text-slate-200 whitespace-nowrap">{u.name}</td>
+                  <tr key={u._id || u.id} className="hover:bg-white/[0.02] transition-all">
+                    <td className="px-6 py-4 font-semibold text-slate-200 whitespace-nowrap">{u.name || `${u.firstName || ''} ${u.lastName || ''}`}</td>
                     <td className="px-6 py-4 text-slate-300 whitespace-nowrap">{u.role}</td>
                     <td className="px-6 py-4 text-slate-300 whitespace-nowrap">{u.department}</td>
                     <td className="px-6 py-4 text-slate-400 whitespace-nowrap">{u.employeeId || '—'}</td>

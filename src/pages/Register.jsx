@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/StateContext';
+import { AUTH_ENDPOINTS } from '../constants/apiConstants';
 import { Shield, User, Mail, Lock, Building, Layers, ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const Register = () => {
@@ -15,8 +16,37 @@ export const Register = () => {
   const [department, setDepartment] = useState('Engineering');
   const [focusedField, setFocusedField] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (role === 'SuperAdmin') {
+      try {
+        const response = await fetch(AUTH_ENDPOINTS.REGISTER_SUPER_ADMIN, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showToast('SuperAdmin registered successfully!', 'success');
+          navigate('/login');
+        } else {
+          showToast(data.message || 'Registration failed', 'error');
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        showToast('Network error, please try again.', 'error');
+      }
+      return;
+    }
 
     let finalTenantId = selectedTenantId;
 
@@ -34,10 +64,6 @@ export const Register = () => {
       } else {
         finalTenantId = 'tenant-' + Date.now();
       }
-    }
-
-    if (role === 'SuperAdmin') {
-      finalTenantId = 'platform';
     }
 
     const res = registerUser(name, email, password, role, finalTenantId, department);
@@ -185,6 +211,7 @@ export const Register = () => {
                       <option className="bg-slate-900 text-slate-200" value="CompanyAdmin">Company Admin (Tenant Admin)</option>
                       <option className="bg-slate-900 text-slate-200" value="Finance Team">Finance Team (Processor)</option>
                       <option className="bg-slate-900 text-slate-200" value="Auditor">Auditor (Reviewer)</option>
+                      <option className="bg-slate-900 text-slate-200" value="SuperAdmin">Super Admin (Platform Owner)</option>
                     </select>
                   </div>
                 </div>

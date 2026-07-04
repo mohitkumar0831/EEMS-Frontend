@@ -1,9 +1,43 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 
 export const Reimbursements = () => {
-  const { currentUser, expenses } = useAppState();
-  const myExpenses = expenses.filter((e) => e.employeeId === currentUser?.id);
+  const { currentUser } = useAppState();
+  const [myExpenses, setMyExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const response = await fetch(EXPENSE_ENDPOINTS.GET_EMPLOYEE_EXPENSES(currentUser.tenantSlug, currentUser.id), {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setMyExpenses(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch expenses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (currentUser?.id && currentUser?.tenantSlug) {
+      fetchExpenses();
+    }
+  }, [currentUser]);
+
+  if (loading) {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900">
+        <div className="py-20 text-center text-slate-500">Loading claims...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900">
@@ -29,14 +63,14 @@ export const Reimbursements = () => {
             </thead>
             <tbody className="divide-y divide-slate-800/40">
               {myExpenses.map((exp) => (
-                <tr key={exp.id} className="text-slate-300 transition-all hover:bg-white/[0.01]">
+                <tr key={exp._id} className="text-slate-300 transition-all hover:bg-white/[0.01]">
                   <td className="px-6 py-4 font-semibold text-slate-200">{exp.title}</td>
                   <td className="px-6 py-4">{exp.category}</td>
-                  <td className="px-6 py-4 font-bold text-slate-200">₹{exp.amount.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-slate-400">{exp.date}</td>
+                  <td className="px-6 py-4 font-bold text-slate-200">₹{exp.amount?.toFixed(2) || '0.00'}</td>
+                  <td className="px-6 py-4 text-slate-400">{new Date(exp.submittedAt).toLocaleDateString()}</td>
                   <td className="max-w-[200px] truncate px-6 py-4 text-slate-400">
-                    {exp.comments.length > 0 ? (
-                      <span className="italic">"{exp.comments[exp.comments.length - 1].text}"</span>
+                    {exp.actionHistory && exp.actionHistory.length > 0 && exp.actionHistory[exp.actionHistory.length - 1].remarks ? (
+                      <span className="italic">"{exp.actionHistory[exp.actionHistory.length - 1].remarks}"</span>
                     ) : (
                       <span className="text-slate-600">No review comments yet</span>
                     )}

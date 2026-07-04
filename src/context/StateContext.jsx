@@ -570,7 +570,8 @@ export const StateProvider = ({ children }) => {
       auditExpense,
       flagExpense,
       showToast,
-      addAuditLog
+      addAuditLog,
+      setCurrentUser
     }}>
       {children}
     </StateContext.Provider>
