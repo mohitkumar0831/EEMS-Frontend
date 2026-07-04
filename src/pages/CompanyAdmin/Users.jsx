@@ -2,58 +2,73 @@ import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { UsersTab } from './UsersTab';
 
+const initialFormState = {
+  firstName: '',
+  lastName: '',
+  employeeId: '',
+  email: '',
+  phone: '',
+  profilePhoto: '',
+  role: 'Employee',
+  department: '',
+  designation: '',
+  reportingManager: '',
+  joiningDate: '',
+  employmentType: 'Permanent',
+  username: '',
+  password: '',
+  confirmPassword: '',
+  expenseLimit: '',
+  expenseApprover: '',
+  travelApprovalRequired: false,
+  status: 'Active',
+  forcePasswordChange: false,
+  costCenter: '',
+  officeLocation: '',
+  panNumber: '',
+  bankAccountNumber: '',
+  ifscCode: '',
+  team: '',
+  approvalLimit: '',
+  canApproveExpenses: false,
+  canRejectExpenses: false,
+  financeRole: 'Finance Executive',
+  canProcessReimbursement: false,
+  canExportReports: false,
+  canManageExpenseCategories: false,
+  canViewAllExpenses: false,
+  auditType: 'Internal',
+  canAuditExpenses: false,
+  canDownloadReports: false,
+  canViewExpenseHistory: false,
+  auditRegion: ''
+};
+
 export const Users = () => {
   const { currentUser, registerUser, users, showToast } = useAppState();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [profilePhoto, setProfilePhoto] = useState('');
-  const [role, setRole] = useState('Employee');
-  const [department, setDepartment] = useState('Engineering');
-  const [designation, setDesignation] = useState('Staff');
-  const [reportingManager, setReportingManager] = useState('');
-  const [joiningDate, setJoiningDate] = useState('');
-  const [employmentType, setEmploymentType] = useState('Full Time');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [expenseLimit, setExpenseLimit] = useState('');
-  const [expenseApprover, setExpenseApprover] = useState('');
-  const [travelApprovalRequired, setTravelApprovalRequired] = useState(false);
-  const [status, setStatus] = useState('Active');
-  const [forcePasswordChange, setForcePasswordChange] = useState(false);
+  const [formData, setFormData] = useState(initialFormState);
 
   const tenantUsers = users.filter(u => u.tenantId === currentUser?.tenantId);
 
   const resetForm = () => {
-    setFirstName('');
-    setLastName('');
-    setEmployeeId('');
-    setEmail('');
-    setPhone('');
-    setProfilePhoto('');
-    setRole('Employee');
-    setDepartment('Engineering');
-    setDesignation('Staff');
-    setReportingManager('');
-    setJoiningDate('');
-    setEmploymentType('Full Time');
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
-    setExpenseLimit('');
-    setExpenseApprover('');
-    setTravelApprovalRequired(false);
-    setStatus('Active');
-    setForcePasswordChange(false);
+    setFormData(initialFormState);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleRegisterUser = (e) => {
     e.preventDefault();
 
-    if (!firstName.trim() || !lastName.trim() || !employeeId.trim() || !email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+    const {
+      firstName, lastName, employeeId, email, username, password, confirmPassword, role,
+      department, phone, profilePhoto, designation, reportingManager, joiningDate,
+      employmentType, expenseLimit, expenseApprover, travelApprovalRequired, status,
+      forcePasswordChange, ...extraData
+    } = formData;
+
+    if (!firstName.trim() || !lastName.trim() || !employeeId.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       showToast('Please fill all required fields.', 'error');
       return;
     }
@@ -63,7 +78,49 @@ export const Users = () => {
       return;
     }
 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      showToast('Password must be at least 8 characters, with 1 uppercase, 1 lowercase, 1 number, and 1 special character.', 'error');
+      return;
+    }
+
+    // Prepare role-specific extra data to save in StateContext
+    let roleSpecificData = {};
+    if (role === 'Employee') {
+      roleSpecificData = {
+        costCenter: extraData.costCenter,
+        officeLocation: extraData.officeLocation,
+        panNumber: extraData.panNumber,
+        bankAccountNumber: extraData.bankAccountNumber,
+        ifscCode: extraData.ifscCode
+      };
+    } else if (role === 'Manager') {
+      roleSpecificData = {
+        team: extraData.team,
+        approvalLimit: extraData.approvalLimit,
+        canApproveExpenses: extraData.canApproveExpenses,
+        canRejectExpenses: extraData.canRejectExpenses
+      };
+    } else if (role === 'Finance Team') {
+      roleSpecificData = {
+        financeRole: extraData.financeRole,
+        canProcessReimbursement: extraData.canProcessReimbursement,
+        canExportReports: extraData.canExportReports,
+        canManageExpenseCategories: extraData.canManageExpenseCategories,
+        canViewAllExpenses: extraData.canViewAllExpenses
+      };
+    } else if (role === 'Auditor') {
+      roleSpecificData = {
+        auditType: extraData.auditType,
+        canAuditExpenses: extraData.canAuditExpenses,
+        canDownloadReports: extraData.canDownloadReports,
+        canViewExpenseHistory: extraData.canViewExpenseHistory,
+        auditRegion: extraData.auditRegion
+      };
+    }
+
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
+    // We are going to pass extraData at the end of the argument list for registerUser
     const res = registerUser(
       fullName,
       email,
@@ -71,7 +128,7 @@ export const Users = () => {
       role,
       currentUser.tenantId,
       department,
-      username,
+      username || email.split('@')[0], // if username is empty, fallback to email prefix
       employeeId,
       phone,
       profilePhoto,
@@ -83,7 +140,8 @@ export const Users = () => {
       expenseApprover,
       travelApprovalRequired,
       status,
-      forcePasswordChange
+      forcePasswordChange,
+      roleSpecificData
     );
 
     if (res.success) {
@@ -94,46 +152,8 @@ export const Users = () => {
   return (
     <UsersTab
       tenantUsers={tenantUsers}
-      firstName={firstName}
-      setFirstName={setFirstName}
-      lastName={lastName}
-      setLastName={setLastName}
-      employeeId={employeeId}
-      setEmployeeId={setEmployeeId}
-      email={email}
-      setEmail={setEmail}
-      phone={phone}
-      setPhone={setPhone}
-      profilePhoto={profilePhoto}
-      setProfilePhoto={setProfilePhoto}
-      role={role}
-      setRole={setRole}
-      department={department}
-      setDepartment={setDepartment}
-      designation={designation}
-      setDesignation={setDesignation}
-      reportingManager={reportingManager}
-      setReportingManager={setReportingManager}
-      joiningDate={joiningDate}
-      setJoiningDate={setJoiningDate}
-      employmentType={employmentType}
-      setEmploymentType={setEmploymentType}
-      username={username}
-      setUsername={setUsername}
-      password={password}
-      setPassword={setPassword}
-      confirmPassword={confirmPassword}
-      setConfirmPassword={setConfirmPassword}
-      expenseLimit={expenseLimit}
-      setExpenseLimit={setExpenseLimit}
-      expenseApprover={expenseApprover}
-      setExpenseApprover={setExpenseApprover}
-      travelApprovalRequired={travelApprovalRequired}
-      setTravelApprovalRequired={setTravelApprovalRequired}
-      status={status}
-      setStatus={setStatus}
-      forcePasswordChange={forcePasswordChange}
-      setForcePasswordChange={setForcePasswordChange}
+      formData={formData}
+      handleChange={handleChange}
       handleRegisterUser={handleRegisterUser}
       resetForm={resetForm}
     />

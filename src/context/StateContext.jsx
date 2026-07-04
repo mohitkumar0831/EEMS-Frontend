@@ -211,7 +211,8 @@ export const StateProvider = ({ children }) => {
     expenseApprover = '',
     travelApprovalRequired = false,
     status = 'Active',
-    forcePasswordChange = false
+    forcePasswordChange = false,
+    extraData = {}
   ) => {
     // Check email uniqueness
     if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
@@ -239,7 +240,8 @@ export const StateProvider = ({ children }) => {
       expenseApprover,
       travelApprovalRequired,
       status,
-      forcePasswordChange
+      forcePasswordChange,
+      ...extraData
     };
 
     setUsers((prev) => [...prev, newUser]);

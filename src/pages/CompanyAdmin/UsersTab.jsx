@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Eye, EyeOff } from 'lucide-react';
 
 const FormField = ({ label, children }) => (
   <div className="flex flex-col gap-1.5 w-full">
@@ -28,49 +28,14 @@ const Checkbox = ({ label, checked, onChange }) => (
 
 export const UsersTab = ({
   tenantUsers = [],
-  firstName,
-  setFirstName,
-  lastName,
-  setLastName,
-  employeeId,
-  setEmployeeId,
-  email,
-  setEmail,
-  phone,
-  setPhone,
-  profilePhoto,
-  setProfilePhoto,
-  role,
-  setRole,
-  department,
-  setDepartment,
-  designation,
-  setDesignation,
-  reportingManager,
-  setReportingManager,
-  joiningDate,
-  setJoiningDate,
-  employmentType,
-  setEmploymentType,
-  username,
-  setUsername,
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  expenseLimit,
-  setExpenseLimit,
-  expenseApprover,
-  setExpenseApprover,
-  travelApprovalRequired,
-  setTravelApprovalRequired,
-  status,
-  setStatus,
-  forcePasswordChange,
-  setForcePasswordChange,
+  formData,
+  handleChange,
   handleRegisterUser,
   resetForm
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const roleDetails = [
     { id: 'Employee',     title: 'Employee',     desc: 'Can submit expense claims and view personal reimbursements.' },
     { id: 'Manager',      title: 'Manager',      desc: 'Approves team expense claims and reviews reports for direct reports.' },
@@ -91,212 +56,182 @@ export const UsersTab = ({
       <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-4 sm:p-6 shadow-xl w-full">
         <form onSubmit={handleRegisterUser} className="flex flex-col gap-6 w-full">
           
-          {/* Section 1: Personal Details */}
+          {/* Role Selection */}
           <div className="flex flex-col gap-4 w-full">
             <div className="pb-2 border-b border-white/5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">1. Personal Information</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">Select Role</h4>
+            </div>
+            <div className="w-full sm:w-1/3">
+              <FormField label="System Role *">
+                <select value={formData.role} onChange={(e) => handleChange('role', e.target.value)} className={selectCls} required>
+                  <option value="Employee">Employee</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Finance Team">Finance Team</option>
+                  <option value="Auditor">Auditor</option>
+                </select>
+              </FormField>
+            </div>
+          </div>
+
+          {/* Section 1: Common Fields */}
+          <div className="flex flex-col gap-4 w-full">
+            <div className="pb-2 border-b border-white/5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">1. Common Details</h4>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
               <FormField label="First Name *">
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="John"
-                  className={inputCls}
-                  required
-                />
+                <input type="text" value={formData.firstName} onChange={(e) => handleChange('firstName', e.target.value)} placeholder="John" className={inputCls} required />
               </FormField>
               <FormField label="Last Name *">
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Doe"
-                  className={inputCls}
-                  required
-                />
+                <input type="text" value={formData.lastName} onChange={(e) => handleChange('lastName', e.target.value)} placeholder="Doe" className={inputCls} required />
               </FormField>
               <FormField label="Employee ID *">
-                <input
-                  type="text"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  placeholder="EMP-824"
-                  className={inputCls}
-                  required
-                />
+                <input type="text" value={formData.employeeId} onChange={(e) => handleChange('employeeId', e.target.value)} placeholder="EMP-824" className={inputCls} required />
               </FormField>
               <FormField label="Email *">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="john@company.com"
-                  className={inputCls}
-                  required
-                />
+                <input type="email" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="john@company.com" className={inputCls} required />
               </FormField>
-              <FormField label="Phone">
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className={inputCls}
-                />
+              <FormField label="Mobile Number">
+                <input type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+91 98765 43210" className={inputCls} />
               </FormField>
-              <FormField label="Profile Image File">
-                <input
-                  type="text"
-                  value={profilePhoto}
-                  onChange={(e) => setProfilePhoto(e.target.value)}
-                  placeholder="avatar.png (optional)"
-                  className={inputCls}
-                />
-              </FormField>
-            </div>
-          </div>
-
-          {/* Section 2: Job & Limit Configuration */}
-          <div className="flex flex-col gap-4 w-full">
-            <div className="pb-2 border-b border-white/5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">2. Job Profile &amp; Spend limits</h4>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
-              <FormField label="System Role *">
-                <select value={role} onChange={(e) => setRole(e.target.value)} className={selectCls} required>
-                  <option value="Employee">Employee (Filer)</option>
-                  <option value="Manager">Manager (L1 Approver)</option>
-                  <option value="Finance Team">Finance Team (Processor)</option>
-                  <option value="Auditor">Auditor (Reviewer)</option>
-                </select>
+              <FormField label="Profile Photo File">
+                <input type="text" value={formData.profilePhoto} onChange={(e) => handleChange('profilePhoto', e.target.value)} placeholder="avatar.png (optional)" className={inputCls} />
               </FormField>
               <FormField label="Department *">
-                <input
-                  type="text"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="Engineering"
-                  className={inputCls}
-                  required
-                />
+                <input type="text" value={formData.department} onChange={(e) => handleChange('department', e.target.value)} placeholder="Engineering" className={inputCls} required />
               </FormField>
               <FormField label="Designation *">
-                <input
-                  type="text"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
-                  placeholder="Software Engineer"
-                  className={inputCls}
-                  required
-                />
-              </FormField>
-              <FormField label="Employment Type">
-                <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value)} className={selectCls}>
-                  <option value="Full Time">Full Time</option>
-                  <option value="Part Time">Part Time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Intern">Intern</option>
-                </select>
+                <input type="text" value={formData.designation} onChange={(e) => handleChange('designation', e.target.value)} placeholder="Software Engineer" className={inputCls} required />
               </FormField>
               <FormField label="Joining Date">
-                <input
-                  type="date"
-                  value={joiningDate}
-                  onChange={(e) => setJoiningDate(e.target.value)}
-                  className={inputCls}
-                />
+                <input type="date" value={formData.joiningDate} onChange={(e) => handleChange('joiningDate', e.target.value)} className={inputCls} />
               </FormField>
-              <FormField label="Monthly Limit Amount (₹)">
-                <input
-                  type="number"
-                  value={expenseLimit}
-                  onChange={(e) => setExpenseLimit(e.target.value)}
-                  placeholder="e.g. 15000"
-                  className={inputCls}
-                />
-              </FormField>
-              <FormField label="Reporting Manager">
-                <select value={reportingManager} onChange={(e) => setReportingManager(e.target.value)} className={selectCls}>
-                  <option value="">None / Executive</option>
-                  {managers.map(m => (
-                    <option key={m.id} value={m.name}>{m.name}</option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="Primary Expense Approver">
-                <select value={expenseApprover} onChange={(e) => setExpenseApprover(e.target.value)} className={selectCls}>
-                  <option value="">Auto-Routing</option>
-                  {managers.map(m => (
-                    <option key={m.id} value={m.name}>{m.name}</option>
-                  ))}
-                </select>
-              </FormField>
-            </div>
-          </div>
-
-          {/* Section 3: Credentials & Access Control */}
-          <div className="flex flex-col gap-4 w-full">
-            <div className="pb-2 border-b border-white/5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">3. Credentials &amp; Access Controls</h4>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
-              <FormField label="Username *">
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="johndoe12"
-                  className={inputCls}
-                  required
-                />
-              </FormField>
-              <FormField label="Password *">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={inputCls}
-                  required
-                />
-              </FormField>
-              <FormField label="Confirm Password *">
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={inputCls}
-                  required
-                />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2 w-full">
-              <FormField label="Profile Access Status">
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectCls}>
-                  <option value="Active">Active Profile</option>
-                  <option value="Suspended">Suspended</option>
+              <FormField label="Status">
+                <select value={formData.status} onChange={(e) => handleChange('status', e.target.value)} className={selectCls}>
+                  <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
               </FormField>
-              <div className="flex flex-col justify-end w-full">
-                <Checkbox
-                  label="Travel Approval Required"
-                  checked={travelApprovalRequired}
-                  onChange={setTravelApprovalRequired}
-                />
-              </div>
-              <div className="flex flex-col justify-end w-full">
-                <Checkbox
-                  label="Force password change on login"
-                  checked={forcePasswordChange}
-                  onChange={setForcePasswordChange}
-                />
-              </div>
+              <FormField label="Password *">
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleChange('password', e.target.value)}
+                    placeholder="••••••••"
+                    className={inputCls}
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </FormField>
+              <FormField label="Confirm Password *">
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                    placeholder="••••••••"
+                    className={inputCls}
+                    required
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </FormField>
             </div>
+          </div>
+
+          {/* Section 2: Role-Specific Information */}
+          <div className="flex flex-col gap-4 w-full">
+            <div className="pb-2 border-b border-white/5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">2. Role Specific Details ({formData.role})</h4>
+            </div>
+
+            {formData.role === 'Employee' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                <FormField label="Reporting Manager">
+                  <select value={formData.reportingManager} onChange={(e) => handleChange('reportingManager', e.target.value)} className={selectCls}>
+                    <option value="">Select Manager</option>
+                    {managers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+                  </select>
+                </FormField>
+                <FormField label="Expense Limit (₹)">
+                  <input type="number" value={formData.expenseLimit} onChange={(e) => handleChange('expenseLimit', e.target.value)} placeholder="15000" className={inputCls} />
+                </FormField>
+                <FormField label="Cost Center">
+                  <input type="text" value={formData.costCenter} onChange={(e) => handleChange('costCenter', e.target.value)} placeholder="CC-001" className={inputCls} />
+                </FormField>
+                <FormField label="Employee Type">
+                  <select value={formData.employmentType} onChange={(e) => handleChange('employmentType', e.target.value)} className={selectCls}>
+                    <option value="Permanent">Permanent</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Intern">Intern</option>
+                  </select>
+                </FormField>
+                <FormField label="Office Location">
+                  <input type="text" value={formData.officeLocation} onChange={(e) => handleChange('officeLocation', e.target.value)} placeholder="Mumbai HQ" className={inputCls} />
+                </FormField>
+                <FormField label="PAN Number">
+                  <input type="text" value={formData.panNumber} onChange={(e) => handleChange('panNumber', e.target.value)} placeholder="ABCDE1234F" className={inputCls} />
+                </FormField>
+                <FormField label="Bank Account Number">
+                  <input type="text" value={formData.bankAccountNumber} onChange={(e) => handleChange('bankAccountNumber', e.target.value)} placeholder="1234567890" className={inputCls} />
+                </FormField>
+                <FormField label="IFSC Code">
+                  <input type="text" value={formData.ifscCode} onChange={(e) => handleChange('ifscCode', e.target.value)} placeholder="HDFC0001234" className={inputCls} />
+                </FormField>
+              </div>
+            )}
+
+            {formData.role === 'Manager' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <FormField label="Team">
+                  <input type="text" value={formData.team} onChange={(e) => handleChange('team', e.target.value)} placeholder="Frontend Team" className={inputCls} />
+                </FormField>
+                <FormField label="Approval Limit (₹)">
+                  <input type="number" value={formData.approvalLimit} onChange={(e) => handleChange('approvalLimit', e.target.value)} placeholder="50000" className={inputCls} />
+                </FormField>
+                <Checkbox label="Can Approve Expenses" checked={formData.canApproveExpenses} onChange={(v) => handleChange('canApproveExpenses', v)} />
+                <Checkbox label="Can Reject Expenses" checked={formData.canRejectExpenses} onChange={(v) => handleChange('canRejectExpenses', v)} />
+              </div>
+            )}
+
+            {formData.role === 'Finance Team' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <FormField label="Finance Role">
+                  <select value={formData.financeRole} onChange={(e) => handleChange('financeRole', e.target.value)} className={selectCls}>
+                    <option value="Finance Executive">Finance Executive</option>
+                    <option value="Finance Manager">Finance Manager</option>
+                  </select>
+                </FormField>
+                <div className="hidden sm:block"></div>
+                <Checkbox label="Can Process Reimbursement" checked={formData.canProcessReimbursement} onChange={(v) => handleChange('canProcessReimbursement', v)} />
+                <Checkbox label="Can Export Reports" checked={formData.canExportReports} onChange={(v) => handleChange('canExportReports', v)} />
+                <Checkbox label="Can Manage Expense Categories" checked={formData.canManageExpenseCategories} onChange={(v) => handleChange('canManageExpenseCategories', v)} />
+                <Checkbox label="Can View All Expenses" checked={formData.canViewAllExpenses} onChange={(v) => handleChange('canViewAllExpenses', v)} />
+              </div>
+            )}
+
+            {formData.role === 'Auditor' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <FormField label="Audit Type">
+                  <select value={formData.auditType} onChange={(e) => handleChange('auditType', e.target.value)} className={selectCls}>
+                    <option value="Internal">Internal</option>
+                    <option value="External">External</option>
+                  </select>
+                </FormField>
+                <FormField label="Audit Region">
+                  <input type="text" value={formData.auditRegion} onChange={(e) => handleChange('auditRegion', e.target.value)} placeholder="APAC" className={inputCls} />
+                </FormField>
+                <Checkbox label="Can Audit Expenses" checked={formData.canAuditExpenses} onChange={(v) => handleChange('canAuditExpenses', v)} />
+                <Checkbox label="Can Download Reports" checked={formData.canDownloadReports} onChange={(v) => handleChange('canDownloadReports', v)} />
+                <Checkbox label="Can View Expense History" checked={formData.canViewExpenseHistory} onChange={(v) => handleChange('canViewExpenseHistory', v)} />
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -306,13 +241,20 @@ export const UsersTab = ({
               onClick={resetForm}
               className="px-5 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-350 bg-slate-950/20 transition-all cursor-pointer text-center w-full sm:w-auto"
             >
-              Reset Fields
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-5 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-350 bg-slate-950/20 transition-all cursor-pointer text-center w-full sm:w-auto"
+            >
+              Reset
             </button>
             <button
               type="submit"
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-cyan-500/10 active:scale-95 transition-all cursor-pointer text-center w-full sm:w-auto"
             >
-              Create User Profile
+              Register User
             </button>
           </div>
 
@@ -327,8 +269,8 @@ export const UsersTab = ({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 w-full">
           {roleDetails.map(r => (
-            <div key={r.id} className={`rounded-2xl p-4 border transition-all ${role === r.id ? 'border-cyan-500 bg-cyan-500/5' : 'border-white/5 bg-white/[0.01]'}`}>
-              <span className={`text-xs font-bold ${role === r.id ? 'text-cyan-400' : 'text-slate-250'}`}>{r.title}</span>
+            <div key={r.id} className={`rounded-2xl p-4 border transition-all ${formData.role === r.id ? 'border-cyan-500 bg-cyan-500/5' : 'border-white/5 bg-white/[0.01]'}`}>
+              <span className={`text-xs font-bold ${formData.role === r.id ? 'text-cyan-400' : 'text-slate-250'}`}>{r.title}</span>
               <p className="text-[11px] text-slate-455 mt-2 leading-relaxed">{r.desc}</p>
             </div>
           ))}
@@ -382,3 +324,4 @@ export const UsersTab = ({
     </div>
   );
 };
+
