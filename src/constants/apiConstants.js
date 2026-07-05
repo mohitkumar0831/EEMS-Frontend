@@ -19,10 +19,20 @@ export const TENANT_ENDPOINTS = {
 export const USER_ENDPOINTS = {
   GET_EMPLOYEES: (slug) => `http://localhost:4000/api/v1/users/tenant/${slug}/employees`,
   REGISTER_EMPLOYEE: (slug) => `http://localhost:4000/api/v1/users/tenant/${slug}/employees`,
+  ASSIGN_MANAGER: (slug, employeeId) => `http://localhost:4000/api/v1/users/tenant/${slug}/employees/${employeeId}/manager`,
+  GET_MANAGER_EMPLOYEES: (slug, managerId) => `http://localhost:4000/api/v1/users/tenant/${slug}/manager/${managerId}/employees`,
 };
 
 export const EXPENSE_ENDPOINTS = {
   CREATE_EXPENSE: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}`,
   UPLOAD_RECEIPT: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/receipts/upload`,
   GET_EMPLOYEE_EXPENSES: (slug, employeeId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/employee/${employeeId}`,
+  GET_MANAGER_EXPENSES: (slug, managerId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/manager/${managerId}`,
+  UPDATE_EXPENSE_STATUS: (slug, expenseId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/${expenseId}/status`,
+  GET_ALL_EXPENSES: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}`,
+  PROCESS_PAYOUT: (slug, expenseId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/${expenseId}/payout`,
+  CREATE_RAZORPAY_ORDER: (slug, expenseId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/${expenseId}/create-razorpay-order`,
+  VERIFY_RAZORPAY_PAYMENT: (slug, expenseId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/${expenseId}/verify-razorpay-payment`,
+  GET_FINANCE_PAYOUTS: (slug, financeId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/finance/${financeId}/payouts`,
+  GET_FINANCE_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/finance/dashboard`,
 };

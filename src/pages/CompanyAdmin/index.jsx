@@ -10,7 +10,7 @@ export const CompanyAdmin = () => {
   const menuItems = [
     { id: 'overview', label: 'Dashboard', icon: Layers, path: 'overview' },
     { id: 'employees', label: 'Users', icon: Users, path: 'employees' },
-    // { id: 'managers', label: 'Managers', icon: UserCheck, path: 'managers' },
+    { id: 'roaster', label: 'Roaster', icon: UserCheck, path: 'roaster' },
     // { id: 'finance-team', label: 'Finance Team', icon: Briefcase, path: 'finance-team' },
     // { id: 'departments', label: 'Departments', icon: Building2, path: 'departments' },
     // { id: 'expense-categories', label: 'Expense Categories', icon: Tags, path: 'expense-categories' },

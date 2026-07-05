@@ -22,7 +22,8 @@ import { NotificationsPage as SuperAdminNotifications } from './pages/SuperAdmin
 import { SettingsPage as SuperAdminSettings } from './pages/SuperAdmin/SettingsPage';
 import { CompanyAdmin } from './pages/CompanyAdmin';
 import { Overview as CompanyAdminOverview } from './pages/CompanyAdmin/Overview';
-import { Users as CompanyAdminEmployees } from './pages/CompanyAdmin/Users';
+import { UsersTab as CompanyAdminEmployees } from './pages/CompanyAdmin/UsersTab';
+import { RoasterTab as CompanyAdminRoaster } from './pages/CompanyAdmin/RoasterTab';
 import { Managers as CompanyAdminManagers } from './pages/CompanyAdmin/Managers';
 import { FinanceTeam as CompanyAdminFinanceTeam } from './pages/CompanyAdmin/FinanceTeam';
 import { Departments as CompanyAdminDepartments } from './pages/CompanyAdmin/Departments';
@@ -163,6 +164,7 @@ function App() {
             <Route index element={<CompanyAdminOverview />} />
             <Route path="overview" element={<CompanyAdminOverview />} />
             <Route path="employees" element={<CompanyAdminEmployees />} />
+            <Route path="roaster" element={<CompanyAdminRoaster />} />
             <Route path="managers" element={<CompanyAdminManagers />} />
             <Route path="finance-team" element={<CompanyAdminFinanceTeam />} />
             <Route path="departments" element={<CompanyAdminDepartments />} />

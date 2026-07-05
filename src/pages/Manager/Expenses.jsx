@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
 import {
   Utensils,
   Plane,
@@ -25,44 +26,133 @@ import {
 } from 'lucide-react';
 
 export const Expenses = () => {
-  const { currentUser, expenses, approveExpense, rejectExpense, showToast } = useAppState();
+  const { currentUser, showToast } = useAppState();
+  const [managerExpenses, setManagerExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [comment, setComment] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'history'
 
-  const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const teamMembers = currentUser ? companyExpenses.filter(e => e.employeeId && e.status) : [];
-  const teamMemberIds = [...new Set(teamMembers.map(m => m.employeeId))];
-
-  // Pending reviews assigned to this manager or unassigned legacy claims
-  const pendingExpenses = companyExpenses.filter(
-    e => (e.assignedManagerId === currentUser.id || (!e.assignedManagerId && teamMemberIds.includes(e.employeeId))) && 
-         (e.status === 'Pending' || e.status === 'Under Review')
-  );
-
-  // Past processed reviews assigned to this manager or unassigned legacy claims
-  const processedExpenses = companyExpenses.filter(
-    e => (e.assignedManagerId === currentUser.id || (!e.assignedManagerId && teamMemberIds.includes(e.employeeId))) && 
-         (e.status === 'Approved' || e.status === 'Rejected' || e.status === 'Paid')
-  );
-
-  const handleApprove = () => {
-    if (!selectedExpense) return;
-    approveExpense(selectedExpense.id, comment);
-    setComment('');
-    setSelectedExpense(null);
+  const fetchData = async () => {
+    try {
+      // Fetch expenses
+      const expenseResponse = await fetch(EXPENSE_ENDPOINTS.GET_MANAGER_EXPENSES(currentUser.tenantSlug, currentUser.id), {
+        headers: { 'Authorization': `Bearer ${currentUser.token}` }
+      });
+      const expenseData = await expenseResponse.json();
+      
+      // Fetch employees to map names
+      const employeeResponse = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
+        headers: { 'Authorization': `Bearer ${currentUser.token}` }
+      });
+      const employeeData = await employeeResponse.json();
+      
+      if (expenseData.success && employeeData.success) {
+        const employeesMap = {};
+        employeeData.data.forEach(emp => {
+          employeesMap[emp._id] = emp;
+        });
+        
+        const mappedExpenses = expenseData.data.map(exp => ({
+          ...exp,
+          employeeName: employeesMap[exp.employeeId] ? `${employeesMap[exp.employeeId].firstName} ${employeesMap[exp.employeeId].lastName}` : 'Unknown Employee',
+          employeeEmail: employeesMap[exp.employeeId] ? employeesMap[exp.employeeId].email : 'N/A'
+        }));
+        setManagerExpenses(mappedExpenses);
+        
+        // Update selectedExpense if it was selected before refresh
+        if (selectedExpense) {
+          const updated = mappedExpenses.find(e => e._id === selectedExpense._id);
+          if (updated) setSelectedExpense(updated);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = () => {
+  useEffect(() => {
+    if (currentUser?.id && currentUser?.tenantSlug) {
+      fetchData();
+    }
+  }, [currentUser]);
+
+  // Pending reviews assigned to this manager
+  const pendingExpenses = managerExpenses.filter(
+    e => e.status === 'Submitted' || e.status === 'Under Review'
+  );
+
+  // Past processed reviews assigned to this manager
+  const processedExpenses = managerExpenses.filter(
+    e => e.status !== 'Submitted' && e.status !== 'Under Review' && e.status !== 'Draft'
+  );
+
+  const handleApprove = async () => {
+    if (!selectedExpense) return;
+    try {
+      const response = await fetch(EXPENSE_ENDPOINTS.UPDATE_EXPENSE_STATUS(currentUser.tenantSlug, selectedExpense._id), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          status: 'Manager Approved',
+          remarks: comment || 'Approved by manager',
+          actionBy: currentUser.id
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        showToast('Expense approved successfully', 'success');
+        fetchData();
+        setComment('');
+        setSelectedExpense(null);
+      } else {
+        showToast(data.message || 'Failed to approve expense', 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('Error updating expense', 'error');
+    }
+  };
+
+  const handleReject = async () => {
     if (!selectedExpense) return;
     if (!comment.trim()) {
       showToast('A reason for rejection must be provided in the comments field.', 'warning');
       return;
     }
-    rejectExpense(selectedExpense.id, comment);
-    setComment('');
-    setSelectedExpense(null);
+    try {
+      const response = await fetch(EXPENSE_ENDPOINTS.UPDATE_EXPENSE_STATUS(currentUser.tenantSlug, selectedExpense._id), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          status: 'Manager Rejected',
+          remarks: comment,
+          actionBy: currentUser.id
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        showToast('Expense rejected successfully', 'success');
+        fetchData();
+        setComment('');
+        setSelectedExpense(null);
+      } else {
+        showToast(data.message || 'Failed to reject expense', 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('Error updating expense', 'error');
+    }
   };
 
   // Helper to match category to icon
@@ -218,10 +308,10 @@ export const Expenses = () => {
           ) : (
             <div className="divide-y divide-white/5 overflow-y-auto max-h-[520px] flex-grow pr-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
               {filteredList.map(exp => {
-                const isSelected = selectedExpense?.id === exp.id;
+                const isSelected = selectedExpense?._id === exp._id;
                 return (
                   <button
-                    key={exp.id}
+                    key={exp._id}
                     onClick={() => {
                       setSelectedExpense(exp);
                       setComment('');
@@ -238,7 +328,7 @@ export const Expenses = () => {
                       <div className="flex flex-col gap-0.5">
                         <span className="text-xs font-bold text-slate-200">{exp.title}</span>
                         <span className="text-[10px] text-slate-500 leading-relaxed font-medium">
-                          {exp.employeeName} • {exp.category} • {exp.date}
+                          {exp.employeeName} • {exp.category} • {new Date(exp.submittedAt || exp.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -252,17 +342,17 @@ export const Expenses = () => {
                             FLAGGED
                           </span>
                         )}
-                        {exp.status === 'Pending' && (
+                        {exp.status === 'Submitted' && (
                           <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 text-[8px] font-bold tracking-wider uppercase shrink-0">
                             PENDING
                           </span>
                         )}
-                        {(exp.status === 'Approved' || exp.status === 'Paid') && (
+                        {(exp.status === 'Manager Approved' || exp.status === 'Finance Approved' || exp.status === 'Paid') && (
                           <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 text-[8px] font-bold tracking-wider uppercase shrink-0">
                             APPROVED
                           </span>
                         )}
-                        {exp.status === 'Rejected' && (
+                        {(exp.status === 'Manager Rejected' || exp.status === 'Finance Rejected') && (
                           <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/25 text-[8px] font-bold tracking-wider uppercase shrink-0">
                             REJECTED
                           </span>
@@ -317,7 +407,7 @@ export const Expenses = () => {
                 </div>
                 <div className="flex flex-col gap-2 pt-2 leading-relaxed text-slate-300">
                   <div className="flex justify-between"><span className="text-slate-500">Category:</span><span className="text-slate-300 font-semibold">{selectedExpense.category}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Transaction Date:</span><span className="text-slate-400">{selectedExpense.date}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Transaction Date:</span><span className="text-slate-400">{new Date(selectedExpense.submittedAt || selectedExpense.createdAt).toLocaleDateString()}</span></div>
                   <div className="flex flex-col gap-1 mt-1">
                     <span className="text-slate-500">Employee Description:</span>
                     <p className="text-slate-400 bg-slate-950/30 p-2.5 rounded-xl border border-slate-800/40 text-[11px] leading-relaxed mt-1 italic">
@@ -337,12 +427,12 @@ export const Expenses = () => {
                         <Paperclip className="w-4 h-4 text-indigo-400" />
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="font-semibold text-slate-200 truncate text-[11px]">{selectedExpense.receipt}</span>
-                        <span className="text-[9px] text-slate-500 uppercase mt-0.5">Image File (342KB)</span>
+                        <span className="font-semibold text-slate-200 truncate text-[11px]">{selectedExpense.receiptId?.originalName || 'receipt.png'}</span>
+                        <span className="text-[9px] text-slate-500 uppercase mt-0.5">Image File</span>
                       </div>
                     </div>
                     <button
-                      onClick={() => alert(`Opening receipt: ${selectedExpense.receipt}`)}
+                      onClick={() => window.open(selectedExpense.receiptId?.fileUrl, '_blank')}
                       className="p-2 rounded-xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-slate-200 cursor-pointer shadow-inner shrink-0"
                       title="Open Receipt Invoice"
                     >
@@ -353,7 +443,7 @@ export const Expenses = () => {
               )}
 
               {/* Audit Timeline */}
-              {selectedExpense.auditTrail && selectedExpense.auditTrail.length > 0 && (
+              {selectedExpense.actionHistory && selectedExpense.actionHistory.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <History className="w-3.5 h-3.5 text-slate-600" />
@@ -361,13 +451,13 @@ export const Expenses = () => {
                   </span>
 
                   <div className="flex flex-col gap-3.5 pl-3 border-l border-slate-800 max-h-32 overflow-y-auto pr-1 mt-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-                    {selectedExpense.auditTrail.map((log, idx) => (
+                    {selectedExpense.actionHistory.map((log, idx) => (
                       <div key={idx} className="relative flex flex-col gap-0.5 text-[10px]">
                         {/* Timeline Node dot */}
                         <div className="absolute left-[-16.5px] top-1 w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700 shadow-inner" />
-                        <span className="text-slate-500 font-semibold">{new Date(log.timestamp).toLocaleString()}</span>
-                        <span className="font-bold text-slate-200">{log.action} ({log.user})</span>
-                        <span className="text-slate-400 mt-0.5">{log.details}</span>
+                        <span className="text-slate-500 font-semibold">{new Date(log.actionAt).toLocaleString()}</span>
+                        <span className="font-bold text-slate-200">{log.status} ({log.actionBy})</span>
+                        <span className="text-slate-400 mt-0.5">{log.remarks}</span>
                       </div>
                     ))}
                   </div>
@@ -375,7 +465,7 @@ export const Expenses = () => {
               )}
 
               {/* Approver Action Panel */}
-              {(selectedExpense.status === 'Pending' || selectedExpense.status === 'Under Review') && (
+              {(selectedExpense.status === 'Submitted' || selectedExpense.status === 'Under Review') && (
                 <div className="flex flex-col gap-3.5 border-t border-white/5 pt-4.5 mt-auto">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
@@ -424,23 +514,23 @@ export const Expenses = () => {
               )}
 
               {/* Already Processed Status Card */}
-              {(selectedExpense.status === 'Approved' || selectedExpense.status === 'Rejected' || selectedExpense.status === 'Paid') && (
+              {(selectedExpense.status !== 'Submitted' && selectedExpense.status !== 'Under Review' && selectedExpense.status !== 'Draft') && (
                 <div className="border-t border-white/5 pt-4.5 mt-auto text-center">
-                  <div className={`p-4 rounded-2xl border flex flex-col items-center gap-2 ${selectedExpense.status === 'Rejected'
+                  <div className={`p-4 rounded-2xl border flex flex-col items-center gap-2 ${(selectedExpense.status === 'Manager Rejected' || selectedExpense.status === 'Finance Rejected')
                       ? 'bg-rose-500/5 border-rose-500/20 text-rose-400'
                       : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
                     }`}>
-                    {selectedExpense.status === 'Rejected' ? (
+                    {(selectedExpense.status === 'Manager Rejected' || selectedExpense.status === 'Finance Rejected') ? (
                       <>
                         <X className="w-6 h-6 p-1 rounded-full bg-rose-500/10" />
-                        <span className="font-bold text-xs">Expense Rejected</span>
-                        <span className="text-[10px] text-slate-400">This claim has already been marked as rejected by manager review.</span>
+                        <span className="font-bold text-xs">Expense Rejected ({selectedExpense.status})</span>
+                        <span className="text-[10px] text-slate-400">This claim has already been marked as rejected.</span>
                       </>
                     ) : (
                       <>
                         <Check className="w-6 h-6 p-1 rounded-full bg-emerald-500/10" />
-                        <span className="font-bold text-xs">Expense Approved / Settled</span>
-                        <span className="text-[10px] text-slate-400">This claim has been approved and moved to the disbursement queue.</span>
+                        <span className="font-bold text-xs">Expense Approved ({selectedExpense.status})</span>
+                        <span className="text-[10px] text-slate-400">This claim has been processed.</span>
                       </>
                     )}
                   </div>

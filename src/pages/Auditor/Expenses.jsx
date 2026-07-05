@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
 import {
   Search,
   Utensils,
@@ -56,19 +57,70 @@ const LifecycleStep = ({ icon: Icon, label, sublabel, done, active, flagged }) =
 };
 
 export const AuditorExpenses = () => {
-  const { currentUser, expenses, auditExpense, flagExpense } = useAppState();
+  const { currentUser, showToast } = useAppState();
+  const [companyExpenses, setCompanyExpenses] = useState([]);
+  const [employees, setEmployees] = useState({});
+  const [loading, setLoading] = useState(true);
+  
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [searchQuery, setSearchQuery]         = useState('');
   const [filterStatus, setFilterStatus]       = useState('all');
   const [auditRemark, setAuditRemark]         = useState('');
   const [activeTab, setActiveTab]             = useState('pending'); // 'pending' | 'cleared' | 'flagged'
 
-  const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
+  const fetchData = async () => {
+    if (!currentUser?.tenantSlug) return;
+    try {
+      setLoading(true);
+      const headers = { 'Authorization': `Bearer ${currentUser.token}` };
+      const [expRes, empRes] = await Promise.all([
+        fetch(EXPENSE_ENDPOINTS.GET_ALL_EXPENSES(currentUser.tenantSlug), { headers }),
+        fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), { headers })
+      ]);
+      
+      if (!expRes.ok || !empRes.ok) throw new Error('Failed to fetch data');
+      
+      const expData = await expRes.json();
+      const empData = await empRes.json();
+
+      const empMap = {};
+      if (empData.success) {
+        empData.data.forEach(e => {
+          empMap[e._id] = e;
+        });
+      }
+      setEmployees(empMap);
+
+      if (expData.success) {
+         const mapped = expData.data.map(exp => ({
+           id: exp._id,
+           title: exp.title,
+           amount: exp.amount,
+           category: exp.category,
+           date: new Date(exp.createdAt).toLocaleDateString(),
+           employeeName: empMap[exp.employeeId] ? `${empMap[exp.employeeId].firstName} ${empMap[exp.employeeId].lastName}` : 'Unknown',
+           status: exp.status,
+           receiptUrl: exp.receiptId?.filePath || null,
+           actionHistory: exp.actionHistory || []
+         }));
+         setCompanyExpenses(mapped);
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('Failed to load auditor data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [currentUser?.tenantSlug, currentUser?.token]);
 
   // Buckets for tabs
   const auditPending = companyExpenses.filter(e => e.status === 'Paid');
   const auditCleared = companyExpenses.filter(e => e.status === 'Audited');
-  const auditFlagged = companyExpenses.filter(e => e.status === 'Flagged');
+  const auditFlagged = companyExpenses.filter(e => e.status === 'Audit Failed' || e.status === 'Flagged');
 
   const statusCounts = {
     all:     companyExpenses.length,
@@ -90,16 +142,40 @@ export const AuditorExpenses = () => {
     );
   };
 
+  const updateStatus = async (expenseId, status, remark) => {
+    try {
+      const res = await fetch(EXPENSE_ENDPOINTS.UPDATE_EXPENSE_STATUS(currentUser.tenantSlug, expenseId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          status: status,
+          actionBy: currentUser.id,
+          remarks: remark
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to update status');
+      showToast('Status updated successfully', 'success');
+      fetchData(); // refresh list
+    } catch (err) {
+      console.error(err);
+      showToast('Error updating status', 'error');
+    }
+  };
+
   const handleAudit = () => {
     if (!selectedExpense) return;
-    auditExpense(selectedExpense.id, auditRemark);
+    updateStatus(selectedExpense.id, 'Audited', auditRemark);
     setSelectedExpense(null);
     setAuditRemark('');
   };
 
   const handleFlag = () => {
     if (!selectedExpense) return;
-    flagExpense(selectedExpense.id, auditRemark);
+    updateStatus(selectedExpense.id, 'Audit Failed', auditRemark);
     setSelectedExpense(null);
     setAuditRemark('');
   };

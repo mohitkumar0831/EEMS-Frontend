@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 import {
   Wallet,
   DollarSign,
@@ -20,21 +21,56 @@ import {
 } from 'lucide-react';
 
 export const FinanceOverview = () => {
-  const { currentUser, expenses, users } = useAppState();
+  const { currentUser, expenses, showToast } = useAppState();
+  
+  const [dashboardMetrics, setDashboardMetrics] = useState(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!currentUser?.tenantSlug || !currentUser?.token) return;
+      try {
+        setLoadingMetrics(true);
+        const res = await fetch(EXPENSE_ENDPOINTS.GET_FINANCE_DASHBOARD(currentUser.tenantSlug), {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch dashboard metrics');
+        const data = await res.json();
+        if (data.success) {
+          setDashboardMetrics(data.data);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error loading finance metrics', 'error');
+      } finally {
+        setLoadingMetrics(false);
+      }
+    };
+    fetchMetrics();
+  }, [currentUser?.tenantSlug, currentUser?.token]);
 
   const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const approvedQueue = companyExpenses.filter(e => e.status === 'Approved');
-  const violationsQueue = companyExpenses.filter(e => e.status === 'Under Review');
-  const paidHistory = companyExpenses.filter(e => e.status === 'Paid');
-  const pendingQueue = companyExpenses.filter(e => e.status === 'Pending');
-  const rejectedQueue = companyExpenses.filter(e => e.status === 'Rejected');
+  const approvedQueue = companyExpenses.filter(e => e.status === 'Approved' || e.status === 'Finance Approved');
+  const violationsQueue = companyExpenses.filter(e => e.status === 'Under Review' || e.status === 'Audit Failed');
 
-  const totalReimbursed = paidHistory.reduce((sum, e) => sum + e.amount, 0);
-  const pendingPaymentSum = approvedQueue.reduce((sum, e) => sum + e.amount, 0);
-  const violationSum = violationsQueue.reduce((sum, e) => sum + e.amount, 0);
-  const totalSubmitted = companyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalReimbursed = dashboardMetrics?.totalDisbursed.amount || 0;
+  const paidClaimsCount = dashboardMetrics?.totalDisbursed.claimsPaid || 0;
+  
+  const pendingPaymentSum = dashboardMetrics?.awaitingPayout.amount || 0;
+  const approvedClaimsCount = dashboardMetrics?.awaitingPayout.approvedClaims || 0;
+  
+  const violationSum = dashboardMetrics?.policyViolations.flaggedAmount || 0;
+  const violationsCount = dashboardMetrics?.policyViolations.count || 0;
+  
+  const totalSubmitted = dashboardMetrics?.totalClaims.submittedAmount || 0;
+  const totalClaimsCount = dashboardMetrics?.totalClaims.count || 0;
+  
+  const avgClaimSize = dashboardMetrics?.averageClaimSize || 0;
+  const pendingQueueLength = dashboardMetrics?.pendingApproval.count || 0;
+  const rejectedQueueLength = dashboardMetrics?.rejectedClaims.count || 0;
+  const uniqueClaimants = dashboardMetrics?.activeClaimants.count || 0;
 
-  // Category breakdown across ALL expenses
+  // Category breakdown across ALL expenses (mock fallback for now)
   const categories = ['Meals', 'Travel', 'Equipment'];
   const categoryData = categories.map(cat => {
     const catExpenses = companyExpenses.filter(e => e.category === cat);
@@ -44,13 +80,7 @@ export const FinanceOverview = () => {
   });
   const maxCategoryTotal = Math.max(...categoryData.map(c => c.total), 1);
 
-  // Claimants: unique employees who submitted claims
-  const uniqueClaimants = [...new Set(companyExpenses.map(e => e.employeeId))].length;
 
-  // Average claim size
-  const avgClaimSize = companyExpenses.length > 0
-    ? companyExpenses.reduce((s, e) => s + e.amount, 0) / companyExpenses.length
-    : 0;
 
   // Recent activity (last 5 expenses by date, any status)
   const recentActivity = [...companyExpenses]
@@ -88,7 +118,7 @@ export const FinanceOverview = () => {
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Disbursed</span>
             <div className="text-2xl font-extrabold text-slate-100 mt-1">₹{totalReimbursed.toFixed(2)}</div>
-            <span className="text-[10px] text-emerald-400">{paidHistory.length} claims paid</span>
+            <span className="text-[10px] text-emerald-400">{paidClaimsCount} claims paid</span>
           </div>
           <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
             <Wallet className="w-5 h-5" />
@@ -100,7 +130,7 @@ export const FinanceOverview = () => {
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Awaiting Payout</span>
             <div className="text-2xl font-extrabold text-slate-100 mt-1">₹{pendingPaymentSum.toFixed(2)}</div>
-            <span className="text-[10px] text-indigo-400">{approvedQueue.length} approved claims</span>
+            <span className="text-[10px] text-indigo-400">{approvedClaimsCount} approved claims</span>
           </div>
           <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
             <Clock className="w-5 h-5" />
@@ -111,7 +141,7 @@ export const FinanceOverview = () => {
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Policy Violations</span>
-            <div className="text-2xl font-extrabold text-slate-100 mt-1">{violationsQueue.length}</div>
+            <div className="text-2xl font-extrabold text-slate-100 mt-1">{violationsCount}</div>
             <span className="text-[10px] text-rose-400">₹{violationSum.toFixed(2)} flagged</span>
           </div>
           <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
@@ -123,7 +153,7 @@ export const FinanceOverview = () => {
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Claims</span>
-            <div className="text-2xl font-extrabold text-slate-100 mt-1">{companyExpenses.length}</div>
+            <div className="text-2xl font-extrabold text-slate-100 mt-1">{totalClaimsCount}</div>
             <span className="text-[10px] text-purple-400">₹{totalSubmitted.toFixed(2)} submitted</span>
           </div>
           <div className="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400">
@@ -146,14 +176,14 @@ export const FinanceOverview = () => {
         {/* Pending Manager Review */}
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pending Approval</span>
-          <span className="text-lg font-extrabold text-amber-300">{pendingQueue.length}</span>
+          <span className="text-lg font-extrabold text-amber-300">{pendingQueueLength}</span>
           <span className="text-[10px] text-slate-500">awaiting manager sign-off</span>
         </div>
 
         {/* Rejected Claims */}
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Rejected Claims</span>
-          <span className="text-lg font-extrabold text-rose-300">{rejectedQueue.length}</span>
+          <span className="text-lg font-extrabold text-rose-300">{rejectedQueueLength}</span>
           <span className="text-[10px] text-slate-500">declined by manager</span>
         </div>
 

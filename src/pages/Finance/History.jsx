@@ -1,11 +1,69 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
 
 export const FinanceHistory = () => {
-  const { currentUser, expenses } = useAppState();
+  const { currentUser, showToast } = useAppState();
+  const [paidHistory, setPaidHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const paidHistory = companyExpenses.filter(e => e.status === 'Paid');
+  // Debugging logs to verify if it's continuously rendering
+  console.log('FinanceHistory Rendered. CurrentUser ID:', currentUser?.id, 'TenantSlug:', currentUser?.tenantSlug);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!currentUser?.tenantSlug || !currentUser?.id) return;
+      try {
+        setLoading(true);
+        // Fetch payouts for this specific finance user
+        const expRes = await fetch(EXPENSE_ENDPOINTS.GET_FINANCE_PAYOUTS(currentUser.tenantSlug, currentUser.id), {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        
+        if (!expRes.ok) {
+          throw new Error(`Server returned ${expRes.status}`);
+        }
+        const expData = await expRes.json();
+
+        // Fetch employees to map names
+        const empRes = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        
+        if (!empRes.ok) {
+          throw new Error(`Server returned ${empRes.status}`);
+        }
+        const empData = await empRes.json();
+
+        if (expData.success && empData.success) {
+          const empMap = {};
+          empData.data.forEach(e => {
+            empMap[e._id] = e;
+          });
+
+          const mapped = expData.data.map(exp => ({
+            id: exp._id,
+            title: exp.title,
+            amount: exp.amount,
+            date: new Date(exp.updatedAt).toLocaleDateString(), // Disbursed date
+            employeeName: empMap[exp.employeeId] ? `${empMap[exp.employeeId].firstName} ${empMap[exp.employeeId].lastName}` : 'Unknown Employee',
+            status: exp.status
+          }));
+          
+          setPaidHistory(mapped);
+        } else {
+          showToast('Failed to load payout history', 'error');
+        }
+      } catch (error) {
+        console.error(error);
+        showToast('Error loading history', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHistory();
+  }, [currentUser?.id, currentUser?.tenantSlug]);
 
   if (!currentUser) return null;
 
@@ -14,7 +72,11 @@ export const FinanceHistory = () => {
       <div className="px-6 py-4 border-b border-white/5">
         <h3 className="text-base font-bold text-slate-200">Reimbursement Payout Registry</h3>
       </div>
-      {paidHistory.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20">
+          <p className="text-slate-500 text-sm animate-pulse">Loading payout records...</p>
+        </div>
+      ) : paidHistory.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-slate-500 text-sm">No processed payments in the ledger.</p>
         </div>
