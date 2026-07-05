@@ -7,6 +7,7 @@ export const AUTH_ENDPOINTS = {
   TENANT_LOGIN: (slug) => `http://localhost:4000/api/v1/auth/tenant/${slug}/login`,
   REFRESH_TOKEN: `${API_BASE_URL}/auth/refresh-token`,
   FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+  TENANT_FORGOT_PASSWORD: (slug) => `http://localhost:4100/api/v1/auth/tenant/${slug}/forgot-password`,
   RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
   CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
 };
@@ -43,4 +44,5 @@ export const EXPENSE_ENDPOINTS = {
   GET_FINANCE_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/finance/dashboard`,
   GET_AUDITOR_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/auditor/dashboard`,
   GET_ADMIN_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/admin/dashboard`,
+  GET_MANAGER_DASHBOARD: (slug, managerId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/manager/${managerId}/dashboard`,
 };

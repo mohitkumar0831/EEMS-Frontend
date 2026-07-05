@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 import { 
   ClipboardList, 
   Plane, 
@@ -19,36 +20,48 @@ import {
 
 export const Overview = () => {
   const navigate = useNavigate();
-  const { currentUser, expenses, travelRequests, users } = useAppState();
+  const { currentUser, users } = useAppState();
 
-  const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const companyTravel = travelRequests.filter(t => t.tenantId === currentUser?.tenantId);
+  const [metrics, setMetrics] = useState({
+    pendingExpensesCount: 0,
+    budgetUtilized: 0,
+    categorySpend: {},
+    pendingTravelCount: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const res = await fetch(EXPENSE_ENDPOINTS.GET_MANAGER_DASHBOARD(currentUser.tenantSlug, currentUser.id || currentUser._id), {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setMetrics(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch manager dashboard metrics:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (currentUser?.tenantSlug && (currentUser.id || currentUser._id)) {
+      fetchMetrics();
+    }
+  }, [currentUser]);
+
   const companyUsers = users.filter(u => u.tenantId === currentUser?.tenantId);
   
   // Filter for team members in the same department (excluding the manager themselves)
   const teamMembers = companyUsers.filter(u => u.department === currentUser?.department && u.role === 'Employee');
-  const teamMemberIds = teamMembers.map(m => m.id);
   
-  // Pending approvals
-  const pendingExpenses = companyExpenses.filter(e => teamMemberIds.includes(e.employeeId) && (e.status === 'Pending' || e.status === 'Under Review'));
-  const pendingTravel = companyTravel.filter(t => teamMemberIds.includes(t.employeeId) && t.status === 'Pending');
-  
-  // Budget utilization (Approved & Paid claims)
-  const budgetUtilized = companyExpenses
-    .filter(e => teamMemberIds.includes(e.employeeId) && (e.status === 'Approved' || e.status === 'Paid'))
-    .reduce((sum, e) => sum + e.amount, 0);
+  const totalSpent = Object.values(metrics.categorySpend).reduce((sum, val) => sum + val, 0) || 1; // Avoid divide by zero
 
-  // Category wise department spend breakdown
-  const categorySpend = companyExpenses
-    .filter(e => teamMemberIds.includes(e.employeeId) && (e.status === 'Approved' || e.status === 'Paid'))
-    .reduce((acc, e) => {
-      acc[e.category] = (acc[e.category] || 0) + e.amount;
-      return acc;
-    }, {});
-
-  const totalSpent = Object.values(categorySpend).reduce((sum, val) => sum + val, 0) || 1; // Avoid divide by zero
-
-  const categoryDetails = Object.entries(categorySpend).map(([cat, amount]) => {
+  const categoryDetails = Object.entries(metrics.categorySpend).map(([cat, amount]) => {
     let colorClass = 'bg-indigo-500';
     let icon = <FileText className="w-4 h-4 text-slate-400" />;
     
@@ -72,6 +85,10 @@ export const Overview = () => {
     };
   }).sort((a, b) => b.amount - a.amount);
 
+  if (isLoading) {
+    return <div className="text-white p-8">Loading dashboard metrics...</div>;
+  }
+
   return (
     <div className="flex flex-col gap-8">
       {/* Title */}
@@ -88,7 +105,7 @@ export const Overview = () => {
         <div className="bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-xl flex items-center justify-between hover:border-indigo-500/20 transition-all duration-300">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Expenses</span>
-            <span className="text-3xl font-extrabold text-slate-100">{pendingExpenses.length}</span>
+            <span className="text-3xl font-extrabold text-slate-100">{metrics.pendingExpensesCount}</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
             <ClipboardList className="w-6 h-6" />
@@ -99,7 +116,7 @@ export const Overview = () => {
         <div className="bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-xl flex items-center justify-between hover:border-indigo-500/20 transition-all duration-300">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Travel Plans</span>
-            <span className="text-3xl font-extrabold text-slate-100">{pendingTravel.length}</span>
+            <span className="text-3xl font-extrabold text-slate-100">{metrics.pendingTravelCount}</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
             <Plane className="w-6 h-6" />
@@ -121,7 +138,7 @@ export const Overview = () => {
         <div className="bg-slate-900/80 border border-white/10 rounded-3xl p-6 shadow-xl flex items-center justify-between hover:border-indigo-500/20 transition-all duration-300">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Approved Spend</span>
-            <span className="text-3xl font-extrabold text-slate-100">₹{budgetUtilized.toFixed(2)}</span>
+            <span className="text-3xl font-extrabold text-slate-100">₹{metrics.budgetUtilized.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
             <DollarSign className="w-6 h-6" />
@@ -150,13 +167,13 @@ export const Overview = () => {
               </button>
             </div>
             
-            {pendingExpenses.length === 0 ? (
+            {metrics.pendingExpenses?.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-slate-500 text-xs">Hurray! No pending expense claims to approve.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {pendingExpenses.map(exp => (
+                {metrics.pendingExpenses?.map(exp => (
                   <div key={exp.id} className="flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-slate-950/20 hover:border-slate-800 transition-colors">
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <div className="flex items-center gap-2">
@@ -167,7 +184,7 @@ export const Overview = () => {
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-500">By {exp.employeeName} • {exp.category} • {exp.date}</span>
+                      <span className="text-[10px] text-slate-500">By {users.find(u => u.id === exp.employeeId || u._id === exp.employeeId)?.name || 'Employee'} • {exp.category} • {new Date(exp.submittedAt || exp.createdAt || Date.now()).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-extrabold text-slate-100">₹{exp.amount.toFixed(2)}</span>
@@ -199,18 +216,18 @@ export const Overview = () => {
               </button>
             </div>
             
-            {pendingTravel.length === 0 ? (
+            {metrics.pendingTravel?.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-slate-500 text-xs">No pending travel plans to authorize.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {pendingTravel.map(travel => (
+                {metrics.pendingTravel?.map(travel => (
                   <div key={travel.id} className="flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-slate-950/20 hover:border-slate-800 transition-colors">
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <span className="text-xs font-bold text-slate-200 truncate">{travel.purpose}</span>
                       <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                        By {travel.employeeName} • <MapPin className="w-3 h-3 text-slate-600 inline shrink-0" /> {travel.destination}
+                        By {users.find(u => u.id === travel.employeeId || u._id === travel.employeeId)?.name || 'Employee'} • <MapPin className="w-3 h-3 text-slate-600 inline shrink-0" /> {travel.destination}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
