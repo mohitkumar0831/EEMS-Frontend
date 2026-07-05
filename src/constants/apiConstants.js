@@ -1,4 +1,5 @@
 export const API_BASE_URL = 'http://localhost:4100/api/v1';
+export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
 
 export const AUTH_ENDPOINTS = {
   REGISTER_SUPER_ADMIN: `${API_BASE_URL}/auth/register-super-admin`,

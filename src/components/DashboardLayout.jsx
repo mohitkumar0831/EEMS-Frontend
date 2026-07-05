@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/StateContext';
+import { useSocket } from '../context/SocketContext';
 import { LogOut, Bell, Shield, Menu, X, ChevronDown, ChevronRight, User, Briefcase, Building2 } from 'lucide-react';
 
 export const DashboardLayout = ({ menuItems, children, activeTab: externalActiveTab, setActiveTab }) => {
@@ -92,11 +93,28 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
     fetchTenantName();
   }, [currentUser?.tenantSlug, currentUser?.tenantId, currentUser?.token, currentUser?.role, tenants]);
 
-  const notifications = [
+  const { socket } = useSocket();
+  const [notifications, setNotifications] = useState([
     { id: 1, text: 'New policy violation flagged: Screen Purchase limit exceeded', time: '10m ago' },
     { id: 2, text: 'Expense claim approved by John Approver', time: '2h ago' },
     { id: 3, text: 'Travel authorization request pending review', time: '1d ago' }
-  ];
+  ]);
+  const [unreadCount, setUnreadCount] = useState(1);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleNewNotification = (data) => {
+      setNotifications((prev) => [data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    };
+
+    socket.on('new_notification', handleNewNotification);
+
+    return () => {
+      socket.off('new_notification', handleNewNotification);
+    };
+  }, [socket]);
 
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100 relative">
@@ -277,11 +295,18 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
           <div className="flex items-center gap-4 relative">
             {/* Notification Bell */}
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setUnreadCount(0); // clear badge when opened
+              }}
               className="relative p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-white/10 transition-all cursor-pointer"
             >
               <Bell className="w-5 h-5 text-slate-300" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 shadow-md shadow-rose-500" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-3 w-3 items-center justify-center rounded-full bg-rose-500 shadow-md shadow-rose-500">
+                  <span className="text-[7px] font-bold text-white">{unreadCount}</span>
+                </span>
+              )}
             </button>
 
             {/* Notification Dropdown Panel */}
