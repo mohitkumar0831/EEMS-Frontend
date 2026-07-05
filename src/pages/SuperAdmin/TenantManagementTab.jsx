@@ -1,8 +1,78 @@
 import React from 'react';
-import { Plus, Building2 } from 'lucide-react';
+import { Plus, Building2, CheckCircle2, XCircle } from 'lucide-react';
 
 const FormField = ({ label, name, value, onChange, type = 'text', placeholder = '', required = false, options = [], readOnly = false, disabled = false }) => {
-  const inputClassName = 'w-full rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20';
+  const [isTouched, setIsTouched] = React.useState(false);
+
+  const handleBlur = () => setIsTouched(true);
+  const handleChange = (e) => {
+    setIsTouched(true);
+    if (onChange) onChange(e);
+  };
+
+  const getValidationState = () => {
+    if (!isTouched && !value) return null; // Don't validate untouched empty fields
+
+    if (!value) {
+      return required ? 'invalid' : null;
+    }
+
+    if (type === 'email') {
+      // only take .in, .com, .org
+      const emailRegex = /^[^\s@]+@[^\s@]+\.(com|in|org)$/i;
+      return emailRegex.test(value) ? 'valid' : 'invalid';
+    }
+
+    if (type === 'tel' || name.toLowerCase().includes('phone')) {
+      // exactly 10 digits (allowing optional whitespace/dashes for UX, but strict 10 digits requested: ^\d{10}$)
+      const phoneRegex = /^\d{10}$/;
+      // if it has plus sign or spaces, let's strip them to check if it's 10 digits? Or strict 10 digits? User said "only take 10 digit"
+      const digitsOnly = value.replace(/\D/g, '');
+      return digitsOnly.length === 10 ? 'valid' : 'invalid';
+    }
+
+    if (name === 'postalCode') {
+      // exactly 6 digits
+      const postalRegex = /^\d{6}$/;
+      return postalRegex.test(value) ? 'valid' : 'invalid';
+    }
+
+    if (name === 'gstNumber') {
+      // GST as per govt rules
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i;
+      return gstRegex.test(value) ? 'valid' : 'invalid';
+    }
+
+    if (name === 'city' || name.toLowerCase().includes('name')) {
+      // only alphabets and spaces
+      // Except companyName which might have numbers, so apply only to adminName and city
+      if (name === 'adminName' || name === 'city') {
+        const alphaRegex = /^[a-zA-Z\s]+$/;
+        return alphaRegex.test(value) ? 'valid' : 'invalid';
+      }
+    }
+
+    if (type === 'number') {
+      return !isNaN(value) && Number(value) > 0 ? 'valid' : 'invalid';
+    }
+
+    if (type === 'url') {
+      try {
+        new URL(value.startsWith('http') ? value : `https://${value}`);
+        return 'valid';
+      } catch {
+        return 'invalid';
+      }
+    }
+
+    return String(value).trim().length > 0 ? 'valid' : 'invalid';
+  };
+
+  const validationState = getValidationState();
+  const inputClassName = `w-full rounded-xl border bg-slate-950/40 px-4 py-3 text-sm text-slate-100 outline-none transition focus:ring-1 pr-10 ${validationState === 'valid' ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-emerald-500/20' :
+    validationState === 'invalid' ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/20' :
+      'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
+    }`;
 
   return (
     <label className="flex flex-col gap-2 text-sm text-slate-300">
@@ -10,29 +80,34 @@ const FormField = ({ label, name, value, onChange, type = 'text', placeholder = 
         {label}
         {required ? <span className="ml-1 text-rose-400">*</span> : null}
       </span>
-      {type === 'select' ? (
-        <select name={name} value={value} onChange={onChange} className={inputClassName} disabled={disabled}>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ) : type === 'textarea' ? (
-        <textarea name={name} value={value} onChange={onChange} placeholder={placeholder} className={`${inputClassName} min-h-24`} readOnly={readOnly} disabled={disabled} />
-      ) : (
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className={inputClassName}
-          required={required}
-          readOnly={readOnly}
-          disabled={disabled}
-        />
-      )}
+      <div className="relative">
+        {type === 'select' ? (
+          <select name={name} value={value} onChange={handleChange} onBlur={handleBlur} className={inputClassName} disabled={disabled}>
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : type === 'textarea' ? (
+          <textarea name={name} value={value} onChange={handleChange} onBlur={handleBlur} placeholder={placeholder} className={`${inputClassName} min-h-24`} readOnly={readOnly} disabled={disabled} />
+        ) : (
+          <input
+            type={type}
+            name={name}
+            value={value}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            className={inputClassName}
+            required={required}
+            readOnly={readOnly}
+            disabled={disabled}
+          />
+        )}
+        {validationState === 'valid' && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />}
+        {validationState === 'invalid' && <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500 pointer-events-none" />}
+      </div>
     </label>
   );
 };
@@ -80,10 +155,10 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField label="Employee Capacity" name="employeeCapacity" value={formData.employeeCapacity} onChange={handleFormChange} type="number" placeholder="500" />
                 <FormField label="Branch Capacity" name="branchCapacity" value={formData.branchCapacity} onChange={handleFormChange} type="number" placeholder="10" />
-                <FormField label="Storage Limit (GB)" name="storageLimit" value={formData.storageLimit} onChange={handleFormChange} type="number" placeholder="100" />
-                <FormField label="Monthly Expense Limit" name="monthlyExpenseLimit" value={formData.monthlyExpenseLimit} onChange={handleFormChange} type="number" placeholder="50000" />
+                {/* <FormField label="Storage Limit (GB)" name="storageLimit" value={formData.storageLimit} onChange={handleFormChange} type="number" placeholder="100" />
+                <FormField label="Monthly Expense Limit" name="monthlyExpenseLimit" value={formData.monthlyExpenseLimit} onChange={handleFormChange} type="number" placeholder="50000" /> */}
               </div>
-              <p className="mt-3 text-sm text-slate-500">Example: Employee Capacity 500, Branch Capacity 10, Storage 100 GB.</p>
+              {/* <p className="mt-3 text-sm text-slate-500">Example: Employee Capacity 500, Branch Capacity 10, Storage 100 GB.</p> */}
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">

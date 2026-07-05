@@ -466,6 +466,32 @@ export const Expenses = () => {
                 </div>
               )}
 
+              {/* Payout Disbursal Receipt Preview Card */}
+              {selectedExpense.payoutReceiptUrl && (
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Disbursal Receipt</span>
+                  <div className="flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-semibold text-slate-200 truncate text-[11px]">payout_receipt.pdf</span>
+                        <span className="text-[9px] text-slate-500 uppercase mt-0.5">PDF Document</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => window.open(selectedExpense.payoutReceiptUrl, '_blank')}
+                      className="p-2 rounded-xl bg-slate-900 border border-emerald-500/30 hover:border-emerald-400 text-emerald-500 hover:text-emerald-400 cursor-pointer shadow-inner shrink-0"
+                      title="Open Disbursal Receipt"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+
               {/* Audit Timeline */}
               {selectedExpense.actionHistory && selectedExpense.actionHistory.length > 0 && (
                 <div className="flex flex-col gap-2">

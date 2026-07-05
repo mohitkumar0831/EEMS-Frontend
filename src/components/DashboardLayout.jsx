@@ -62,9 +62,35 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
     ? externalActiveTab
     : menuItems.find(item => item.path === currentPath)?.id || menuItems[0]?.id || '';
 
-  const tenantName = currentUser?.tenantId === 'platform'
-    ? 'Platform Owner'
-    : (tenants.find(t => t.id === currentUser?.tenantId)?.name || 'Unknown Company');
+  const [realTenantName, setRealTenantName] = useState('Loading...');
+
+  useEffect(() => {
+    const fetchTenantName = async () => {
+      if (currentUser?.tenantSlug && currentUser.tenantSlug !== 'platform') {
+        try {
+          const res = await fetch(`http://localhost:4000/api/v1/tenants/${currentUser.tenantSlug}`, {
+            headers: { 'Authorization': `Bearer ${currentUser?.token}` }
+          });
+          const data = await res.json();
+          if (data.success && data.data) {
+            setRealTenantName(data.data.companyName);
+          } else {
+            setRealTenantName('Unknown Company');
+          }
+        } catch (error) {
+          console.error('Error fetching tenant name:', error);
+          setRealTenantName('Unknown Company');
+        }
+      } else if (currentUser?.tenantId === 'platform' || currentUser?.role === 'SuperAdmin') {
+        setRealTenantName('Platform Owner');
+      } else {
+        // Fallback to mock context if not API logged in
+        const name = tenants.find(t => t.id === currentUser?.tenantId)?.name || 'Unknown Company';
+        setRealTenantName(name);
+      }
+    };
+    fetchTenantName();
+  }, [currentUser?.tenantSlug, currentUser?.tenantId, currentUser?.token, currentUser?.role, tenants]);
 
   const notifications = [
     { id: 1, text: 'New policy violation flagged: Screen Purchase limit exceeded', time: '10m ago' },
@@ -113,7 +139,7 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-slate-200 truncate max-w-[170px]">{currentUser?.name}</span>
               <span className="text-[10px] font-extrabold tracking-wider text-purple-400 uppercase truncate max-w-[170px]">{currentUser?.role}</span>
-              <span className="text-[9px] text-slate-500 truncate max-w-[170px] mt-0.5">{tenantName}</span>
+              <span className="text-[9px] text-slate-500 truncate max-w-[170px] mt-0.5">{realTenantName}</span>
             </div>
           </div>
         </div>

@@ -453,6 +453,22 @@ export const AuditorExpenses = () => {
                 </div>
               )}
 
+              {/* Payout Disbursal Receipt */}
+              {selectedExpense.payoutReceiptUrl && (
+                <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl mt-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="font-semibold text-slate-200 truncate text-[11px]">payout_receipt.pdf</span>
+                  </div>
+                  <button
+                    onClick={() => window.open(selectedExpense.payoutReceiptUrl, '_blank')}
+                    className="p-1.5 rounded-xl bg-slate-900 border border-emerald-500/30 hover:border-emerald-400 text-emerald-500 hover:text-emerald-400 cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               {/* Approval Lifecycle */}
               {(() => {
                 const lc = getLifecycle(selectedExpense);

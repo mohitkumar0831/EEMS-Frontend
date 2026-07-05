@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
+import { FileText } from 'lucide-react';
 
 export const Reimbursements = () => {
   const { currentUser } = useAppState();
@@ -59,6 +60,7 @@ export const Reimbursements = () => {
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Approver Comments</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40">
@@ -87,6 +89,20 @@ export const Reimbursements = () => {
                     }`}>
                       {exp.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {exp.payoutReceiptUrl ? (
+                      <button 
+                        onClick={() => window.open(exp.payoutReceiptUrl, '_blank')}
+                        className="p-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-400 text-emerald-500 hover:text-emerald-400 cursor-pointer shadow-inner shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all"
+                        title="Download Payout Receipt"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        Slip
+                      </button>
+                    ) : (
+                      <span className="text-slate-600 italic text-[10px]">N/A</span>
+                    )}
                   </td>
                 </tr>
               ))}

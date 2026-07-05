@@ -25,33 +25,66 @@ export const FinanceOverview = () => {
   
   const [dashboardMetrics, setDashboardMetrics] = useState(null);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
+  const [apiExpenses, setApiExpenses] = useState([]);
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    const fetchDashboardData = async () => {
       if (!currentUser?.tenantSlug || !currentUser?.token) return;
       try {
         setLoadingMetrics(true);
-        const res = await fetch(EXPENSE_ENDPOINTS.GET_FINANCE_DASHBOARD(currentUser.tenantSlug), {
+        // 1. Fetch dashboard metrics
+        const resMetrics = await fetch(EXPENSE_ENDPOINTS.GET_FINANCE_DASHBOARD(currentUser.tenantSlug), {
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
-        if (!res.ok) throw new Error('Failed to fetch dashboard metrics');
-        const data = await res.json();
-        if (data.success) {
-          setDashboardMetrics(data.data);
+        
+        // 2. Fetch all expenses for the tenant
+        const resExpenses = await fetch(EXPENSE_ENDPOINTS.GET_ALL_EXPENSES(currentUser.tenantSlug), {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+
+        // 3. Fetch employees to map names
+        const resEmployees = await fetch(`http://localhost:4000/api/v1/users/tenant/${currentUser.tenantSlug}/employees`, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+
+        const dataMetrics = await resMetrics.json();
+        const dataExpenses = await resExpenses.json();
+        const dataEmployees = await resEmployees.json();
+
+        if (dataMetrics.success) {
+          setDashboardMetrics(dataMetrics.data);
+        }
+
+        if (dataExpenses.success && dataEmployees.success) {
+          const employeesMap = {};
+          dataEmployees.data.forEach(emp => {
+            employeesMap[emp._id] = emp;
+          });
+
+          const mappedExpenses = dataExpenses.data.map(exp => {
+            const emp = employeesMap[exp.employeeId] || {};
+            return {
+              ...exp,
+              id: exp._id,
+              date: new Date(exp.createdAt).toISOString().split('T')[0],
+              employeeName: emp.firstName ? `${emp.firstName} ${emp.lastName}` : 'Unknown Employee',
+            };
+          });
+          setApiExpenses(mappedExpenses);
         }
       } catch (err) {
         console.error(err);
-        showToast('Error loading finance metrics', 'error');
+        showToast('Error loading finance data', 'error');
       } finally {
         setLoadingMetrics(false);
       }
     };
-    fetchMetrics();
+    fetchDashboardData();
   }, [currentUser?.tenantSlug, currentUser?.token]);
 
-  const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
-  const approvedQueue = companyExpenses.filter(e => e.status === 'Approved' || e.status === 'Finance Approved');
-  const violationsQueue = companyExpenses.filter(e => e.status === 'Under Review' || e.status === 'Audit Failed');
+  const companyExpenses = apiExpenses;
+  const approvedQueue = companyExpenses.filter(e => e.status === 'Approved' || e.status === 'Finance Approved' || e.status === 'Manager Approved');
+  const violationsQueue = companyExpenses.filter(e => e.status === 'Under Review' || e.status === 'Audit Failed' || e.status === 'Flagged');
 
   const totalReimbursed = dashboardMetrics?.totalDisbursed.amount || 0;
   const paidClaimsCount = dashboardMetrics?.totalDisbursed.claimsPaid || 0;
