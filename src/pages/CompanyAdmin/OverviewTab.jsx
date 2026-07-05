@@ -53,53 +53,36 @@ const DonutChart = ({ segments, label, isCurrency }) => {
   );
 };
 
-export const OverviewTab = ({ tenantPolicies = [] }) => {
-  const { currentUser, users, expenses, travelRequests, auditLogs } = useAppState();
+export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, totalManagers, tenantUsers }) => {
+  const { currentUser, travelRequests, auditLogs } = useAppState();
 
-  const tenantUsers = users.filter(u => u.tenantId === currentUser?.tenantId);
-  const tenantExpenses = expenses.filter(exp => exp.tenantId === currentUser?.tenantId);
   const tenantTravel = travelRequests.filter(t => t.tenantId === currentUser?.tenantId);
 
-  const totalEmployees = tenantUsers.filter(u => u.role === 'Employee').length;
   const activeEmployees = totalEmployees; // no active flag in seed data
-  const totalManagers = tenantUsers.filter(u => u.role === 'Manager').length;
-  const pendingClaims = tenantExpenses.filter(e => e.status === 'Pending' || e.status === 'Under Review').length;
+  const pendingClaims = dashboardMetrics.pendingClaims || 0;
   const pendingTravel = tenantTravel.filter(t => t.status === 'Pending').length;
-  const totalSpend = tenantExpenses.filter(e => e.status === 'Approved' || e.status === 'Paid').reduce((s, e) => s + e.amount, 0);
-  const reimbursementsPending = tenantExpenses.filter(e => e.status === 'Approved').length;
-  const policyViolations = tenantExpenses.filter(e => e.status === 'Under Review').length;
+  const totalSpend = dashboardMetrics.totalSpend || 0;
+  const reimbursementsPending = dashboardMetrics.reimbursementsPending || 0;
+  const policyViolations = dashboardMetrics.policyViolations || 0;
 
-  const topExpenses = tenantExpenses.slice().sort((a, b) => b.amount - a.amount).slice(0, 5);
+  const topExpenses = (dashboardMetrics.topExpenses || []).map(exp => {
+    const user = tenantUsers.find(u => u.id === exp.employeeId || u._id === exp.employeeId) || {};
+    return { ...exp, employeeName: user.name || 'Unknown', department: user.department };
+  });
 
   const recentActivities = auditLogs.filter(l => l.tenantId === currentUser?.tenantId).slice(0, 6);
 
   const pendingApprovals = [
-    ...tenantExpenses.filter(e => e.status === 'Pending' || e.status === 'Under Review').map(e => ({ type: 'Expense Claim', id: e.id, employee: e.employeeName, submittedOn: e.date, amount: e.amount })),
-    ...tenantTravel.filter(t => t.status === 'Pending').map(t => ({ type: 'Travel Request', id: t.id, employee: t.employeeName, submittedOn: t.createdAt?.split('T')[0] || '', amount: t.estimatedCost }))
+    ...(dashboardMetrics.pendingApprovals || []).map(p => {
+      const user = tenantUsers.find(u => u.id === p.employeeId || u._id === p.employeeId) || {};
+      return { ...p, employee: user.name || 'Unknown', submittedOn: new Date(p.submittedOn).toLocaleDateString() };
+    }),
+    ...tenantTravel.filter(t => t.status === 'Pending').map(t => ({ type: 'Travel Request', id: t.id, employee: t.employeeName, submittedOn: new Date(t.createdAt).toLocaleDateString(), amount: t.estimatedCost }))
   ].slice(0, 5);
 
-  const departmentData = tenantExpenses.reduce((acc, exp) => {
-    const user = users.find(u => u.id === exp.employeeId) || {};
-    const dep = user.department || 'General';
-    acc[dep] = (acc[dep] || 0) + exp.amount;
-    return acc;
-  }, {});
-
-  const categoryData = tenantExpenses.reduce((acc, exp) => {
-    acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
-    return acc;
-  }, {});
-
-  const monthlyData = tenantExpenses.reduce((acc, exp) => {
-    const month = new Date(exp.date).toLocaleString('default', { month: 'short' });
-    acc[month] = (acc[month] || 0) + exp.amount;
-    return acc;
-  }, {});
-
-  const statusData = tenantExpenses.reduce((acc, exp) => {
-    acc[exp.status] = (acc[exp.status] || 0) + 1;
-    return acc;
-  }, {});
+  const categoryData = dashboardMetrics.categoryData || {};
+  const monthlyData = dashboardMetrics.monthlyData || {};
+  const statusData = dashboardMetrics.statusData || {};
 
   const departmentSegments = getDistribution(departmentData);
   const categorySegments = getDistribution(categoryData);

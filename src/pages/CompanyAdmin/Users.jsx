@@ -78,7 +78,19 @@ export const Users = () => {
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let sanitizedValue = value;
+    
+    // Strict sanitization for names
+    if (field === 'firstName' || field === 'lastName') {
+      sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+    }
+    
+    // Strict sanitization for phone (digits only, max 10)
+    if (field === 'phone') {
+      sanitizedValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
   };
 
   const handleRegisterUser = async (e) => {
@@ -94,6 +106,36 @@ export const Users = () => {
     if (!firstName.trim() || !lastName.trim() || !employeeId.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       showToast('Please fill all required fields.', 'error');
       return;
+    }
+
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
+      showToast('Name should only contain alphabets.', 'error');
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|in)$/i;
+    if (!emailRegex.test(email)) {
+      showToast('Email must end with .com, .org, or .in', 'error');
+      return;
+    }
+
+    if (phone) {
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(phone)) {
+        showToast('Mobile number must be exactly 10 digits.', 'error');
+        return;
+      }
+    }
+
+    if (joiningDate) {
+      const selectedDate = new Date(joiningDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate > today) {
+        showToast('Joining date cannot be in the future.', 'error');
+        return;
+      }
     }
 
     if (password !== confirmPassword) {

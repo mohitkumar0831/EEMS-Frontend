@@ -37,13 +37,13 @@ export const UsersTab = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const roleDetails = [
-    { id: 'Employee',     title: 'Employee',     desc: 'Can submit expense claims and view personal reimbursements.' },
-    { id: 'Manager',      title: 'Manager',      desc: 'Approves team expense claims and reviews reports for direct reports.' },
+    { id: 'Employee', title: 'Employee', desc: 'Can submit expense claims and view personal reimbursements.' },
+    { id: 'Manager', title: 'Manager', desc: 'Approves team expense claims and reviews reports for direct reports.' },
     { id: 'Finance Team', title: 'Finance Team', desc: 'Processes reimbursements, marks claims as paid, and manages finance workflows.' },
-    { id: 'Auditor',      title: 'Auditor',      desc: 'Reviews audit logs and inspects expense records for compliance.' }
+    { id: 'Auditor', title: 'Auditor', desc: 'Reviews audit logs and inspects expense records for compliance.' }
   ];
 
-  const managers = tenantUsers.filter(u => u.role === 'Manager');
+  const managers = tenantUsers.filter(u => u?.role === 'Manager');
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-full overflow-hidden">
@@ -55,7 +55,7 @@ export const UsersTab = ({
 
       <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-4 sm:p-6 shadow-xl w-full">
         <form onSubmit={handleRegisterUser} className="flex flex-col gap-6 w-full">
-          
+
           {/* Role Selection */}
           <div className="flex flex-col gap-4 w-full">
             <div className="pb-2 border-b border-white/5">
@@ -94,9 +94,9 @@ export const UsersTab = ({
               <FormField label="Mobile Number">
                 <input type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+91 98765 43210" className={inputCls} />
               </FormField>
-              <FormField label="Profile Photo File">
+              {/* <FormField label="Profile Photo File">
                 <input type="text" value={formData.profilePhoto} onChange={(e) => handleChange('profilePhoto', e.target.value)} placeholder="avatar.png (optional)" className={inputCls} />
-              </FormField>
+              </FormField> */}
               <FormField label="Department *">
                 <input type="text" value={formData.department} onChange={(e) => handleChange('department', e.target.value)} placeholder="Engineering" className={inputCls} required />
               </FormField>
@@ -104,7 +104,7 @@ export const UsersTab = ({
                 <input type="text" value={formData.designation} onChange={(e) => handleChange('designation', e.target.value)} placeholder="Software Engineer" className={inputCls} required />
               </FormField>
               <FormField label="Joining Date">
-                <input type="date" value={formData.joiningDate} onChange={(e) => handleChange('joiningDate', e.target.value)} className={inputCls} />
+                <input type="date" max={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]} value={formData.joiningDate} onChange={(e) => handleChange('joiningDate', e.target.value)} className={inputCls} />
               </FormField>
               <FormField label="Status">
                 <select value={formData.status} onChange={(e) => handleChange('status', e.target.value)} className={selectCls}>
@@ -153,17 +153,8 @@ export const UsersTab = ({
 
             {formData.role === 'Employee' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
-                <FormField label="Reporting Manager">
-                  <select value={formData.reportingManager} onChange={(e) => handleChange('reportingManager', e.target.value)} className={selectCls}>
-                    <option value="">Select Manager</option>
-                    {managers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-                  </select>
-                </FormField>
                 <FormField label="Expense Limit (₹)">
                   <input type="number" value={formData.expenseLimit} onChange={(e) => handleChange('expenseLimit', e.target.value)} placeholder="15000" className={inputCls} />
-                </FormField>
-                <FormField label="Cost Center">
-                  <input type="text" value={formData.costCenter} onChange={(e) => handleChange('costCenter', e.target.value)} placeholder="CC-001" className={inputCls} />
                 </FormField>
                 <FormField label="Employee Type">
                   <select value={formData.employmentType} onChange={(e) => handleChange('employmentType', e.target.value)} className={selectCls}>
@@ -306,11 +297,10 @@ export const UsersTab = ({
                     <td className="px-6 py-4 text-slate-300 whitespace-nowrap">{u.department}</td>
                     <td className="px-6 py-4 text-slate-400 whitespace-nowrap">{u.employeeId || '—'}</td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wider ${
-                        (u.status || 'Active') === 'Active'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                      }`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wider ${(u.status || 'Active') === 'Active'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        }`}>
                         {u.status || 'Active'}
                       </span>
                     </td>

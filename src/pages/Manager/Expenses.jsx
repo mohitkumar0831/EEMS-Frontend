@@ -55,11 +55,19 @@ export const Expenses = () => {
           employeesMap[emp._id] = emp;
         });
         
-        const mappedExpenses = expenseData.data.map(exp => ({
-          ...exp,
-          employeeName: employeesMap[exp.employeeId] ? `${employeesMap[exp.employeeId].firstName} ${employeesMap[exp.employeeId].lastName}` : 'Unknown Employee',
-          employeeEmail: employeesMap[exp.employeeId] ? employeesMap[exp.employeeId].email : 'N/A'
-        }));
+        const mappedExpenses = expenseData.data.map(exp => {
+          const emp = employeesMap[exp.employeeId] || {};
+          return {
+            ...exp,
+            employeeName: emp.firstName ? `${emp.firstName} ${emp.lastName}` : 'Unknown Employee',
+            employeeEmail: emp.email || 'N/A',
+            employeeDesignation: emp.designation || 'N/A',
+            employeeDepartment: emp.department || 'N/A',
+            employeeBank: emp.bankAccountNumber || 'N/A',
+            employeeIfsc: emp.ifscCode || 'N/A',
+            employeePan: emp.panNumber || 'N/A'
+          };
+        });
         setManagerExpenses(mappedExpenses);
         
         // Update selectedExpense if it was selected before refresh
@@ -389,13 +397,29 @@ export const Expenses = () => {
               )}
 
               {/* Employee Summary Card */}
-              <div className="flex items-center gap-3 bg-slate-950/20 border border-white/5 p-3 rounded-2xl">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs text-white uppercase shadow-md">
-                  {selectedExpense.employeeName?.charAt(0) || 'E'}
+              <div className="flex flex-col gap-3 bg-slate-950/20 border border-white/5 p-4 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-sm text-white uppercase shadow-md">
+                    {selectedExpense.employeeName?.charAt(0) || 'E'}
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-bold text-slate-200 truncate">{selectedExpense.employeeName}</span>
+                    <span className="text-[10px] text-indigo-400 uppercase tracking-wider mt-0.5">{selectedExpense.employeeEmail}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-slate-200 truncate">{selectedExpense.employeeName}</span>
-                  <span className="text-[9px] text-indigo-400 uppercase tracking-wider mt-0.5">{selectedExpense.employeeEmail || 'Employee'}</span>
+                
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <div className="flex flex-col p-2 bg-slate-900/50 rounded-lg border border-white/5">
+                    <span className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Role / Dept</span>
+                    <span className="text-[11px] text-slate-300 truncate">{selectedExpense.employeeDesignation}</span>
+                    <span className="text-[10px] text-slate-400 truncate">{selectedExpense.employeeDepartment}</span>
+                  </div>
+                  <div className="flex flex-col p-2 bg-slate-900/50 rounded-lg border border-white/5">
+                    <span className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Bank Details</span>
+                    <span className="text-[11px] text-slate-300 truncate font-mono">{selectedExpense.employeeBank}</span>
+                    <span className="text-[10px] text-slate-400 truncate uppercase">IFSC: {selectedExpense.employeeIfsc}</span>
+                    <span className="text-[10px] text-slate-400 truncate uppercase mt-0.5">PAN: {selectedExpense.employeePan}</span>
+                  </div>
                 </div>
               </div>
 
@@ -418,7 +442,7 @@ export const Expenses = () => {
               </div>
 
               {/* Receipt File Preview Card */}
-              {selectedExpense.receipt && (
+              {selectedExpense.receiptId && (
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Attached Receipt Invoice</span>
                   <div className="flex items-center justify-between p-3.5 bg-slate-950/20 border border-slate-800 rounded-2xl">
@@ -427,12 +451,12 @@ export const Expenses = () => {
                         <Paperclip className="w-4 h-4 text-indigo-400" />
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="font-semibold text-slate-200 truncate text-[11px]">{selectedExpense.receiptId?.originalName || 'receipt.png'}</span>
+                        <span className="font-semibold text-slate-200 truncate text-[11px]">{selectedExpense.receiptId.originalName || 'receipt.png'}</span>
                         <span className="text-[9px] text-slate-500 uppercase mt-0.5">Image File</span>
                       </div>
                     </div>
                     <button
-                      onClick={() => window.open(selectedExpense.receiptId?.fileUrl, '_blank')}
+                      onClick={() => window.open(selectedExpense.receiptId.filePath, '_blank')}
                       className="p-2 rounded-xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-slate-200 cursor-pointer shadow-inner shrink-0"
                       title="Open Receipt Invoice"
                     >

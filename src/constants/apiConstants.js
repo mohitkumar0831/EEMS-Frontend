@@ -35,4 +35,6 @@ export const EXPENSE_ENDPOINTS = {
   VERIFY_RAZORPAY_PAYMENT: (slug, expenseId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/${expenseId}/verify-razorpay-payment`,
   GET_FINANCE_PAYOUTS: (slug, financeId) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/finance/${financeId}/payouts`,
   GET_FINANCE_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/finance/dashboard`,
+  GET_AUDITOR_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/auditor/dashboard`,
+  GET_ADMIN_DASHBOARD: (slug) => `http://localhost:4000/api/v1/expenses/tenant/${slug}/admin/dashboard`,
 };

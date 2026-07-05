@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 import {
   ClipboardList,
   CheckCircle2,
@@ -23,30 +24,46 @@ import {
 
 export const AuditorOverview = () => {
   const { currentUser, expenses, auditLogs } = useAppState();
+  const [dashboardMetrics, setDashboardMetrics] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      if (!currentUser?.tenantSlug) return;
+      try {
+        const res = await fetch(EXPENSE_ENDPOINTS.GET_AUDITOR_DASHBOARD(currentUser.tenantSlug), {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        const json = await res.json();
+        if (json.success) {
+          setDashboardMetrics(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to load auditor dashboard', err);
+      }
+    };
+    fetchDashboard();
+  }, [currentUser?.tenantSlug, currentUser?.token]);
 
   const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
   const companyLogs = auditLogs.filter(l => l.tenantId === currentUser?.tenantId || l.tenantId === 'platform');
 
-  // Buckets
-  const auditedExpenses = companyExpenses.filter(e => e.status === 'Audited');
-  const flaggedExpenses = companyExpenses.filter(e => e.status === 'Flagged');
-  const pendingAudit = companyExpenses.filter(e => e.status === 'Paid');
-  const underReview = companyExpenses.filter(e => e.status === 'Under Review');
-  const rejectedExpenses = companyExpenses.filter(e => e.status === 'Rejected');
-  const paidExpenses = companyExpenses.filter(e => ['Paid', 'Audited'].includes(e.status));
-
-  const totalClaims = companyExpenses.length;
-  const violationCount = underReview.length + rejectedExpenses.length + flaggedExpenses.length;
-  const complianceRate = totalClaims > 0
-    ? Math.round(((totalClaims - violationCount) / totalClaims) * 100)
-    : 100;
-
-  const totalDisbursed = paidExpenses.reduce((s, e) => s + e.amount, 0);
-  const flaggedValue = flaggedExpenses.reduce((s, e) => s + e.amount, 0);
-  const pendingAuditValue = pendingAudit.reduce((s, e) => s + e.amount, 0);
-
-  // Unique claimants
-  const uniqueClaimants = [...new Set(companyExpenses.map(e => e.employeeId))].length;
+  const totalClaims = dashboardMetrics?.ledgerClaims?.count || 0;
+  const uniqueClaimants = dashboardMetrics?.ledgerClaims?.activeClaimants || 0;
+  
+  const complianceRate = dashboardMetrics?.complianceRate?.percentage || 100;
+  const violationCount = dashboardMetrics?.complianceRate?.violationsFound || 0;
+  
+  const flaggedExpensesCount = dashboardMetrics?.flaggedClaims?.count || 0;
+  const flaggedValue = dashboardMetrics?.flaggedClaims?.underProbeAmount || 0;
+  
+  const auditClearedCount = dashboardMetrics?.auditCleared?.count || 0;
+  
+  const pendingAuditCount = dashboardMetrics?.awaitingAudit?.count || 0;
+  const pendingAuditValue = dashboardMetrics?.awaitingAudit?.amountToReview || 0;
+  
+  const policyViolationsCount = dashboardMetrics?.policyViolations?.count || 0;
+  
+  const totalDisbursed = dashboardMetrics?.totalDisbursed?.amount || 0;
 
   // Category breakdown
   const categories = ['Meals', 'Travel', 'Equipment'];
@@ -69,7 +86,7 @@ export const AuditorOverview = () => {
     { label: 'Approval Workflow Trace', sub: 'Multi-level validation tracking', ok: true },
     { label: 'Payment Gateway Compliance', sub: 'Reimbursement disbursement trail', ok: true },
     { label: 'Policy Cap Enforcement', sub: 'Category spend-limit rule binding', ok: violationCount === 0 },
-    { label: 'Flagged Claims Investigation', sub: 'Active investigation on flagged items', ok: flaggedExpenses.length === 0 },
+    { label: 'Flagged Claims Investigation', sub: 'Active investigation on flagged items', ok: flaggedExpensesCount === 0 },
   ];
 
   const getCategoryIcon = (cat) => {
@@ -125,7 +142,7 @@ export const AuditorOverview = () => {
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Flagged Claims</span>
-            <div className="text-2xl font-extrabold text-rose-400 mt-1">{flaggedExpenses.length}</div>
+            <div className="text-2xl font-extrabold text-rose-400 mt-1">{flaggedExpensesCount}</div>
             <span className="text-[10px] text-rose-400">₹{flaggedValue.toFixed(2)} under probe</span>
           </div>
           <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
@@ -136,7 +153,7 @@ export const AuditorOverview = () => {
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Audit Cleared</span>
-            <div className="text-2xl font-extrabold text-violet-400 mt-1">{auditedExpenses.length}</div>
+            <div className="text-2xl font-extrabold text-violet-400 mt-1">{auditClearedCount}</div>
             <span className="text-[10px] text-violet-400">by your sign-off</span>
           </div>
           <div className="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl text-violet-400">
@@ -151,13 +168,13 @@ export const AuditorOverview = () => {
 
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Awaiting Audit</span>
-          <span className="text-lg font-extrabold text-amber-300">{pendingAudit.length}</span>
+          <span className="text-lg font-extrabold text-amber-300">{pendingAuditCount}</span>
           <span className="text-[10px] text-slate-500">₹{pendingAuditValue.toFixed(2)} to review</span>
         </div>
 
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Policy Violations</span>
-          <span className="text-lg font-extrabold text-orange-300">{underReview.length}</span>
+          <span className="text-lg font-extrabold text-orange-300">{policyViolationsCount}</span>
           <span className="text-[10px] text-slate-500">claims exceeding caps</span>
         </div>
 
@@ -241,7 +258,7 @@ export const AuditorOverview = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Audited by you:</span>
-              <span className="font-bold text-violet-400">{auditedExpenses.length}</span>
+              <span className="font-bold text-violet-400">{auditClearedCount}</span>
             </div>
           </div>
 

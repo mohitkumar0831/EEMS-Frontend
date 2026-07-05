@@ -101,7 +101,9 @@ export const FileExpenseClaim = () => {
           receiptId = uploadData.data._id;
         } else {
           console.error('Receipt upload failed:', uploadData);
-          // showToast('Receipt upload failed, continuing without receipt', 'warning');
+          alert(uploadData.message || 'Receipt upload failed. Please try again.');
+          setIsSubmitting(false);
+          return;
         }
       }
 

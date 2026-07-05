@@ -22,7 +22,7 @@ import { NotificationsPage as SuperAdminNotifications } from './pages/SuperAdmin
 import { SettingsPage as SuperAdminSettings } from './pages/SuperAdmin/SettingsPage';
 import { CompanyAdmin } from './pages/CompanyAdmin';
 import { Overview as CompanyAdminOverview } from './pages/CompanyAdmin/Overview';
-import { UsersTab as CompanyAdminEmployees } from './pages/CompanyAdmin/UsersTab';
+import { Users as CompanyAdminEmployees } from './pages/CompanyAdmin/Users';
 import { RoasterTab as CompanyAdminRoaster } from './pages/CompanyAdmin/RoasterTab';
 import { Managers as CompanyAdminManagers } from './pages/CompanyAdmin/Managers';
 import { FinanceTeam as CompanyAdminFinanceTeam } from './pages/CompanyAdmin/FinanceTeam';
