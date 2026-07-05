@@ -14,6 +14,7 @@ export const TENANT_API_BASE_URL = 'http://localhost:4200/api/v1';
 
 export const TENANT_ENDPOINTS = {
   REGISTER: `${TENANT_API_BASE_URL}/tenants/register`,
+  GET_ALL: `http://localhost:4000/api/v1/tenants`,
 };
 
 export const USER_ENDPOINTS = {
@@ -21,6 +22,10 @@ export const USER_ENDPOINTS = {
   REGISTER_EMPLOYEE: (slug) => `http://localhost:4000/api/v1/users/tenant/${slug}/employees`,
   ASSIGN_MANAGER: (slug, employeeId) => `http://localhost:4000/api/v1/users/tenant/${slug}/employees/${employeeId}/manager`,
   GET_MANAGER_EMPLOYEES: (slug, managerId) => `http://localhost:4000/api/v1/users/tenant/${slug}/manager/${managerId}/employees`,
+};
+
+export const DASHBOARD_ENDPOINTS = {
+  SUPER_ADMIN: `http://localhost:4000/api/v1/dashboard/superadmin`,
 };
 
 export const EXPENSE_ENDPOINTS = {

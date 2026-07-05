@@ -37,7 +37,7 @@ const FormField = ({ label, name, value, onChange, type = 'text', placeholder = 
   );
 };
 
-export const TenantManagementTab = ({ tenants, users, formData, handleFormChange, handleCreateTenant, isFormOpen, setIsFormOpen }) => {
+export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormChange, handleCreateTenant, isFormOpen, setIsFormOpen }) => {
   return (
     <div className="flex flex-col gap-8">
       <div className="rounded-2xl border border-white/5 bg-slate-900 p-6">
@@ -165,14 +165,13 @@ export const TenantManagementTab = ({ tenants, users, formData, handleFormChange
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40 text-sm">
-              {tenants.map((t) => {
-                const tenantUsers = users.filter((u) => u.tenantId === t.id).length;
+              {tenantsSummary.map((t) => {
                 return (
-                  <tr key={t.id} className="transition-all hover:bg-white/[0.01]">
-                    <td className="px-6 py-4 font-semibold text-slate-200">{t.name}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-400">{t.id}</td>
+                  <tr key={t.tenantId} className="transition-all hover:bg-white/[0.01]">
+                    <td className="px-6 py-4 font-semibold text-slate-200">{t.companyName}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-400">{t.tenantId}</td>
                     <td className="px-6 py-4 text-slate-400">{new Date(t.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 font-bold text-slate-300">{tenantUsers} Users</td>
+                    <td className="px-6 py-4 font-bold text-slate-300">{t.totalUsersCount} Users</td>
                   </tr>
                 );
               })}

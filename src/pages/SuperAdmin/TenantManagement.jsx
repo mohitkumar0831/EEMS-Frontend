@@ -43,9 +43,29 @@ const initialTenantForm = {
 };
 
 export const TenantManagement = () => {
-  const { tenants, users, createTenant, showToast, currentUser } = useAppState();
+  const { createTenant, showToast, currentUser } = useAppState();
   const [formData, setFormData] = useState(initialTenantForm);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [tenantsSummary, setTenantsSummary] = useState([]);
+
+  React.useEffect(() => {
+    const fetchTenantsSummary = async () => {
+      try {
+        const res = await fetch(`${TENANT_ENDPOINTS.GET_ALL}/summary`, {
+          headers: {
+            'Authorization': currentUser?.token ? `Bearer ${currentUser.token}` : undefined
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setTenantsSummary(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tenants summary:', error);
+      }
+    };
+    fetchTenantsSummary();
+  }, [currentUser]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -135,8 +155,7 @@ export const TenantManagement = () => {
 
   return (
     <TenantManagementTab
-      tenants={tenants}
-      users={users}
+      tenantsSummary={tenantsSummary}
       formData={formData}
       handleFormChange={handleFormChange}
       handleCreateTenant={handleCreateTenant}

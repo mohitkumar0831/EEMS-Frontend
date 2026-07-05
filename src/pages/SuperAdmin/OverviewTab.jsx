@@ -5,34 +5,28 @@ import {
   CheckCircle2, AlertTriangle, XCircle, Plane, Activity
 } from 'lucide-react';
 
-export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests, auditLogs }) => {
-  // ── Computed Metrics ──────────────────────────────────
-  const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
-  const approvedExpenses = expenses.filter(e => e.status === 'Approved' || e.status === 'Paid');
-  const pendingExpenses = expenses.filter(e => e.status === 'Pending');
-  const flaggedExpenses = expenses.filter(e => e.status === 'Under Review');
-  const pendingTravel = travelRequests.filter(t => t.status === 'Pending');
+export const OverviewTab = ({ stats }) => {
+  if (!stats) return null;
 
-  // Role breakdown
-  const roleCounts = users.reduce((acc, u) => {
-    acc[u.role] = (acc[u.role] || 0) + 1;
-    return acc;
-  }, {});
+  // ── Computed Metrics from Backend API ─────────────────
+  const {
+    activeTenants = 0,
+    totalTenants = 0,
+    totalUsers = 0,
+    roleCounts = {},
+    totalSpend = 0,
+    totalClaims = 0,
+    pendingClaims = 0,
+    approvedClaims = 0,
+    flaggedClaims = 0,
+    categorySpend = {},
+    activePolicies = 0,
+    pendingTravel = 0,
+    auditLogs = [],
+    tenants = [],
+    usersPerTenantMap = {}
+  } = stats;
 
-  // Tenant user distribution
-  const tenantStats = tenants.map(t => {
-    const tUsers = users.filter(u => u.tenantId === t.id);
-    const tExpenses = expenses.filter(e => e.tenantId === t.id);
-    const tSpend = tExpenses.reduce((s, e) => s + e.amount, 0);
-    const tPolicies = policies.filter(p => p.tenantId === t.id);
-    return { ...t, userCount: tUsers.length, expenseCount: tExpenses.length, totalSpend: tSpend, policyCount: tPolicies.length };
-  });
-
-  // Category breakdown for donut-style indicators
-  const categorySpend = expenses.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] || 0) + e.amount;
-    return acc;
-  }, {});
   const categoryEntries = Object.entries(categorySpend).sort((a, b) => b[1] - a[1]);
   const categoryColors = ['bg-indigo-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
   const categoryTextColors = ['text-indigo-400', 'text-purple-400', 'text-emerald-400', 'text-amber-400', 'text-rose-400'];
@@ -78,14 +72,14 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
         <div className="bg-slate-900 border border-white/5 p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="flex flex-col gap-1 z-10">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Tenants</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Admins</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-extrabold text-slate-100">{tenants.length}</span>
+              <span className="text-3xl font-extrabold text-slate-100">{roleCounts['CompanyAdmin'] || 0}</span>
               <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5">
                 <ArrowUpRight className="w-3 h-3" /> +1 this quarter
               </span>
             </div>
-            <span className="text-[10px] text-slate-500">Provisioned workspace instances</span>
+            <span className="text-[10px] text-slate-500">Registered company administrators</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 z-10">
             <Globe className="w-6 h-6" />
@@ -98,10 +92,10 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
           <div className="flex flex-col gap-1 z-10">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Users</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-extrabold text-slate-100">{users.length}</span>
-              <span className="text-[10px] font-bold text-slate-500">across {tenants.length} companies</span>
+              <span className="text-3xl font-extrabold text-slate-100">{totalUsers}</span>
+              <span className="text-[10px] font-bold text-slate-500">across {Object.keys(usersPerTenantMap).length} companies</span>
             </div>
-            <span className="text-[10px] text-slate-500">Avg {(users.length / Math.max(tenants.length, 1)).toFixed(1)} per tenant</span>
+            <span className="text-[10px] text-slate-500">Avg {(totalUsers / Math.max(Object.keys(usersPerTenantMap).length, 1)).toFixed(1)} per tenant</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 z-10">
             <Users className="w-6 h-6" />
@@ -118,7 +112,7 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
                 ₹{totalSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className="text-[10px] text-slate-500">{expenses.length} total claims submitted</span>
+            <span className="text-[10px] text-slate-500">{totalClaims} total claims submitted</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 z-10">
             <DollarSign className="w-6 h-6" />
@@ -131,10 +125,10 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
           <div className="flex flex-col gap-1 z-10">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Policies</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-extrabold text-slate-100">{policies.length}</span>
-              <span className={`text-[10px] font-bold flex items-center gap-0.5 ${flaggedExpenses.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                {flaggedExpenses.length > 0 && <AlertTriangle className="w-3 h-3" />}
-                {flaggedExpenses.length} violations
+              <span className="text-3xl font-extrabold text-slate-100">{activePolicies}</span>
+              <span className={`text-[10px] font-bold flex items-center gap-0.5 ${flaggedClaims > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {flaggedClaims > 0 && <AlertTriangle className="w-3 h-3" />}
+                {flaggedClaims} violations
               </span>
             </div>
             <span className="text-[10px] text-slate-500">Compliance rules enforced</span>
@@ -146,13 +140,13 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
       </div>
 
       {/* ── Pipeline Status Indicators ────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-white/5 px-4 py-3.5 rounded-xl flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
             <Clock className="w-4.5 h-4.5 text-amber-400" />
           </div>
           <div>
-            <div className="text-lg font-extrabold text-slate-100">{pendingExpenses.length}</div>
+            <div className="text-lg font-extrabold text-slate-100">{pendingClaims}</div>
             <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pending Claims</div>
           </div>
         </div>
@@ -162,7 +156,7 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
             <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400" />
           </div>
           <div>
-            <div className="text-lg font-extrabold text-slate-100">{approvedExpenses.length}</div>
+            <div className="text-lg font-extrabold text-slate-100">{approvedClaims}</div>
             <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Approved</div>
           </div>
         </div>
@@ -172,7 +166,7 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
             <AlertTriangle className="w-4.5 h-4.5 text-rose-400" />
           </div>
           <div>
-            <div className="text-lg font-extrabold text-slate-100">{flaggedExpenses.length}</div>
+            <div className="text-lg font-extrabold text-slate-100">{flaggedClaims}</div>
             <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Flagged Review</div>
           </div>
         </div>
@@ -182,11 +176,11 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
             <Plane className="w-4.5 h-4.5 text-blue-400" />
           </div>
           <div>
-            <div className="text-lg font-extrabold text-slate-100">{pendingTravel.length}</div>
+            <div className="text-lg font-extrabold text-slate-100">{pendingTravel}</div>
             <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Travel Requests</div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* ── Middle Row: Chart + Category Breakdown ────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -273,29 +267,29 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
           </div>
 
           <div className="flex flex-col gap-3">
-            {tenantStats.map((t, idx) => {
+            {tenants.map((t, idx) => {
               const borderColors = ['border-indigo-500/20', 'border-emerald-500/20', 'border-fuchsia-500/20'];
               const bgColors = ['bg-indigo-500/5', 'bg-emerald-500/5', 'bg-fuchsia-500/5'];
               return (
-                <div key={t.id} className={`p-4 rounded-xl border ${borderColors[idx % 3]} ${bgColors[idx % 3]}`}>
+                <div key={t._id} className={`p-4 rounded-xl border ${borderColors[idx % 3]} ${bgColors[idx % 3]}`}>
                   <div className="flex justify-between items-start mb-2.5">
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">{t.name}</h4>
-                      <span className="text-[9px] font-mono text-slate-500">{t.id}</span>
+                      <h4 className="text-xs font-bold text-slate-200">{t.companyName}</h4>
+                      <span className="text-[9px] font-mono text-slate-500">{t._id}</span>
                     </div>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-extrabold uppercase">Active</span>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-extrabold uppercase">{t.status || 'Active'}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <div className="text-sm font-extrabold text-slate-100">{t.userCount}</div>
+                      <div className="text-sm font-extrabold text-slate-100">{t.userCount || '-'}</div>
                       <div className="text-[9px] text-slate-500 font-semibold uppercase">Users</div>
                     </div>
                     <div>
-                      <div className="text-sm font-extrabold text-slate-100">{t.expenseCount}</div>
+                      <div className="text-sm font-extrabold text-slate-100">{t.expenseCount || '-'}</div>
                       <div className="text-[9px] text-slate-500 font-semibold uppercase">Claims</div>
                     </div>
                     <div>
-                      <div className="text-sm font-extrabold text-slate-100">₹{t.totalSpend.toLocaleString('en-US', { minimumFractionDigits: 0 })}</div>
+                      <div className="text-sm font-extrabold text-slate-100">{t.totalSpend ? `₹${t.totalSpend.toLocaleString('en-US', { minimumFractionDigits: 0 })}` : '-'}</div>
                       <div className="text-[9px] text-slate-500 font-semibold uppercase">Spend</div>
                     </div>
                   </div>
@@ -317,7 +311,7 @@ export const OverviewTab = ({ tenants, users, policies, expenses, travelRequests
 
           <div className="flex flex-col gap-2.5 mt-2">
             {Object.entries(roleCounts).map(([role, count], idx) => {
-              const pct = (count / users.length) * 100;
+              const pct = totalUsers > 0 ? (count / totalUsers) * 100 : 0;
               const roleColors = {
                 SuperAdmin: { bar: 'bg-indigo-500', text: 'text-indigo-400', icon: '🛡️' },
                 CompanyAdmin: { bar: 'bg-purple-500', text: 'text-purple-400', icon: '🏢' },
