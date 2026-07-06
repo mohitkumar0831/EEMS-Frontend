@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
-import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
+import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
 import { 
   AlertTriangle, 
   Plus, 
@@ -16,7 +16,8 @@ import {
   DollarSign,
   Utensils,
   Laptop,
-  FileText
+  FileText,
+  Plane
 } from 'lucide-react';
 
 export const FileExpenseClaim = () => {
@@ -34,7 +35,7 @@ export const FileExpenseClaim = () => {
   useEffect(() => {
     const fetchManagers = async () => {
       try {
-        const response = await fetch(EXPENSE_ENDPOINTS.GET_EMPLOYEES?.(currentUser.tenantSlug) || `http://localhost:4000/api/v1/users/tenant/${currentUser.tenantSlug}/employees`, {
+        const response = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }

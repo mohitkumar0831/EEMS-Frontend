@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/StateContext';
 import { useSocket } from '../context/SocketContext';
+import { API_BASE_URL } from '../constants/apiConstants';
 import { LogOut, Bell, Shield, Menu, X, ChevronDown, ChevronRight, User, Briefcase, Building2 } from 'lucide-react';
 
 export const DashboardLayout = ({ menuItems, children, activeTab: externalActiveTab, setActiveTab }) => {
@@ -69,7 +70,7 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
     const fetchTenantName = async () => {
       if (currentUser?.tenantSlug && currentUser.tenantSlug !== 'platform') {
         try {
-          const res = await fetch(`http://localhost:4000/api/v1/tenants/${currentUser.tenantSlug}`, {
+          const res = await fetch(`${API_BASE_URL}/tenants/${currentUser.tenantSlug}`, {
             headers: { 'Authorization': `Bearer ${currentUser?.token}` }
           });
           const data = await res.json();

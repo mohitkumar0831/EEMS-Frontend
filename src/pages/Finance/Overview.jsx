@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
+import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
 import { PageSkeleton } from '../../components/PageSkeleton';
 import {
   Wallet,
@@ -44,8 +44,8 @@ export const FinanceOverview = () => {
         });
 
         // 3. Fetch employees to map names
-        const resEmployees = await fetch(`http://localhost:4000/api/v1/users/tenant/${currentUser.tenantSlug}/employees`, {
-          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        const resEmployees = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
+          headers: { 'Authorization': `Bearer ${currentUser?.token}` }
         });
 
         const dataMetrics = await resMetrics.json();

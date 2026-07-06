@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/StateContext';
+import { API_BASE_URL } from '../constants/apiConstants';
 import {
   User,
   Mail,
@@ -40,7 +41,7 @@ export const ProfilePage = () => {
     const fetchTenantName = async () => {
       if (currentUser?.tenantSlug && currentUser.tenantSlug !== 'platform') {
         try {
-          const res = await fetch(`http://localhost:4000/api/v1/tenants/${currentUser.tenantSlug}`, {
+          const res = await fetch(`${API_BASE_URL}/tenants/${currentUser.tenantSlug}`, {
             headers: { 'Authorization': `Bearer ${currentUser?.token}` }
           });
           const data = await res.json();
