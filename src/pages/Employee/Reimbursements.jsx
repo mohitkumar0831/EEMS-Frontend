@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 import { FileText } from 'lucide-react';
 
@@ -34,8 +35,8 @@ export const Reimbursements = () => {
 
   if (loading) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900">
-        <div className="py-20 text-center text-slate-500">Loading claims...</div>
+      <div className="flex flex-col h-full gap-6">
+        <PageSkeleton />
       </div>
     );
   }

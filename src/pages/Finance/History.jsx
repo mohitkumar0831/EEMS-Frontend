@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 export const FinanceHistory = () => {
   const { currentUser, showToast } = useAppState();
@@ -73,9 +74,7 @@ export const FinanceHistory = () => {
         <h3 className="text-base font-bold text-slate-200">Reimbursement Payout Registry</h3>
       </div>
       {loading ? (
-        <div className="text-center py-20">
-          <p className="text-slate-500 text-sm animate-pulse">Loading payout records...</p>
-        </div>
+        <PageSkeleton />
       ) : paidHistory.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-slate-500 text-sm">No processed payments in the ledger.</p>

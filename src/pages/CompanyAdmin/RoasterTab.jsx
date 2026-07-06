@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import { Users, UserCheck, ShieldCheck, User } from 'lucide-react';
 
 const selectCls =
@@ -91,7 +92,7 @@ export const RoasterTab = () => {
 
       <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-4 sm:p-6 shadow-xl w-full">
         {loading ? (
-          <div className="text-center text-slate-500 py-10 text-sm">Loading users...</div>
+          <PageSkeleton />
         ) : (
           <div className="flex flex-col gap-4">
             {employees.length === 0 ? (

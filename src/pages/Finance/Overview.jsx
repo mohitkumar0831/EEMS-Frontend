@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import {
   Wallet,
   DollarSign,
@@ -139,6 +140,8 @@ export const FinanceOverview = () => {
   };
 
   if (!currentUser) return null;
+
+  if (loadingMetrics) return <PageSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

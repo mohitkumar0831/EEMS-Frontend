@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import {
   CreditCard,
   Search,
@@ -276,6 +277,8 @@ export const FinanceProcess = () => {
   const filteredList = getFilteredList();
 
   if (!currentUser) return null;
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

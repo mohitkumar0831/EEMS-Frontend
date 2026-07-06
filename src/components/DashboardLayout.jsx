@@ -94,12 +94,8 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
   }, [currentUser?.tenantSlug, currentUser?.tenantId, currentUser?.token, currentUser?.role, tenants]);
 
   const { socket } = useSocket();
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'New policy violation flagged: Screen Purchase limit exceeded', time: '10m ago' },
-    { id: 2, text: 'Expense claim approved by John Approver', time: '2h ago' },
-    { id: 3, text: 'Travel authorization request pending review', time: '1d ago' }
-  ]);
-  const [unreadCount, setUnreadCount] = useState(1);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!socket) return;
@@ -319,15 +315,29 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
                 <div className="absolute right-0 top-12 z-50 w-80 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-4 animate-slide-in flex flex-col gap-3">
                   <div className="flex items-center justify-between border-b border-white/5 pb-2">
                     <span className="text-xs font-bold text-slate-200">System Notifications</span>
-                    <span className="text-[9px] font-bold text-indigo-400 hover:underline cursor-pointer">Mark all read</span>
+                    <span 
+                      onClick={() => {
+                        setNotifications([]);
+                        setUnreadCount(0);
+                      }}
+                      className="text-[9px] font-bold text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      Mark all read
+                    </span>
                   </div>
                   <div className="flex flex-col gap-2.5 max-h-60 overflow-y-auto">
-                    {notifications.map(n => (
-                      <div key={n.id} className="flex flex-col gap-1 p-2 rounded-lg bg-white/[0.01] hover:bg-white/[0.03] transition-all">
-                        <p className="text-xs text-slate-300 leading-normal">{n.text}</p>
-                        <span className="text-[9px] text-slate-500 align-right self-end">{n.time}</span>
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center">
+                        <span className="text-xs text-slate-500">No new notifications</span>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n.id} className="flex flex-col gap-1 p-2 rounded-lg bg-white/[0.01] hover:bg-white/[0.03] transition-all">
+                          <p className="text-xs text-slate-300 leading-normal">{n.text}</p>
+                          <span className="text-[9px] text-slate-500 align-right self-end">{n.time}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </>

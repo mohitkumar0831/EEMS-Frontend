@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/StateContext';
 import {
@@ -34,13 +34,34 @@ export const ProfilePage = () => {
   const navigate = useNavigate();
   const { currentUser, tenants } = useAppState();
 
-  const [editMode, setEditMode]   = useState(false);
-  const [displayName, setDisplayName] = useState(currentUser?.name || '');
-  const [saved, setSaved]         = useState(false);
+  const [realTenantName, setRealTenantName] = useState('Loading...');
 
-  const tenantName = currentUser?.tenantId === 'platform'
-    ? 'Platform (ExpenseFlow)'
-    : tenants.find(t => t.id === currentUser?.tenantId)?.name || 'Unknown Company';
+  useEffect(() => {
+    const fetchTenantName = async () => {
+      if (currentUser?.tenantSlug && currentUser.tenantSlug !== 'platform') {
+        try {
+          const res = await fetch(`http://localhost:4000/api/v1/tenants/${currentUser.tenantSlug}`, {
+            headers: { 'Authorization': `Bearer ${currentUser?.token}` }
+          });
+          const data = await res.json();
+          if (data.success && data.data) {
+            setRealTenantName(data.data.companyName);
+          } else {
+            setRealTenantName('Unknown Company');
+          }
+        } catch (error) {
+          console.error('Error fetching tenant name:', error);
+          setRealTenantName('Unknown Company');
+        }
+      } else if (currentUser?.tenantId === 'platform' || currentUser?.role === 'SuperAdmin') {
+        setRealTenantName('Platform Owner');
+      } else {
+        const name = tenants.find(t => t.id === currentUser?.tenantId)?.name || 'Unknown Company';
+        setRealTenantName(name);
+      }
+    };
+    fetchTenantName();
+  }, [currentUser?.tenantSlug, currentUser?.tenantId, currentUser?.token, currentUser?.role, tenants]);
 
   const initials = currentUser?.name
     ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -55,13 +76,6 @@ export const ProfilePage = () => {
     Auditor:       'from-violet-500 to-purple-600',
   };
   const gradClass = roleColors[currentUser?.role] || 'from-indigo-500 to-purple-600';
-
-  const handleSave = () => {
-    // In a real app this would call an update function from context
-    setSaved(true);
-    setEditMode(false);
-    setTimeout(() => setSaved(false), 3000);
-  };
 
   const recentActivity = [
     { action: 'Logged In',        time: 'Just now',  icon: Activity },
@@ -95,54 +109,11 @@ export const ProfilePage = () => {
           </div>
 
           <div className="flex flex-col gap-1 flex-grow min-w-0 pt-2 sm:pt-0">
-            {editMode ? (
-              <input
-                type="text"
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                className="bg-slate-950/60 border border-indigo-500/40 rounded-xl px-3 py-1.5 text-lg font-bold text-slate-100 focus:outline-none focus:border-indigo-500 w-full max-w-xs"
-              />
-            ) : (
-              <h2 className="text-xl font-extrabold text-slate-100">{currentUser.name}</h2>
-            )}
+            <h2 className="text-xl font-extrabold text-slate-100">{currentUser.name}</h2>
             <span className="text-xs font-bold uppercase tracking-wider text-purple-400">{currentUser.role}</span>
-            <span className="text-[11px] text-slate-500">{tenantName}</span>
-          </div>
-
-          <div className="flex gap-2 shrink-0">
-            {editMode ? (
-              <>
-                <button
-                  onClick={() => { setEditMode(false); setDisplayName(currentUser.name); }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-slate-400 hover:text-white text-xs font-bold cursor-pointer transition-all"
-                >
-                  <X className="w-3.5 h-3.5" /> Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold cursor-pointer shadow-lg shadow-indigo-500/20 transition-all hover:shadow-indigo-500/40"
-                >
-                  <Save className="w-3.5 h-3.5" /> Save
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setEditMode(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/30 text-xs font-bold cursor-pointer transition-all"
-              >
-                <Edit3 className="w-3.5 h-3.5" /> Edit Profile
-              </button>
-            )}
+            <span className="text-[11px] text-slate-500">{realTenantName}</span>
           </div>
         </div>
-
-        {/* Saved toast */}
-        {saved && (
-          <div className="mx-8 mb-6 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-3 text-xs font-bold">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            Profile updated successfully.
-          </div>
-        )}
       </div>
 
       {/* Details Grid */}
@@ -154,10 +125,10 @@ export const ProfilePage = () => {
             <User className="w-4 h-4 text-indigo-400" />
             Account Information
           </h3>
-          <InfoRow icon={User}      label="Full Name"   value={displayName} />
+          <InfoRow icon={User}      label="Full Name"   value={currentUser.name} />
           <InfoRow icon={Mail}      label="Email"       value={currentUser.email} color="text-sky-400" />
           <InfoRow icon={Shield}    label="Role"        value={currentUser.role}  color="text-violet-400" />
-          <InfoRow icon={Building2} label="Company"     value={tenantName}        color="text-emerald-400" />
+          <InfoRow icon={Building2} label="Company"     value={realTenantName}        color="text-emerald-400" />
           <InfoRow icon={Briefcase} label="Department"  value={currentUser.department || 'N/A'} color="text-amber-400" />
         </div>
 
@@ -167,19 +138,9 @@ export const ProfilePage = () => {
             <Lock className="w-4 h-4 text-rose-400" />
             Security & Access
           </h3>
-          <InfoRow icon={Key}       label="Password"       value="••••••••"                      color="text-rose-400" />
-          <InfoRow icon={Shield}    label="2FA Status"     value="Not Enabled"                   color="text-amber-400" />
           <InfoRow icon={Activity}  label="Access Level"   value={currentUser.role}              color="text-violet-400" />
           <InfoRow icon={Lock}      label="Account Status" value="Active"                        color="text-emerald-400" />
           <InfoRow icon={Clock}     label="Member Since"   value="January 2026"                  color="text-sky-400" />
-
-          {/* Change Password Hint */}
-          <div className="mt-4 pt-4 border-t border-white/5">
-            <button className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors">
-              <Key className="w-3 h-3" />
-              Change Password
-            </button>
-          </div>
         </div>
 
       </div>

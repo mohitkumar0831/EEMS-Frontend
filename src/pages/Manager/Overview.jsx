@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
-import { 
-  ClipboardList, 
-  Plane, 
-  Users, 
-  DollarSign, 
-  MapPin, 
-  Calendar, 
+import { PageSkeleton } from '../../components/PageSkeleton';
+import {
+  ClipboardList,
+  Plane,
+  Users,
+  DollarSign,
+  MapPin,
+  Calendar,
   ArrowRight,
   TrendingUp,
   AlertCircle,
@@ -55,16 +56,16 @@ export const Overview = () => {
   }, [currentUser]);
 
   const companyUsers = users.filter(u => u.tenantId === currentUser?.tenantId);
-  
+
   // Filter for team members in the same department (excluding the manager themselves)
   const teamMembers = companyUsers.filter(u => u.department === currentUser?.department && u.role === 'Employee');
-  
+
   const totalSpent = Object.values(metrics.categorySpend).reduce((sum, val) => sum + val, 0) || 1; // Avoid divide by zero
 
   const categoryDetails = Object.entries(metrics.categorySpend).map(([cat, amount]) => {
     let colorClass = 'bg-indigo-500';
     let icon = <FileText className="w-4 h-4 text-slate-400" />;
-    
+
     if (cat === 'Meals') {
       colorClass = 'bg-amber-500';
       icon = <Utensils className="w-4 h-4 text-amber-400" />;
@@ -75,7 +76,7 @@ export const Overview = () => {
       colorClass = 'bg-purple-500';
       icon = <Laptop className="w-4 h-4 text-purple-400" />;
     }
-    
+
     return {
       category: cat,
       amount,
@@ -86,7 +87,7 @@ export const Overview = () => {
   }).sort((a, b) => b.amount - a.amount);
 
   if (isLoading) {
-    return <div className="text-white p-8">Loading dashboard metrics...</div>;
+    return <PageSkeleton />;
   }
 
   return (
@@ -148,10 +149,10 @@ export const Overview = () => {
 
       {/* Interactive Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Columns (2/3 width on desktop): Approval Queues */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          
+
           {/* Expenses Queue Card */}
           <div className="bg-slate-900/80 border border-white/10 p-6 rounded-3xl shadow-xl flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -159,14 +160,14 @@ export const Overview = () => {
                 <h4 className="text-sm font-bold text-slate-200">Immediate Expense Queue</h4>
                 <p className="text-xs text-slate-500 mt-1">Pending claims submitted by your department employees.</p>
               </div>
-              <button 
+              <button
                 onClick={() => navigate('/dashboard/manager/expenses')}
                 className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 Go to Review Board <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            
+
             {metrics.pendingExpenses?.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-slate-500 text-xs">Hurray! No pending expense claims to approve.</p>
@@ -208,14 +209,14 @@ export const Overview = () => {
                 <h4 className="text-sm font-bold text-slate-200">Travel Authorization Queue</h4>
                 <p className="text-xs text-slate-500 mt-1">Pending travel plans requiring manager approval.</p>
               </div>
-              <button 
+              <button
                 onClick={() => navigate('/dashboard/manager/travel')}
                 className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 Go to Travel Board <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            
+
             {metrics.pendingTravel?.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-slate-500 text-xs">No pending travel plans to authorize.</p>
@@ -248,7 +249,7 @@ export const Overview = () => {
 
         {/* Right Column (1/3 width on desktop): Spend analysis & Staff overview */}
         <div className="flex flex-col gap-6">
-          
+
           {/* Card 1: Department Spend Breakdown */}
           <div className="bg-slate-900/80 border border-white/10 p-6 rounded-3xl shadow-xl flex flex-col gap-4">
             <div className="border-b border-white/5 pb-3">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import {
   Utensils,
   Plane,
@@ -202,6 +203,8 @@ export const Expenses = () => {
   };
 
   const filteredList = getFilteredList();
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

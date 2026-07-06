@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import {
   Search,
   Utensils,
@@ -227,6 +228,8 @@ export const AuditorExpenses = () => {
   const filteredList = getActiveList();
 
   if (!currentUser) return null;
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

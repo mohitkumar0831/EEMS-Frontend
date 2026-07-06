@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { USER_ENDPOINTS } from '../../constants/apiConstants';
 import { User } from 'lucide-react';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 export const Team = () => {
   const { currentUser, showToast } = useAppState();
@@ -43,7 +44,7 @@ export const Team = () => {
       </div>
       
       {loading ? (
-        <div className="p-8 text-center text-slate-500 text-sm">Loading team...</div>
+        <PageSkeleton />
       ) : teamMembers.length === 0 ? (
         <div className="p-8 text-center text-slate-500 text-sm">No employees are currently assigned to you.</div>
       ) : (

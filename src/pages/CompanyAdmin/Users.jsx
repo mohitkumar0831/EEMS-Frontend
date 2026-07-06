@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { UsersTab } from './UsersTab';
 import { USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 const initialFormState = {
   firstName: '',
@@ -247,6 +248,8 @@ export const Users = () => {
       setIsLoading(false);
     }
   };
+
+  if (isLoading) return <PageSkeleton />;
 
   return (
     <UsersTab

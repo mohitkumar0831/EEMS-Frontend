@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAppState } from '../../context/StateContext';
 import { OverviewTab } from './OverviewTab';
 import { DASHBOARD_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 export const Overview = () => {
   const { currentUser } = useAppState();
@@ -29,7 +30,7 @@ export const Overview = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center p-8 text-slate-400">Loading dashboard...</div>;
+    return <PageSkeleton />;
   }
 
   if (error) {

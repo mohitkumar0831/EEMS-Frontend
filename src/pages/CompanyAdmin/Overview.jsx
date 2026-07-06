@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { OverviewTab } from './OverviewTab';
 import { EXPENSE_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 export const Overview = () => {
   const { currentUser, showToast } = useAppState();
@@ -44,11 +45,7 @@ export const Overview = () => {
   }, [currentUser]);
 
   if (isLoading || !dashboardMetrics) {
-    return (
-      <div className="flex items-center justify-center h-full text-slate-400">
-        Loading dashboard metrics...
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   // Calculate department data by merging employeeSpend with tenantUsers
