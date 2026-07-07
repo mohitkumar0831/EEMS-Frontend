@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { Users, Mail, Building, ShieldAlert } from 'lucide-react';
+import { TENANT_ENDPOINTS } from '../../constants/apiConstants';
 
 export const CompanyAdmins = () => {
-  const { users, tenants } = useAppState();
-  const adminsList = users.filter(u => u.role === 'CompanyAdmin');
+  const { currentUser } = useAppState();
+  const [adminsList, setAdminsList] = useState([]);
+
+  useEffect(() => {
+    const fetchCompanyAdmins = async () => {
+      try {
+        const response = await fetch(TENANT_ENDPOINTS.GET_COMPANY_ADMINS, {
+          headers: {
+            'Authorization': currentUser?.token ? `Bearer ${currentUser.token}` : undefined
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setAdminsList(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch company admins:', error);
+      }
+    };
+    fetchCompanyAdmins();
+  }, [currentUser]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,8 +52,6 @@ export const CompanyAdmins = () => {
             </thead>
             <tbody className="divide-y divide-slate-800/40 text-xs">
               {adminsList.map((admin) => {
-                const tenant = tenants.find(t => t.id === admin.tenantId);
-                const companyName = tenant ? tenant.name : 'Unknown Workspace';
                 return (
                   <tr key={admin.id} className="transition-all hover:bg-white/[0.01]">
                     <td className="px-6 py-4 font-semibold text-slate-200">{admin.name}</td>
@@ -46,7 +64,7 @@ export const CompanyAdmins = () => {
                     <td className="px-6 py-4 text-slate-300">
                       <div className="flex items-center gap-1.5">
                         <Building className="w-3.5 h-3.5 text-slate-500" />
-                        {companyName}
+                        {admin.companyName}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-400">{admin.department || 'Administration'}</td>

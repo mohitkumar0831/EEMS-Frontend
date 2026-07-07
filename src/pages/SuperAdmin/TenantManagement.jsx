@@ -51,7 +51,7 @@ export const TenantManagement = () => {
   React.useEffect(() => {
     const fetchTenantsSummary = async () => {
       try {
-        const res = await fetch(`${TENANT_ENDPOINTS.GET_ALL}/summary`, {
+        const res = await fetch(TENANT_ENDPOINTS.GET_ALL, {
           headers: {
             'Authorization': currentUser?.token ? `Bearer ${currentUser.token}` : undefined
           }
@@ -153,12 +153,65 @@ export const TenantManagement = () => {
     }
   };
 
+  const handlePauseResume = async (slug, currentStatus) => {
+    const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
+    if (!window.confirm(`Are you sure you want to ${newStatus === 'Suspended' ? 'pause' : 'resume'} this tenant?`)) return;
+
+    try {
+      const response = await fetch(TENANT_ENDPOINTS.UPDATE_STATUS(slug), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser?.token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        showToast(`Tenant ${newStatus === 'Suspended' ? 'paused' : 'resumed'} successfully`, 'success');
+        setTenantsSummary(prev => prev.map(t => t.slug === slug ? { ...t, status: data.data.status } : t));
+      } else {
+        showToast(data.message || 'Failed to update status', 'error');
+      }
+    } catch (error) {
+      console.error('Update status error:', error);
+      showToast('Network error', 'error');
+    }
+  };
+
+  const handleDelete = async (slug) => {
+    if (!window.confirm('Are you sure you want to delete this tenant? This action cannot be undone.')) return;
+
+    try {
+      const response = await fetch(TENANT_ENDPOINTS.DELETE_TENANT(slug), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser?.token}`
+        }
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        showToast('Tenant deleted successfully', 'success');
+        setTenantsSummary(prev => prev.filter(t => t.slug !== slug));
+      } else {
+        showToast(data.message || 'Failed to delete tenant', 'error');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      showToast('Network error', 'error');
+    }
+  };
+
   return (
     <TenantManagementTab
       tenantsSummary={tenantsSummary}
       formData={formData}
       handleFormChange={handleFormChange}
       handleCreateTenant={handleCreateTenant}
+      handlePauseResume={handlePauseResume}
+      handleDelete={handleDelete}
       isFormOpen={isFormOpen}
       setIsFormOpen={setIsFormOpen}
     />

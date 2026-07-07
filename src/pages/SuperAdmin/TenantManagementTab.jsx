@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Building2, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Building2, CheckCircle2, XCircle, Pause, Play, Trash2 } from 'lucide-react';
 
 const FormField = ({ label, name, value, onChange, type = 'text', placeholder = '', required = false, options = [], readOnly = false, disabled = false }) => {
   const [isTouched, setIsTouched] = React.useState(false);
@@ -112,7 +112,7 @@ const FormField = ({ label, name, value, onChange, type = 'text', placeholder = 
   );
 };
 
-export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormChange, handleCreateTenant, isFormOpen, setIsFormOpen }) => {
+export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormChange, handleCreateTenant, handlePauseResume, handleDelete, isFormOpen, setIsFormOpen }) => {
   return (
     <div className="flex flex-col gap-8">
       <div className="rounded-2xl border border-white/5 bg-slate-900 p-6">
@@ -236,7 +236,9 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                 <th className="px-6 py-4">Tenant Name</th>
                 <th className="px-6 py-4">Tenant ID</th>
                 <th className="px-6 py-4">Provisioned Date</th>
+                <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Users Count</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40 text-sm">
@@ -246,7 +248,30 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                     <td className="px-6 py-4 font-semibold text-slate-200">{t.companyName}</td>
                     <td className="px-6 py-4 font-mono text-xs text-slate-400">{t.tenantId}</td>
                     <td className="px-6 py-4 text-slate-400">{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${t.status === 'Suspended' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                        {t.status || 'Active'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 font-bold text-slate-300">{t.totalUsersCount} Users</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handlePauseResume(t.slug, t.status || 'Active')}
+                          className={`p-2 rounded-lg border border-white/5 transition-colors ${t.status === 'Suspended' ? 'hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30' : 'hover:bg-amber-500/10 text-slate-400 hover:text-amber-400 hover:border-amber-500/30'}`}
+                          title={t.status === 'Suspended' ? 'Resume Tenant' : 'Pause Tenant'}
+                        >
+                          {t.status === 'Suspended' ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.slug)}
+                          className="p-2 rounded-lg border border-white/5 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-colors"
+                          title="Delete Tenant"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}

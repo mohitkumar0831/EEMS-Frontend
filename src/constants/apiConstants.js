@@ -20,7 +20,10 @@ export const AUTH_ENDPOINTS = {
 
 export const TENANT_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/tenants/register`,
-  GET_ALL: `${API_BASE_URL}/tenants`,
+  GET_ALL: `${API_BASE_URL}/tenants/summary`,
+  UPDATE_STATUS: (slug) => `${API_BASE_URL}/tenants/${slug}/status`,
+  DELETE_TENANT: (slug) => `${API_BASE_URL}/tenants/${slug}`,
+  GET_COMPANY_ADMINS: `${API_BASE_URL}/tenants/company-admins`,
 };
 
 export const USER_ENDPOINTS = {
