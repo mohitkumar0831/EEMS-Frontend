@@ -35,6 +35,7 @@ export const USER_ENDPOINTS = {
 
 export const DASHBOARD_ENDPOINTS = {
   SUPER_ADMIN: `${API_BASE_URL}/dashboard/superadmin`,
+  SUPER_ADMIN_REPORTS: `${API_BASE_URL}/tenants/dashboard/stats`,
 };
 
 export const EXPENSE_ENDPOINTS = {

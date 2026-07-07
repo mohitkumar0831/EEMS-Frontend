@@ -42,10 +42,9 @@ export const SuperAdmin = () => {
     // { id: 'roles', label: 'Role & Permission', icon: ShieldCheck, path: 'roles' },
     // { id: 'policies', label: 'Global Policies', icon: Settings, path: 'policies' },
     { id: 'reports', label: 'Reports & Analytics', icon: FileText, path: 'reports' },
-    // { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: 'auditlogs' },
-    // { id: 'monitoring', label: 'System Monitoring', icon: Activity, path: 'monitoring' },
+    { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: 'auditlogs' },
     { id: 'notifications', label: 'Notifications', icon: Bell, path: 'notifications' },
-    // { id: 'settings', label: 'Settings', icon: Sliders, path: 'settings' }
+    { id: 'settings', label: 'Settings', icon: Sliders, path: 'settings' }
   ];
 
   if (!currentUser) return null;

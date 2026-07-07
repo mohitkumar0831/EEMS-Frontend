@@ -16,10 +16,10 @@ import { TenantStatus as SuperAdminTenantStatus } from './pages/SuperAdmin/Tenan
 import { SuperAdmins as SuperAdminSuperAdmins } from './pages/SuperAdmin/SuperAdmins';
 import { CompanyAdmins as SuperAdminCompanyAdmins } from './pages/SuperAdmin/CompanyAdmins';
 import { RolePermissions as SuperAdminRolePermissions } from './pages/SuperAdmin/RolePermissions';
-import { AuditLogsPage as SuperAdminAuditLogs } from './pages/SuperAdmin/AuditLogsPage';
+import { AuditLogs as SuperAdminAuditLogs } from './pages/SuperAdmin/AuditLogs';
 import { SystemMonitoring as SuperAdminSystemMonitoring } from './pages/SuperAdmin/SystemMonitoring';
 import { NotificationsPage as SuperAdminNotifications } from './pages/SuperAdmin/NotificationsPage';
-import { SettingsPage as SuperAdminSettings } from './pages/SuperAdmin/SettingsPage';
+import { PlatformSettings as SuperAdminSettings } from './pages/SuperAdmin/PlatformSettings';
 import { CompanyAdmin } from './pages/CompanyAdmin';
 import { Overview as CompanyAdminOverview } from './pages/CompanyAdmin/Overview';
 import { Users as CompanyAdminEmployees } from './pages/CompanyAdmin/Users';
@@ -105,11 +105,11 @@ function App() {
 
   const DashboardRoute = ({ element, allowedRoles }) => {
     const { slug } = useParams();
-    
+
     if (!currentUser) {
       return <Navigate to={slug ? `/${slug}` : '/login'} replace />;
     }
-    
+
     if (!allowedRoles.includes(currentUser.role)) {
       return <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace />;
     }
@@ -140,7 +140,7 @@ function App() {
             path="/:slug/dashboard"
             element={currentUser ? <Navigate to={getDashboardPath(currentUser.role, currentUser.tenantSlug)} replace /> : <Navigate to="/login" replace />}
           />
-          
+
           {/* Super Admin Routes (No slug) */}
           <Route path="/dashboard/superadmin" element={<DashboardRoute element={<SuperAdmin />} allowedRoles={['SuperAdmin']} />}>
             <Route index element={<SuperAdminOverview />} />
@@ -177,7 +177,7 @@ function App() {
             <Route path="reports" element={<CompanyAdminReports />} />
             <Route path="notifications" element={<CompanyAdminNotifications />} />
           </Route>
-          
+
           <Route path="/:slug/dashboard/manager" element={<DashboardRoute element={<Manager />} allowedRoles={['Manager']} />}>
             <Route index element={<ManagerOverview />} />
             <Route path="overview" element={<ManagerOverview />} />
@@ -185,7 +185,7 @@ function App() {
             <Route path="travel" element={<ManagerTravel />} />
             <Route path="team" element={<ManagerTeam />} />
           </Route>
-          
+
           <Route path="/:slug/dashboard/employee" element={<DashboardRoute element={<Employee />} allowedRoles={['Employee']} />}>
             <Route index element={<EmployeeOverview />} />
             <Route path="overview" element={<EmployeeOverview />} />
@@ -194,7 +194,7 @@ function App() {
             <Route path="reimbursements" element={<Reimbursements />} />
             <Route path="policy" element={<EmployeePolicy />} />
           </Route>
-          
+
           <Route path="/:slug/dashboard/finance" element={<DashboardRoute element={<Finance />} allowedRoles={['Finance Team']} />}>
             <Route index element={<FinanceOverview />} />
             <Route path="overview" element={<FinanceOverview />} />
@@ -202,7 +202,7 @@ function App() {
             <Route path="violations" element={<FinanceViolations />} />
             <Route path="history" element={<FinanceHistory />} />
           </Route>
-          
+
           <Route path="/:slug/dashboard/auditor" element={<DashboardRoute element={<Auditor />} allowedRoles={['Auditor']} />}>
             <Route index element={<AuditorOverview />} />
             <Route path="overview" element={<AuditorOverview />} />
@@ -210,7 +210,7 @@ function App() {
             <Route path="activity" element={<AuditorActivity />} />
             <Route path="export" element={<AuditorExportReports />} />
           </Route>
-          
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>

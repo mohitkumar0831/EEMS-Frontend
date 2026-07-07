@@ -266,16 +266,16 @@ export const OverviewTab = ({ stats }) => {
             <p className="text-[11px] text-slate-500 mt-0.5">Per-tenant metrics overview</p>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
             {tenants.map((t, idx) => {
               const borderColors = ['border-indigo-500/20', 'border-emerald-500/20', 'border-fuchsia-500/20'];
               const bgColors = ['bg-indigo-500/5', 'bg-emerald-500/5', 'bg-fuchsia-500/5'];
               return (
-                <div key={t._id} className={`p-4 rounded-xl border ${borderColors[idx % 3]} ${bgColors[idx % 3]}`}>
+                <div key={t.tenantId || idx} className={`p-4 rounded-xl border ${borderColors[idx % 3]} ${bgColors[idx % 3]} shrink-0`}>
                   <div className="flex justify-between items-start mb-2.5">
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">{t.companyName}</h4>
-                      <span className="text-[9px] font-mono text-slate-500">{t._id}</span>
+                      <h4 className="text-xs font-bold text-slate-200">{t.companyName || t.name}</h4>
+                      <span className="text-[9px] font-mono text-slate-500">{t.tenantId || t.id}</span>
                     </div>
                     <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-extrabold uppercase">{t.status || 'Active'}</span>
                   </div>
