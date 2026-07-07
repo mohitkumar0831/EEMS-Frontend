@@ -49,4 +49,5 @@ export const EXPENSE_ENDPOINTS = {
   GET_AUDITOR_DASHBOARD: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}/auditor/dashboard`,
   GET_ADMIN_DASHBOARD: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}/admin/dashboard`,
   GET_MANAGER_DASHBOARD: (slug, managerId) => `${API_BASE_URL}/expenses/tenant/${slug}/manager/${managerId}/dashboard`,
+  GET_EMPLOYEE_DASHBOARD: (slug, employeeId) => `${API_BASE_URL}/expenses/tenant/${slug}/employee/${employeeId}/dashboard`,
 };

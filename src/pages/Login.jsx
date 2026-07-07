@@ -10,7 +10,7 @@ export const Login = () => {
   const { login, setCurrentUser, showToast } = useAppState();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password'); // Default password for simplicity
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(!slug);
   const [workspaceSlug, setWorkspaceSlug] = useState(slug || '');
   const [focusedField, setFocusedField] = useState(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -26,6 +26,8 @@ export const Login = () => {
     if (slug) {
       setWorkspaceSlug(slug);
       setIsSuperAdmin(false);
+    } else {
+      setIsSuperAdmin(true);
     }
   }, [slug]);
 
@@ -292,31 +294,7 @@ export const Login = () => {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                {/* Login Type Toggle */}
-                {!isTenantRoute && (
-                  <div className="flex items-center gap-4 mb-2">
-                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="loginType"
-                        checked={!isSuperAdmin}
-                        onChange={() => setIsSuperAdmin(false)}
-                        className="w-3.5 h-3.5 bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500/20"
-                      />
-                      Company Login
-                    </label>
-                    <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="loginType"
-                        checked={isSuperAdmin}
-                        onChange={() => setIsSuperAdmin(true)}
-                        className="w-3.5 h-3.5 bg-slate-900 border-slate-700 text-teal-500 focus:ring-teal-500/20"
-                      />
-                      Super Admin
-                    </label>
-                  </div>
-                )}
+
 
                 {isTenantRoute && (
                   <div className="flex flex-col gap-1.5 mb-1">
@@ -397,37 +375,7 @@ export const Login = () => {
               </button>
             </form>
 
-            {/* Quick Demo Access Divider */}
-            <div className="flex items-center gap-4 my-2">
-              <div className="h-px bg-slate-800/60 flex-grow" />
-              <span className="text-[9px] font-bold tracking-widest text-slate-500 uppercase">Quick Demo Profiles</span>
-              <div className="h-px bg-slate-800/60 flex-grow" />
-            </div>
 
-            {/* Quick Login Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {demoAccounts.map((account) => (
-                <button
-                  key={account.name}
-                  type="button"
-                  onClick={() => handleQuickLogin(account.email)}
-                  className={`border rounded-2xl p-3 text-left flex flex-col gap-1 transition-all hover:scale-[1.03] cursor-pointer ${account.color}`}
-                >
-                  <span className="text-[10px] font-bold tracking-wide truncate">{account.name}</span>
-                  <span className="text-[8px] opacity-60 truncate max-w-full font-medium">{account.email}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="text-center mt-2 text-xs text-slate-400">
-              Need a new company or user profile?{' '}
-              <button
-                onClick={() => navigate('/register')}
-                className="text-cyan-400 font-bold hover:underline cursor-pointer transition-all"
-              >
-                Register here
-              </button>
-            </div>
           </div>
         </div>
 

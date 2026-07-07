@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAppState } from '../../context/StateContext';
+import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 import {
   FileSpreadsheet,
   AlertTriangle,
@@ -19,27 +22,44 @@ import {
 
 export const Overview = () => {
   const navigate = useNavigate();
-  const { currentUser, expenses, travelRequests, policies } = useAppState();
+  const { currentUser } = useAppState();
 
-  const myExpenses = expenses.filter((e) => e.employeeId === currentUser?.id);
-  const myTravel = travelRequests.filter((t) => t.employeeId === currentUser?.id);
-  const myPolicies = policies.filter((p) => p.tenantId === currentUser?.tenantId);
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
 
-  const totalClaims = myExpenses.length;
-  const pendingClaimsCount = myExpenses.filter((e) => e.status === 'Pending' || e.status === 'Under Review').length;
-  const approvedClaimsCount = myExpenses.filter((e) => e.status === 'Approved').length;
-  const totalReimbursed = myExpenses.filter((e) => e.status === 'Paid').reduce((sum, e) => sum + e.amount, 0);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        if (!currentUser) return;
+        const tenantSlug = currentUser.tenantSlug || 'platform'; // Use tenantSlug instead of tenantId
+        const res = await axios.get(EXPENSE_ENDPOINTS.GET_EMPLOYEE_DASHBOARD(tenantSlug, currentUser.id));
+        if (res.data.success) {
+          setDashboardData(res.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, [currentUser]);
 
-  // Policy Flagged Claims Count
-  const flaggedClaimsCount = myExpenses.filter((e) => e.status === 'Under Review').length;
+  if (loading || !dashboardData) {
+    return <PageSkeleton />;
+  }
 
-  // Personal Spend Category Distribution
-  const personalCategorySpend = myExpenses
-    .filter(e => e.status === 'Approved' || e.status === 'Paid')
-    .reduce((acc, e) => {
-      acc[e.category] = (acc[e.category] || 0) + e.amount;
-      return acc;
-    }, {});
+  const {
+    totalClaims = 0,
+    pendingClaimsCount = 0,
+    approvedClaimsCount = 0,
+    totalReimbursed = 0,
+    flaggedClaimsCount = 0,
+    personalCategorySpend = {},
+    recentClaims = [],
+    recentTravel = [],
+    policies = []
+  } = dashboardData;
 
   const totalMySpent = Object.values(personalCategorySpend).reduce((sum, val) => sum + val, 0) || 1;
 
@@ -145,13 +165,13 @@ export const Overview = () => {
               </button>
             </div>
 
-            {myExpenses.length === 0 ? (
+            {recentClaims.length === 0 ? (
               <div className="py-10 text-center border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-xs text-slate-500">No expense claims filed yet.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {myExpenses.slice(0, 4).map((exp) => (
+                {recentClaims.slice(0, 4).map((exp) => (
                   <div key={exp.id} className="flex items-center justify-between rounded-2xl border border-white/5 bg-slate-950/20 p-3.5 hover:border-slate-800 transition-colors">
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <span className="truncate text-xs font-bold text-slate-200">{exp.title}</span>
@@ -191,13 +211,13 @@ export const Overview = () => {
               </button>
             </div>
 
-            {myTravel.length === 0 ? (
+            {recentTravel.length === 0 ? (
               <div className="py-10 text-center border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
                 <p className="text-xs text-slate-500">No travel authorization plans submitted.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {myTravel.slice(0, 4).map((tr) => (
+                {recentTravel.slice(0, 4).map((tr) => (
                   <div key={tr.id} className="flex items-center justify-between rounded-2xl border border-white/5 bg-slate-950/20 p-3.5 hover:border-slate-800 transition-colors">
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <span className="truncate text-xs font-bold text-slate-200">{tr.destination}</span>
@@ -290,11 +310,11 @@ export const Overview = () => {
               <p className="text-[10px] text-slate-500 mt-0.5">Corporate allowance caps for category claims.</p>
             </div>
 
-            {myPolicies.length === 0 ? (
+            {policies.length === 0 ? (
               <p className="text-xs text-slate-500 text-center py-6">No policy guidelines configured.</p>
             ) : (
               <div className="flex flex-col gap-3">
-                {myPolicies.map(policy => (
+                {policies.map(policy => (
                   <div key={policy.id} className="flex items-center justify-between p-3 bg-slate-950/20 border border-white/5 rounded-2xl">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center font-bold text-xs shrink-0 text-slate-400">
