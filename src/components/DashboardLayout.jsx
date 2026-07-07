@@ -133,8 +133,8 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <Shield className="w-4 h-4 text-white" />
             </div>
-            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent">
-              ExpenseFlow
+            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-indigo-200 to-purple-200 bg-clip-text text-transparent truncate max-w-[180px]" title={currentUser?.role === 'SuperAdmin' ? 'ExpenseFlow' : realTenantName}>
+              {currentUser?.role === 'SuperAdmin' ? 'ExpenseFlow' : realTenantName}
             </span>
           </div>
           <button
