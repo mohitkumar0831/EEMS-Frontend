@@ -1,11 +1,11 @@
 // --- LOCAL DEVELOPMENT ---
-export const API_BASE_URL = 'http://localhost:4000/api/v1';
-export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
+// export const API_BASE_URL = 'http://localhost:4000/api/v1';
+// export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
 
 // --- DEPLOYED / PRODUCTION ---
 // Uncomment the lines below (and comment the local ones above) when deploying
-// export const API_BASE_URL = 'http://103.192.198.240:9002/api/v1';
-// export const NOTIFICATION_SERVICE_URL = 'http://103.192.198.240:4500';
+export const API_BASE_URL = 'http://103.192.198.240:9002/api/v1';
+export const NOTIFICATION_SERVICE_URL = 'http://103.192.198.240:4500';
 
 export const AUTH_ENDPOINTS = {
   REGISTER_SUPER_ADMIN: `${API_BASE_URL}/auth/register-super-admin`,
