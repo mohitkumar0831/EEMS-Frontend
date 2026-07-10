@@ -30,8 +30,8 @@ const buildGradient = (segments) => {
 const DonutChart = ({ segments, label, isCurrency }) => {
   const gradient = buildGradient(segments);
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
-  const displayValue = isCurrency 
-    ? `₹${Math.round(total).toLocaleString()}` 
+  const displayValue = isCurrency
+    ? `₹${Math.round(total).toLocaleString()}`
     : total.toLocaleString();
 
   return (
@@ -67,7 +67,12 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
 
   const topExpenses = (dashboardMetrics.topExpenses || []).map(exp => {
     const user = tenantUsers.find(u => u.id === exp.employeeId || u._id === exp.employeeId) || {};
-    return { ...exp, employeeName: user.name || 'Unknown', department: user.department };
+    return {
+      ...exp,
+      employeeName: exp.employeeName || user.name || (user.firstName ? `${user.firstName} ${user.lastName}` : 'Unknown'),
+      department: user.department,
+      role: exp.employeeRole || user.role
+    };
   });
 
   const recentActivities = auditLogs.filter(l => l.tenantId === currentUser?.tenantId).slice(0, 6);
@@ -75,7 +80,11 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
   const pendingApprovals = [
     ...(dashboardMetrics.pendingApprovals || []).map(p => {
       const user = tenantUsers.find(u => u.id === p.employeeId || u._id === p.employeeId) || {};
-      return { ...p, employee: user.name || 'Unknown', submittedOn: new Date(p.submittedOn).toLocaleDateString() };
+      return {
+        ...p,
+        employee: p.employeeName || user.name || (user.firstName ? `${user.firstName} ${user.lastName}` : 'Unknown'),
+        submittedOn: new Date(p.submittedOn).toLocaleDateString()
+      };
     }),
     ...tenantTravel.filter(t => t.status === 'Pending').map(t => ({ type: 'Travel Request', id: t.id, employee: t.employeeName, submittedOn: new Date(t.createdAt).toLocaleDateString(), amount: t.estimatedCost }))
   ].slice(0, 5);
@@ -92,7 +101,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
   return (
     <div className="flex flex-col gap-8">
       {/* Top KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 xl:gap-6">
         {/* Total Employees */}
         <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-indigo-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
@@ -155,32 +164,6 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
           </div>
           <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-300 shrink-0">
             <DollarSign className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Reimbursements Pending */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-indigo-500/30 transition-all duration-300">
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Reimbursements Pending">
-              Reimb. Pending
-            </div>
-            <div className="mt-1.5 text-2xl font-bold text-slate-100 truncate">{reimbursementsPending}</div>
-          </div>
-          <div className="rounded-xl bg-indigo-500/10 p-2.5 text-indigo-300 shrink-0">
-            <Plus className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Policy Violations */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-rose-500/30 transition-all duration-300">
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Policy Violations">
-              Violations
-            </div>
-            <div className="mt-1.5 text-2xl font-bold text-slate-100 truncate">{policyViolations}</div>
-          </div>
-          <div className="rounded-xl bg-rose-500/10 p-2.5 text-rose-300 shrink-0">
-            <ShieldAlert className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -295,7 +278,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
                 <h4 className="text-sm font-semibold text-slate-200">Recent Activities</h4>
                 <p className="text-xs text-slate-500 mt-1">Latest tenant activity audit logs</p>
               </div>
-              <button className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-300 transition hover:bg-indigo-500/15">View All</button>
+              {/* <button className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-300 transition hover:bg-indigo-500/15">View All</button> */}
             </div>
             <div className="flex flex-col gap-3 overflow-y-auto pr-1 flex-1 max-h-[380px] lg:max-h-[420px] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
               {recentActivities.length === 0 ? (
@@ -327,7 +310,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
                 <tr className="text-slate-400 text-[10px] uppercase tracking-wider font-bold border-b border-white/5">
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">Employee</th>
-                  <th className="px-4 py-3">Department</th>
+                  <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Category</th>
                   <th className="px-4 py-3 text-right">Amount</th>
                 </tr>
@@ -340,7 +323,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
                     <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-4 py-3 text-slate-500">{idx + 1}</td>
                       <td className="px-4 py-3 font-medium text-slate-200">{exp.employeeName}</td>
-                      <td className="px-4 py-3 text-slate-400">{exp.department || '—'}</td>
+                      <td className="px-4 py-3 text-slate-400 capitalize">{exp.role || '—'}</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 text-slate-300 border border-white/5">
                           {exp.category}
@@ -379,11 +362,10 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
                     <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-4 py-3 text-slate-500">{i + 1}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                          p.type === 'Expense Claim' 
-                            ? 'bg-amber-500/10 text-amber-300 border-amber-500/20' 
-                            : 'bg-sky-500/10 text-sky-300 border-sky-500/20'
-                        }`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${p.type === 'Expense Claim'
+                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                          : 'bg-sky-500/10 text-sky-300 border-sky-500/20'
+                          }`}>
                           {p.type}
                         </span>
                       </td>

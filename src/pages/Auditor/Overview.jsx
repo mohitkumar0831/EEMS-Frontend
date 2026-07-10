@@ -23,19 +23,31 @@ import {
 } from 'lucide-react';
 
 export const AuditorOverview = () => {
-  const { currentUser, expenses, auditLogs } = useAppState();
+  const { currentUser, auditLogs } = useAppState();
   const [dashboardMetrics, setDashboardMetrics] = useState(null);
+  const [apiExpenses, setApiExpenses] = useState([]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       if (!currentUser?.tenantSlug) return;
       try {
-        const res = await fetch(EXPENSE_ENDPOINTS.GET_AUDITOR_DASHBOARD(currentUser.tenantSlug), {
-          headers: { 'Authorization': `Bearer ${currentUser.token}` }
-        });
-        const json = await res.json();
-        if (json.success) {
-          setDashboardMetrics(json.data);
+        const [resMetrics, resExpenses] = await Promise.all([
+          fetch(EXPENSE_ENDPOINTS.GET_AUDITOR_DASHBOARD(currentUser.tenantSlug), {
+            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+          }),
+          fetch(EXPENSE_ENDPOINTS.GET_ALL_EXPENSES(currentUser.tenantSlug), {
+            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+          })
+        ]);
+        
+        if (resMetrics.ok) {
+          const json = await resMetrics.json();
+          if (json.success) setDashboardMetrics(json.data);
+        }
+
+        if (resExpenses.ok) {
+          const expJson = await resExpenses.json();
+          if (expJson.success) setApiExpenses(expJson.data);
         }
       } catch (err) {
         console.error('Failed to load auditor dashboard', err);
@@ -44,25 +56,25 @@ export const AuditorOverview = () => {
     fetchDashboard();
   }, [currentUser?.tenantSlug, currentUser?.token]);
 
-  const companyExpenses = expenses.filter(e => e.tenantId === currentUser?.tenantId);
+  const companyExpenses = apiExpenses;
   const companyLogs = auditLogs.filter(l => l.tenantId === currentUser?.tenantId || l.tenantId === 'platform');
 
   const totalClaims = dashboardMetrics?.ledgerClaims?.count || 0;
   const uniqueClaimants = dashboardMetrics?.ledgerClaims?.activeClaimants || 0;
-  
+
   const complianceRate = dashboardMetrics?.complianceRate?.percentage || 100;
   const violationCount = dashboardMetrics?.complianceRate?.violationsFound || 0;
-  
+
   const flaggedExpensesCount = dashboardMetrics?.flaggedClaims?.count || 0;
   const flaggedValue = dashboardMetrics?.flaggedClaims?.underProbeAmount || 0;
-  
+
   const auditClearedCount = dashboardMetrics?.auditCleared?.count || 0;
-  
+
   const pendingAuditCount = dashboardMetrics?.awaitingAudit?.count || 0;
   const pendingAuditValue = dashboardMetrics?.awaitingAudit?.amountToReview || 0;
-  
+
   const policyViolationsCount = dashboardMetrics?.policyViolations?.count || 0;
-  
+
   const totalDisbursed = dashboardMetrics?.totalDisbursed?.amount || 0;
 
   // Category breakdown
@@ -100,17 +112,6 @@ export const AuditorOverview = () => {
 
   return (
     <div className="flex flex-col gap-6">
-
-      {/* Title */}
-      {/* <div>
-        <h3 className="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
-          <Shield className="w-5 h-5 text-violet-400" />
-          Audit Dashboard
-        </h3>
-        <p className="text-slate-500 text-xs mt-1">
-          Compliance standing, flagged investigations, and full audit trail coverage across the workspace.
-        </p>
-      </div> */}
 
       {/* ── Row 1: Primary KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -164,7 +165,7 @@ export const AuditorOverview = () => {
       </div>
 
       {/* ── Row 2: Secondary Metrics ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
 
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Awaiting Audit</span>
@@ -173,98 +174,9 @@ export const AuditorOverview = () => {
         </div>
 
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Policy Violations</span>
-          <span className="text-lg font-extrabold text-orange-300">{policyViolationsCount}</span>
-          <span className="text-[10px] text-slate-500">claims exceeding caps</span>
-        </div>
-
-        <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Disbursed</span>
           <span className="text-lg font-extrabold text-sky-300">₹{totalDisbursed.toFixed(2)}</span>
           <span className="text-[10px] text-slate-500">across paid claims</span>
-        </div>
-
-        <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Audit Logs</span>
-          <span className="text-lg font-extrabold text-purple-300">{companyLogs.length}</span>
-          <span className="text-[10px] text-slate-500">recorded system events</span>
-        </div>
-
-      </div>
-
-      {/* ── Row 3: Checklist + Compliance Risk ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* Compliance Checklist (2/3) */}
-        <div className="bg-slate-900/60 border border-white/5 rounded-2xl flex flex-col lg:col-span-2 overflow-hidden shadow-xl">
-          <div className="px-6 py-4 border-b border-white/5 bg-white/[0.01]">
-            <h3 className="text-sm font-bold text-slate-200">Compliance Audit Trail Checklist</h3>
-            <p className="text-[10px] text-slate-500 mt-0.5">Summary of critical role actions and approval chain completions</p>
-          </div>
-          <div className="flex flex-col gap-3 p-5">
-            {checklistItems.map((item, idx) => (
-              <div key={idx} className={`flex justify-between items-center p-3.5 rounded-xl border text-xs transition-all ${item.ok
-                  ? 'border-emerald-500/15 bg-emerald-500/[0.03]'
-                  : 'border-rose-500/15 bg-rose-500/[0.03]'
-                }`}>
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                    }`}>
-                    {item.ok
-                      ? <CheckCircle2 className="w-3.5 h-3.5" />
-                      : <AlertTriangle className="w-3.5 h-3.5" />
-                    }
-                  </div>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="font-bold text-slate-200 truncate">{item.label}</span>
-                    <span className="text-[10px] text-slate-500">{item.sub}</span>
-                  </div>
-                </div>
-                <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase border shrink-0 ml-3 ${item.ok
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                  }`}>
-                  {item.ok ? 'VERIFIED' : 'ACTION NEEDED'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Compliance Score card (1/3) */}
-        <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
-          <h3 className="text-sm font-bold text-slate-200">Compliance Score</h3>
-
-          {/* Big ring indicator */}
-          <div className="flex flex-col items-center justify-center py-4 gap-2">
-            <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center font-extrabold text-2xl ${complianceRate >= 80 ? 'border-emerald-500 text-emerald-400' : 'border-amber-500 text-amber-400'
-              }`}>
-              {complianceRate}%
-            </div>
-            <span className={`text-xs font-bold uppercase tracking-wider ${complianceRate >= 80 ? 'text-emerald-500' : 'text-amber-500'
-              }`}>
-              {complianceRate >= 80 ? 'STRONG STANDING' : 'NEEDS ATTENTION'}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-2 text-[11px] border-t border-white/5 pt-3">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Compliant claims:</span>
-              <span className="font-bold text-emerald-400">{totalClaims - violationCount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Violations found:</span>
-              <span className="font-bold text-rose-400">{violationCount}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Audited by you:</span>
-              <span className="font-bold text-violet-400">{auditClearedCount}</span>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-white/5 p-3 bg-slate-950/50 text-[10px] text-slate-400 leading-relaxed">
-            Use <span className="text-indigo-400 font-semibold">Export Reports</span> to download audit logs for regulatory submission.
-          </div>
         </div>
 
       </div>
@@ -281,9 +193,9 @@ export const AuditorOverview = () => {
 
           <div className="flex flex-col gap-4">
             {categoryData.map(cat => {
-              const barWidth = (cat.total / maxCatTotal) * 100;
-              const riskColor = cat.flagged > 0 ? 'bg-rose-400' : 'bg-violet-400';
-              const barBg = cat.name === 'Meals' ? 'bg-amber-400' : cat.name === 'Travel' ? 'bg-sky-400' : 'bg-indigo-400';
+              const barWidth = maxCatTotal > 0 ? (cat.total / maxCatTotal) * 100 : 0;
+              const flaggedPct = cat.count > 0 ? (cat.flagged / cat.count) * 100 : 0;
+              const barColor = cat.name === 'Meals' ? 'bg-amber-400' : cat.name === 'Travel' ? 'bg-sky-400' : 'bg-indigo-400';
               return (
                 <div key={cat.name} className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs">
@@ -292,23 +204,23 @@ export const AuditorOverview = () => {
                       <span className="font-semibold text-slate-300">{cat.name}</span>
                       <span className="text-[9px] text-slate-600">{cat.count} claims</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="font-bold text-slate-100">₹{cat.total.toFixed(2)}</span>
                       {cat.flagged > 0 && (
                         <span className="text-[9px] font-bold text-rose-400 flex items-center gap-0.5">
                           <Flag className="w-2.5 h-2.5" />{cat.flagged} flagged
                         </span>
                       )}
-                      <span className="font-bold text-slate-100">₹{cat.total.toFixed(2)}</span>
                     </div>
                   </div>
+                  {/* Total bar */}
                   <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                    <div className={`h-full rounded-full ${barBg} opacity-70`} style={{ width: `${barWidth}%` }} />
+                    <div className={`h-full rounded-full ${barColor} opacity-30`} style={{ width: `${barWidth}%` }} />
                   </div>
-                  {cat.flagged > 0 && (
-                    <div className="h-1 rounded-full bg-slate-800 overflow-hidden -mt-1.5">
-                      <div className="h-full rounded-full bg-rose-500" style={{ width: `${(cat.flagged / cat.count) * 100}%` }} />
-                    </div>
-                  )}
+                  {/* Flagged sub-bar */}
+                  <div className="h-1 rounded-full bg-slate-800 overflow-hidden -mt-2">
+                    <div className={`h-full rounded-full bg-rose-500`} style={{ width: `${flaggedPct}%` }} />
+                  </div>
                 </div>
               );
             })}

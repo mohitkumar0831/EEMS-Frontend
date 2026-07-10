@@ -201,50 +201,6 @@ export const Overview = () => {
               </div>
             )}
           </div>
-
-          {/* Travel Requests Queue Card */}
-          <div className="bg-slate-900/80 border border-white/10 p-6 rounded-3xl shadow-xl flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <div>
-                <h4 className="text-sm font-bold text-slate-200">Travel Authorization Queue</h4>
-                <p className="text-xs text-slate-500 mt-1">Pending travel plans requiring manager approval.</p>
-              </div>
-              <button
-                onClick={() => navigate('/dashboard/manager/travel')}
-                className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                Go to Travel Board <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {metrics.pendingTravel?.length === 0 ? (
-              <div className="text-center py-10 border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
-                <p className="text-slate-500 text-xs">No pending travel plans to authorize.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {metrics.pendingTravel?.map(travel => (
-                  <div key={travel.id} className="flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-slate-950/20 hover:border-slate-800 transition-colors">
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="text-xs font-bold text-slate-200 truncate">{travel.purpose}</span>
-                      <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                        By {users.find(u => u.id === travel.employeeId || u._id === travel.employeeId)?.name || 'Employee'} • <MapPin className="w-3 h-3 text-slate-600 inline shrink-0" /> {travel.destination}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-extrabold text-slate-100">₹{travel.estimatedCost?.toFixed(2)}</span>
-                      <button
-                        onClick={() => navigate('/dashboard/manager/travel')}
-                        className="p-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/10 cursor-pointer"
-                      >
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Right Column (1/3 width on desktop): Spend analysis & Staff overview */}

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAppState } from '../../context/StateContext';
+import { REPORTS_ENDPOINTS } from '../../constants/apiConstants';
 import {
   Search,
   Filter,
@@ -13,58 +15,44 @@ import {
   Receipt,
   Download,
   Calendar,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Loader2
 } from 'lucide-react';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
-export const ReportsTab = ({ tenantUsers, tenantExpenses }) => {
+export const ReportsTab = () => {
+  const { currentUser } = useAppState();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDept, setSelectedDept] = useState('All');
+  const [selectedRole, setSelectedRole] = useState('All');
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
 
-  // Filter users to only employees or anyone who has expenses
-  const employees = tenantUsers.filter(u => u.role === 'Employee' || tenantExpenses.some(e => e.employeeId === u.id));
+  const [employeeReportData, setEmployeeReportData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get list of departments for filter
-  const departments = ['All', ...new Set(employees.map(u => u.department || 'General'))];
-
-  // Helper to generate deterministic employee ID if missing
-  const getEmpId = (emp) => {
-    if (emp.employeeId) return emp.employeeId;
-    const suffix = emp.id.includes('-') ? emp.id.split('-').pop().toUpperCase() : emp.id.toUpperCase();
-    return `EMP-${suffix}`;
-  };
-
-  // Helper to generate deterministic phone number if missing
-  const getPhone = (emp) => {
-    if (emp.phone) return emp.phone;
-    const lastChar = emp.id.charCodeAt(emp.id.length - 1) || 0;
-    const mid = (lastChar % 900) + 100;
-    const end = (lastChar * 17) % 10000;
-    const paddedEnd = String(end).padStart(4, '0');
-    return `+1 (555) ${mid}-${paddedEnd}`;
-  };
-
-  // Calculate stats for each employee
-  const employeeReportData = employees.map(emp => {
-    const empExpenses = tenantExpenses.filter(e => e.employeeId === emp.id);
-    const approvedSpend = empExpenses
-      .filter(e => e.status === 'Approved' || e.status === 'Paid')
-      .reduce((sum, e) => sum + e.amount, 0);
-    const pendingSpend = empExpenses
-      .filter(e => e.status === 'Pending' || e.status === 'Under Review')
-      .reduce((sum, e) => sum + e.amount, 0);
-    const totalClaimsCount = empExpenses.length;
-
-    return {
-      user: emp,
-      empId: getEmpId(emp),
-      phone: getPhone(emp),
-      approvedSpend,
-      pendingSpend,
-      totalClaimsCount,
-      expenses: empExpenses
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(REPORTS_ENDPOINTS.GET_SPENDING(currentUser.tenantSlug), {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setEmployeeReportData(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch spend report:', err);
+      } finally {
+        setLoading(false);
+      }
     };
-  });
+    if (currentUser?.tenantSlug) {
+      fetchReports();
+    }
+  }, [currentUser]);
+
+  // Get list of roles for filter
+  const roles = ['All', ...new Set(employeeReportData.map(item => item.user.role || 'Employee'))];
 
   // Filter report data based on search and department
   const filteredReportData = employeeReportData.filter(item => {
@@ -73,16 +61,16 @@ export const ReportsTab = ({ tenantUsers, tenantExpenses }) => {
       item.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesDept = selectedDept === 'All' || (item.user.department || 'General') === selectedDept;
+    const matchesRole = selectedRole === 'All' || (item.user.role || 'Employee') === selectedRole;
 
-    return matchesSearch && matchesDept;
+    return matchesSearch && matchesRole;
   });
 
   // Global calculations
   const totalApprovedCompanySpend = employeeReportData.reduce((sum, item) => sum + item.approvedSpend, 0);
   const totalPendingCompanySpend = employeeReportData.reduce((sum, item) => sum + item.pendingSpend, 0);
-  const totalActiveClaimsCount = tenantExpenses.length;
-  const averageSpendPerEmployee = employees.length ? totalApprovedCompanySpend / employees.length : 0;
+  const totalActiveClaimsCount = employeeReportData.reduce((sum, item) => sum + item.totalClaimsCount, 0);
+  const averageSpendPerEmployee = employeeReportData.length ? totalApprovedCompanySpend / employeeReportData.length : 0;
 
   const toggleRow = (empId) => {
     if (expandedEmployeeId === empId) {
@@ -176,6 +164,8 @@ export const ReportsTab = ({ tenantUsers, tenantExpenses }) => {
     URL.revokeObjectURL(url);
   };
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div className="flex flex-col gap-8">
       {/* Title */}
@@ -266,17 +256,17 @@ export const ReportsTab = ({ tenantUsers, tenantExpenses }) => {
               />
             </div>
 
-            {/* Department Filter */}
+            {/* Role Filter */}
             <div className="relative flex items-center bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2 text-xs">
               <Filter className="w-3.5 h-3.5 text-slate-500 mr-2" />
               <select
-                id="dept-filter"
-                value={selectedDept}
-                onChange={(e) => setSelectedDept(e.target.value)}
+                id="role-filter"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
                 className="bg-transparent text-slate-300 focus:outline-none cursor-pointer"
               >
-                {departments.map(dept => (
-                  <option key={dept} value={dept} className="bg-slate-900 text-slate-300">{dept}</option>
+                {roles.map(role => (
+                  <option key={role} value={role} className="bg-slate-900 text-slate-300">{role}</option>
                 ))}
               </select>
             </div>
@@ -290,7 +280,7 @@ export const ReportsTab = ({ tenantUsers, tenantExpenses }) => {
               <tr className="text-slate-400 text-[10px] uppercase tracking-wider font-bold border-b border-white/5">
                 <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3">Employee ID</th>
-                <th className="px-4 py-3">Name & Department</th>
+                <th className="px-4 py-3">Name & Role</th>
                 <th className="px-4 py-3">Email & Phone</th>
                 <th className="px-4 py-3 text-center">Submitted</th>
                 <th className="px-4 py-3 text-right">Pending (₹)</th>
@@ -332,7 +322,7 @@ export const ReportsTab = ({ tenantUsers, tenantExpenses }) => {
                         <td className="px-4 py-4">
                           <div className="flex flex-col gap-0.5">
                             <span className="font-bold text-slate-200">{item.user.name}</span>
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold">{item.user.department || 'General'}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold">{item.user.role || 'Employee'}</span>
                           </div>
                         </td>
 

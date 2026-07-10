@@ -1,11 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { ScrollText, Search, Filter, ShieldCheck, Mail } from 'lucide-react';
+import { AUDIT_ENDPOINTS, TENANT_ENDPOINTS } from '../../constants/apiConstants';
 
 export const AuditLogsPage = () => {
-  const { auditLogs, tenants } = useAppState();
+  const { currentUser } = useAppState();
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [tenants, setTenants] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTenant, setSelectedTenant] = useState('all');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (currentUser?.token) headers['Authorization'] = `Bearer ${currentUser.token}`;
+
+        const [logsRes, tenantsRes] = await Promise.all([
+          fetch(AUDIT_ENDPOINTS.GET_ALL, { headers }),
+          fetch(TENANT_ENDPOINTS.GET_ALL, { headers })
+        ]);
+
+        const logsData = await logsRes.json();
+        const tenantsData = await tenantsRes.json();
+
+        if (logsData.success && logsData.data) {
+          setAuditLogs(logsData.data);
+        }
+        if (tenantsData.success && tenantsData.data) {
+          setTenants(tenantsData.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch audit data', err);
+      }
+    };
+    fetchData();
+  }, [currentUser]);
 
   const filteredLogs = auditLogs.filter(log => {
     const matchesSearch = 

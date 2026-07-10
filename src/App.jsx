@@ -30,16 +30,19 @@ import { Departments as CompanyAdminDepartments } from './pages/CompanyAdmin/Dep
 import { ExpenseCategories as CompanyAdminExpenseCategories } from './pages/CompanyAdmin/ExpenseCategories';
 import { Policies as CompanyAdminPolicies } from './pages/CompanyAdmin/Policies';
 import { Workflows as CompanyAdminWorkflows } from './pages/CompanyAdmin/Workflows';
-import { Expenses as CompanyAdminExpenses } from './pages/CompanyAdmin/Expenses';
+import { ExpenseApproval as CompanyAdminExpenseApproval } from './pages/CompanyAdmin/ExpenseApproval';
 import { TravelRequests as CompanyAdminTravelRequests } from './pages/CompanyAdmin/TravelRequests';
 import { Reimbursements as CompanyAdminReimbursements } from './pages/CompanyAdmin/Reimbursements';
 import { Reports as CompanyAdminReports } from './pages/CompanyAdmin/Reports';
 import { Notifications as CompanyAdminNotifications } from './pages/CompanyAdmin/Notifications';
+import { Billing as CompanyAdminBilling } from './pages/CompanyAdmin/Billing';
 import { Manager } from './pages/Manager';
 import { Overview as ManagerOverview } from './pages/Manager/Overview';
 import { Expenses as ManagerExpenses } from './pages/Manager/Expenses';
 import { Travel as ManagerTravel } from './pages/Manager/Travel';
 import { Team as ManagerTeam } from './pages/Manager/Team';
+import { FileExpenseClaim as ManagerFileExpenseClaim } from './pages/Manager/FileExpenseClaim';
+import { Reimbursements as ManagerReimbursements } from './pages/Manager/Reimbursements';
 import { Employee } from './pages/Employee';
 import { Overview as EmployeeOverview } from './pages/Employee/Overview';
 import { FileExpenseClaim } from './pages/Employee/FileExpenseClaim';
@@ -51,11 +54,15 @@ import { FinanceOverview } from './pages/Finance/Overview';
 import { FinanceProcess } from './pages/Finance/Process';
 import { FinanceViolations } from './pages/Finance/Violations';
 import { FinanceHistory } from './pages/Finance/History';
+import { FileExpenseClaim as FinanceFileExpenseClaim } from './pages/Finance/FileExpenseClaim';
+import { Reimbursements as FinanceReimbursements } from './pages/Finance/Reimbursements';
 import { Auditor } from './pages/Auditor';
 import { AuditorOverview } from './pages/Auditor/Overview';
 import { AuditorExpenses } from './pages/Auditor/Expenses';
 import { AuditorActivity } from './pages/Auditor/Activity';
 import { AuditorExportReports } from './pages/Auditor/ExportReports';
+import { FileExpenseClaim as AuditorFileExpenseClaim } from './pages/Auditor/FileExpenseClaim';
+import { Reimbursements as AuditorReimbursements } from './pages/Auditor/Reimbursements';
 import { ToastList } from './components/ToastList';
 import './App.css';
 
@@ -171,10 +178,11 @@ function App() {
             <Route path="expense-categories" element={<CompanyAdminExpenseCategories />} />
             <Route path="policies" element={<CompanyAdminPolicies />} />
             <Route path="workflows" element={<CompanyAdminWorkflows />} />
-            <Route path="expenses" element={<CompanyAdminExpenses />} />
+            <Route path="expenses" element={<CompanyAdminExpenseApproval />} />
             <Route path="travel-requests" element={<CompanyAdminTravelRequests />} />
             <Route path="reimbursements" element={<CompanyAdminReimbursements />} />
             <Route path="reports" element={<CompanyAdminReports />} />
+            <Route path="billing" element={<CompanyAdminBilling />} />
             <Route path="notifications" element={<CompanyAdminNotifications />} />
           </Route>
 
@@ -184,6 +192,8 @@ function App() {
             <Route path="expenses" element={<ManagerExpenses />} />
             <Route path="travel" element={<ManagerTravel />} />
             <Route path="team" element={<ManagerTeam />} />
+            <Route path="file-claim" element={<ManagerFileExpenseClaim />} />
+            <Route path="reimbursements" element={<ManagerReimbursements />} />
           </Route>
 
           <Route path="/:slug/dashboard/employee" element={<DashboardRoute element={<Employee />} allowedRoles={['Employee']} />}>
@@ -201,6 +211,8 @@ function App() {
             <Route path="process" element={<FinanceProcess />} />
             <Route path="violations" element={<FinanceViolations />} />
             <Route path="history" element={<FinanceHistory />} />
+            <Route path="file-claim" element={<FinanceFileExpenseClaim />} />
+            <Route path="reimbursements" element={<FinanceReimbursements />} />
           </Route>
 
           <Route path="/:slug/dashboard/auditor" element={<DashboardRoute element={<Auditor />} allowedRoles={['Auditor']} />}>
@@ -209,6 +221,8 @@ function App() {
             <Route path="expenses" element={<AuditorExpenses />} />
             <Route path="activity" element={<AuditorActivity />} />
             <Route path="export" element={<AuditorExportReports />} />
+            <Route path="file-claim" element={<AuditorFileExpenseClaim />} />
+            <Route path="reimbursements" element={<AuditorReimbursements />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -23,7 +23,7 @@ import {
 
 export const FinanceOverview = () => {
   const { currentUser, expenses, showToast } = useAppState();
-  
+
   const [dashboardMetrics, setDashboardMetrics] = useState(null);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [apiExpenses, setApiExpenses] = useState([]);
@@ -37,7 +37,7 @@ export const FinanceOverview = () => {
         const resMetrics = await fetch(EXPENSE_ENDPOINTS.GET_FINANCE_DASHBOARD(currentUser.tenantSlug), {
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
-        
+
         // 2. Fetch all expenses for the tenant
         const resExpenses = await fetch(EXPENSE_ENDPOINTS.GET_ALL_EXPENSES(currentUser.tenantSlug), {
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
@@ -89,16 +89,16 @@ export const FinanceOverview = () => {
 
   const totalReimbursed = dashboardMetrics?.totalDisbursed.amount || 0;
   const paidClaimsCount = dashboardMetrics?.totalDisbursed.claimsPaid || 0;
-  
+
   const pendingPaymentSum = dashboardMetrics?.awaitingPayout.amount || 0;
   const approvedClaimsCount = dashboardMetrics?.awaitingPayout.approvedClaims || 0;
-  
+
   const violationSum = dashboardMetrics?.policyViolations.flaggedAmount || 0;
   const violationsCount = dashboardMetrics?.policyViolations.count || 0;
-  
+
   const totalSubmitted = dashboardMetrics?.totalClaims.submittedAmount || 0;
   const totalClaimsCount = dashboardMetrics?.totalClaims.count || 0;
-  
+
   const avgClaimSize = dashboardMetrics?.averageClaimSize || 0;
   const pendingQueueLength = dashboardMetrics?.pendingApproval.count || 0;
   const rejectedQueueLength = dashboardMetrics?.rejectedClaims.count || 0;
@@ -146,8 +146,8 @@ export const FinanceOverview = () => {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── Row 1: 4 Primary KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── Row 1: 2 Primary KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xl:gap-6">
 
         {/* Total Disbursed */}
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
@@ -162,7 +162,7 @@ export const FinanceOverview = () => {
         </div>
 
         {/* Pending Payout */}
-        <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
+        {/* <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Awaiting Payout</span>
             <div className="text-2xl font-extrabold text-slate-100 mt-1">₹{pendingPaymentSum.toFixed(2)}</div>
@@ -173,7 +173,6 @@ export const FinanceOverview = () => {
           </div>
         </div>
 
-        {/* Policy Violations */}
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Policy Violations</span>
@@ -183,7 +182,7 @@ export const FinanceOverview = () => {
           <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
             <ShieldAlert className="w-5 h-5" />
           </div>
-        </div>
+        </div> */}
 
         {/* Reimbursement Volume */}
         <div className="bg-slate-900/70 border border-white/5 p-5 rounded-2xl flex items-center justify-between shadow-xl">
@@ -228,86 +227,6 @@ export const FinanceOverview = () => {
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Claimants</span>
           <span className="text-lg font-extrabold text-violet-300">{uniqueClaimants}</span>
           <span className="text-[10px] text-slate-500">employees with submissions</span>
-        </div>
-
-      </div>
-
-      {/* ── Row 3: Main Content Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* Pending Reimbursements Queue (2/3) */}
-        <div className="bg-slate-900/60 border border-white/5 rounded-2xl flex flex-col lg:col-span-2 shadow-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
-            <div>
-              <h3 className="text-sm font-bold text-slate-200">Pending Reimbursements Queue</h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Manager-approved claims awaiting Finance disbursement</p>
-            </div>
-            <span className="text-[10px] font-bold bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-2 py-1 rounded-lg">
-              {approvedQueue.length} PENDING
-            </span>
-          </div>
-
-          {approvedQueue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-2 text-center p-4">
-              <CheckCircle2 className="w-9 h-9 text-slate-700" />
-              <p className="text-slate-500 text-xs">No approved expenses waiting for disbursement.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-white/5">
-              {approvedQueue.map(exp => (
-                <div key={exp.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-white/[0.02] transition-colors gap-3">
-                  <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-                    <div className="w-8 h-8 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-center shrink-0">
-                      {getCategoryIcon(exp.category)}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-slate-200 truncate">{exp.title}</span>
-                      <span className="text-[10px] text-slate-500">
-                        {exp.employeeName} · {exp.category} · {exp.date}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 w-full sm:w-auto border-t border-white/[0.02] sm:border-0 pt-2 sm:pt-0">
-                    <span className="text-xs font-extrabold text-slate-100">₹{exp.amount.toFixed(2)}</span>
-                    <span className="text-[8px] font-bold px-2 py-0.5 rounded border bg-indigo-500/10 text-indigo-400 border-indigo-500/20 uppercase tracking-wider">
-                      Approved
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Policy Violations (1/3) */}
-        <div className="bg-slate-900/60 border border-white/5 rounded-2xl flex flex-col shadow-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5 bg-white/[0.01]">
-            <h3 className="text-sm font-bold text-slate-200">Policy Compliance</h3>
-            <p className="text-[10px] text-slate-500 mt-0.5">Claims flagged for audit review</p>
-          </div>
-
-          {violationsQueue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-center p-4 flex-grow">
-              <CheckCircle2 className="w-8 h-8 text-emerald-700" />
-              <p className="text-emerald-500 text-xs font-semibold">100% Compliant</p>
-              <p className="text-slate-500 text-[10px]">No policy violations flagged.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3 p-4">
-              {violationsQueue.map(v => (
-                <div key={v.id} className="flex flex-col gap-1.5 p-3.5 border border-rose-500/20 bg-rose-500/5 rounded-xl">
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="font-bold text-rose-400 text-[11px] leading-tight truncate">{v.title}</span>
-                    <span className="font-extrabold text-slate-100 text-[11px] shrink-0">₹{v.amount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-[9px] text-slate-500">
-                    <AlertCircle className="w-3 h-3 text-rose-500 shrink-0" />
-                    <span>Exceeds policy · Filed by {v.employeeName}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
       </div>

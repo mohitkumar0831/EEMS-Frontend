@@ -10,7 +10,7 @@ const DEFAULT_TENANTS = [
 
 const DEFAULT_USERS = [
   { id: 'user-sa', name: 'Alex Platform Owner', email: 'superadmin@ems.com', password: 'password', role: 'SuperAdmin', tenantId: 'platform', department: 'Platform Operations' },
-  
+
   // Acme Corp
   { id: 'user-ca1', name: 'Sarah Connor', email: 'admin@acme.com', password: 'password', role: 'CompanyAdmin', tenantId: 'tenant-1', department: 'Administration' },
   { id: 'user-m1', name: 'John Approver', email: 'manager@acme.com', password: 'password', role: 'Manager', tenantId: 'tenant-1', department: 'Engineering' },
@@ -118,7 +118,7 @@ export const StateProvider = ({ children }) => {
   const [expenses, setExpenses] = useState(() => JSON.parse(localStorage.getItem('ems_expenses')) || DEFAULT_EXPENSES);
   const [travelRequests, setTravelRequests] = useState(() => JSON.parse(localStorage.getItem('ems_travel')) || DEFAULT_TRAVEL);
   const [auditLogs, setAuditLogs] = useState(() => JSON.parse(localStorage.getItem('ems_logs')) || DEFAULT_LOGS);
-  
+
   const [currentUser, setCurrentUser] = useState(() => {
     return JSON.parse(localStorage.getItem('ems_current_user')) || null;
   });
@@ -175,7 +175,7 @@ export const StateProvider = ({ children }) => {
     if (userMatch) {
       setCurrentUser(userMatch);
       showToast(`Welcome back, ${userMatch.name}! Signed in as ${userMatch.role}.`, 'success');
-      
+
       const userTenant = userMatch.tenantId === 'platform' ? 'Platform' : (tenants.find(t => t.id === userMatch.tenantId)?.name || 'Unknown Company');
       addAuditLog('User Login', `Logged in successfully from ${userTenant}`, userMatch.tenantId);
       return { success: true };
@@ -342,7 +342,7 @@ export const StateProvider = ({ children }) => {
   // Employee actions
   const submitExpense = (title, category, amount, description, receiptName, assignedManagerId = null) => {
     const numericAmount = parseFloat(amount);
-    
+
     // Policy Check
     const activePolicy = policies.find(p => p.tenantId === currentUser.tenantId && p.category.toLowerCase() === category.toLowerCase());
     const exceedsPolicy = activePolicy ? numericAmount > activePolicy.limit : false;
@@ -462,14 +462,14 @@ export const StateProvider = ({ children }) => {
   const reviewTravelRequest = (requestId, status, commentText) => {
     setTravelRequests(prev => prev.map(tr => {
       if (tr.id === requestId) {
-        const comments = commentText.trim() 
-          ? [...tr.comments, { author: currentUser.name, text: commentText, timestamp: new Date().toISOString() }] 
+        const comments = commentText.trim()
+          ? [...tr.comments, { author: currentUser.name, text: commentText, timestamp: new Date().toISOString() }]
           : tr.comments;
         return { ...tr, status, comments };
       }
       return tr;
     }));
-    
+
     showToast(`Travel request ${status.toLowerCase()}.`, status === 'Approved' ? 'success' : 'error');
     addAuditLog('Travel Reviewed', `Manager marked travel request ${requestId} as ${status}`, currentUser.tenantId);
   };

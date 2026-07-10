@@ -43,7 +43,7 @@ export const SuperAdmin = () => {
     // { id: 'policies', label: 'Global Policies', icon: Settings, path: 'policies' },
     { id: 'reports', label: 'Reports & Analytics', icon: FileText, path: 'reports' },
     { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: 'auditlogs' },
-    { id: 'notifications', label: 'Notifications', icon: Bell, path: 'notifications' },
+    // { id: 'notifications', label: 'Notifications', icon: Bell, path: 'notifications' },
     { id: 'settings', label: 'Settings', icon: Sliders, path: 'settings' }
   ];
 

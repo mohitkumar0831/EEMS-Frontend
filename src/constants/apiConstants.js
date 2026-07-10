@@ -1,11 +1,11 @@
 // --- LOCAL DEVELOPMENT ---
-// export const API_BASE_URL = 'http://localhost:4000/api/v1';
-// export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
+export const API_BASE_URL = 'http://localhost:4000/api/v1';
+export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
 
 // --- DEPLOYED / PRODUCTION ---
 // Uncomment the lines below (and comment the local ones above) when deploying
-export const API_BASE_URL = 'http://103.192.198.240:9002/api/v1';
-export const NOTIFICATION_SERVICE_URL = 'http://103.192.198.240:4500';
+// export const API_BASE_URL = 'http://103.192.198.240:9002/api/v1';
+// export const NOTIFICATION_SERVICE_URL = 'http://103.192.198.240:4500';
 
 export const AUTH_ENDPOINTS = {
   REGISTER_SUPER_ADMIN: `${API_BASE_URL}/auth/register-super-admin`,
@@ -16,6 +16,19 @@ export const AUTH_ENDPOINTS = {
   TENANT_FORGOT_PASSWORD: (slug) => `${API_BASE_URL}/auth/tenant/${slug}/forgot-password`,
   RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
   CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
+  GET_COMPANY_ADMIN: (slug) => `${API_BASE_URL}/auth/tenant/${slug}/company-admin`,
+};
+
+export const NOTIFICATION_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/notifications`,
+  GET_UNREAD: `${API_BASE_URL}/notifications/unread`,
+  MARK_READ: (id) => `${API_BASE_URL}/notifications/${id}/read`,
+  MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
+  DELETE: (id) => `${API_BASE_URL}/notifications/${id}`,
+};
+
+export const REPORTS_ENDPOINTS = {
+  GET_SPENDING: (slug) => `${API_BASE_URL}/reports/tenant/${slug}/spending`,
 };
 
 export const TENANT_ENDPOINTS = {
@@ -42,6 +55,7 @@ export const EXPENSE_ENDPOINTS = {
   CREATE_EXPENSE: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}`,
   UPLOAD_RECEIPT: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}/receipts/upload`,
   GET_EMPLOYEE_EXPENSES: (slug, employeeId) => `${API_BASE_URL}/expenses/tenant/${slug}/employee/${employeeId}`,
+  GET_EMPLOYEE_REIMBURSEMENT_SUMMARY: (slug, employeeId) => `${API_BASE_URL}/expenses/tenant/${slug}/employee/${employeeId}/reimbursements/summary`,
   GET_MANAGER_EXPENSES: (slug, managerId) => `${API_BASE_URL}/expenses/tenant/${slug}/manager/${managerId}`,
   UPDATE_EXPENSE_STATUS: (slug, expenseId) => `${API_BASE_URL}/expenses/tenant/${slug}/${expenseId}/status`,
   GET_ALL_EXPENSES: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}`,
@@ -55,3 +69,34 @@ export const EXPENSE_ENDPOINTS = {
   GET_MANAGER_DASHBOARD: (slug, managerId) => `${API_BASE_URL}/expenses/tenant/${slug}/manager/${managerId}/dashboard`,
   GET_EMPLOYEE_DASHBOARD: (slug, employeeId) => `${API_BASE_URL}/expenses/tenant/${slug}/employee/${employeeId}/dashboard`,
 };
+
+export const BILLING_ENDPOINTS = {
+  // Plans
+  GET_PLANS: `${API_BASE_URL}/billing/plans`,
+  CREATE_PLAN: `${API_BASE_URL}/billing/plans`,
+  UPDATE_PLAN: (planId) => `${API_BASE_URL}/billing/plans/${planId}`,
+  DELETE_PLAN: (planId) => `${API_BASE_URL}/billing/plans/${planId}`,
+
+  // Subscriptions
+  CREATE_SUBSCRIPTION: `${API_BASE_URL}/billing/subscriptions`,
+  GET_ALL_SUBSCRIPTIONS: `${API_BASE_URL}/billing/subscriptions`,
+  GET_BILLING_STATS: `${API_BASE_URL}/billing/subscriptions/stats`,
+  GET_SUBSCRIPTION: (tenantId) => `${API_BASE_URL}/billing/subscriptions/${tenantId}`,
+  UPGRADE_PLAN: (subId) => `${API_BASE_URL}/billing/subscriptions/${subId}/upgrade`,
+  OVERRIDE_SUBSCRIPTION: (subId) => `${API_BASE_URL}/billing/subscriptions/${subId}/override`,
+
+  // Payments
+  CREATE_ORDER: `${API_BASE_URL}/billing/payments/create-order`,
+  VERIFY_PAYMENT: `${API_BASE_URL}/billing/payments/verify`,
+  GET_ALL_PAYMENTS: `${API_BASE_URL}/billing/payments`,
+  GET_PAYMENT_HISTORY: (tenantId) => `${API_BASE_URL}/billing/payments/tenant/${tenantId}`,
+
+  // Invoices
+  GET_INVOICES: (tenantId) => `${API_BASE_URL}/billing/invoices/tenant/${tenantId}`,
+  DOWNLOAD_INVOICE: (invoiceId) => `${API_BASE_URL}/billing/invoices/${invoiceId}/download`,
+};
+
+export const AUDIT_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/audit/logs`,
+};
+

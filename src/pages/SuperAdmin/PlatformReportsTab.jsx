@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { BILLING_ENDPOINTS } from '../../constants/apiConstants';
 import {
   Building2,
   Users,
@@ -10,7 +11,26 @@ import {
 } from 'lucide-react';
 
 export const PlatformReportsTab = () => {
-  const { tenants, showToast } = useAppState();
+  const { tenants, currentUser } = useAppState();
+  const [plans, setPlans] = useState([]);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (currentUser?.token) headers['Authorization'] = `Bearer ${currentUser.token}`;
+
+        const res = await fetch(BILLING_ENDPOINTS.GET_PLANS, { headers });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPlans(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch plans', err);
+      }
+    };
+    fetchPlans();
+  }, [currentUser]);
 
   // Compute Platform KPIs
   const totalTenants = tenants.length;
@@ -18,23 +38,13 @@ export const PlatformReportsTab = () => {
   const suspendedTenants = tenants.filter(t => t.status === 'Suspended').length;
   const totalUsers = tenants.reduce((acc, t) => acc + (t.userCount || 0), 0);
 
-  // Static Plan mappings for visual rendering
   const getTenantPlan = (tenant) => {
-    // Ideally this would come from tenant object if we implement subscriptions in DB
-    if (tenant.subscriptionPlan) return tenant.subscriptionPlan;
-    if (tenant.id === 'tenant-1') return 'Enterprise';
-    if (tenant.id === 'tenant-2') return 'Standard';
-    return 'Basic';
+    return tenant.subscriptionPlan || 'Free';
   };
 
-  const getTenantBillingRate = (plan) => {
-    switch (plan) {
-      case 'Enterprise': return 1250;
-      case 'Standard': return 450;
-      case 'Basic': return 150;
-      case 'Free': return 0;
-      default: return 150;
-    }
+  const getTenantBillingRate = (planName) => {
+    const plan = plans.find(p => p.name === planName);
+    return plan ? plan.priceMonthly : 0;
   };
 
   return (
@@ -154,20 +164,20 @@ export const PlatformReportsTab = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${plan === 'Enterprise'
-                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                          : plan === 'Standard'
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                            : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                        : plan === 'Standard'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
                         }`}>
                         {plan}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${status === 'Active'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : status === 'Trial'
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : status === 'Trial'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                         }`}>
                         {status}
                       </span>
@@ -179,7 +189,7 @@ export const PlatformReportsTab = () => {
                       ₹{rate.toLocaleString()}/mo
                     </td>
                     <td className="px-6 py-4 text-slate-400 font-mono">
-                      {t.planExpiryDate ? new Date(t.planExpiryDate).toLocaleDateString() : '08/30/2026'}
+                      {t.planExpiryDate ? new Date(t.planExpiryDate).toLocaleDateString() : '-'}
                     </td>
                   </tr>
                 );

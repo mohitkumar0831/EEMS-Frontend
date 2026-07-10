@@ -257,8 +257,8 @@ export const OverviewTab = ({ stats }) => {
       {/* ── Bottom Row: Tenant Grid + Role Distribution + Activity Log ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tenant Workspace Health Cards */}
-        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col gap-4">
-          <div>
+        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col h-[300px]">
+          <div className="shrink-0 mb-4">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <Building2 className="w-4.5 h-4.5 text-indigo-400" />
               Workspace Health Index
@@ -266,7 +266,7 @@ export const OverviewTab = ({ stats }) => {
             <p className="text-[11px] text-slate-500 mt-0.5">Per-tenant metrics overview</p>
           </div>
 
-          <div className="flex flex-col gap-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {tenants.map((t, idx) => {
               const borderColors = ['border-indigo-500/20', 'border-emerald-500/20', 'border-fuchsia-500/20'];
               const bgColors = ['bg-indigo-500/5', 'bg-emerald-500/5', 'bg-fuchsia-500/5'];
@@ -300,8 +300,8 @@ export const OverviewTab = ({ stats }) => {
         </div>
 
         {/* Role Distribution Matrix */}
-        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col gap-4">
-          <div>
+        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col h-[300px]">
+          <div className="shrink-0 mb-2">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <ShieldAlert className="w-4.5 h-4.5 text-indigo-400" />
               Role Distribution Matrix
@@ -309,7 +309,7 @@ export const OverviewTab = ({ stats }) => {
             <p className="text-[11px] text-slate-500 mt-0.5">User population by access level</p>
           </div>
 
-          <div className="flex flex-col gap-2.5 mt-2">
+          <div className="flex flex-col gap-2.5 flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {Object.entries(roleCounts).map(([role, count], idx) => {
               const pct = totalUsers > 0 ? (count / totalUsers) * 100 : 0;
               const roleColors = {
@@ -340,8 +340,8 @@ export const OverviewTab = ({ stats }) => {
         </div>
 
         {/* Activity Log Stream */}
-        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col h-[300px]">
+          <div className="flex items-center justify-between shrink-0 mb-4">
             <div>
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <Activity className="w-4.5 h-4.5 text-indigo-400" />
@@ -352,8 +352,8 @@ export const OverviewTab = ({ stats }) => {
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           </div>
 
-          <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1">
-            {auditLogs.slice(0, 8).map(log => (
+          <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {auditLogs.slice(0, 10).map(log => (
               <div key={log.id} className="flex gap-3 text-xs border-b border-slate-800/50 pb-3 last:border-0">
                 <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Activity className="w-3.5 h-3.5 text-indigo-400" />

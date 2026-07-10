@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
 import { DashboardLayout } from '../../components/DashboardLayout';
-import { Users, UserCheck, Briefcase, Building2, Tags, Settings, ShieldCheck, Layers, FileText, Bell, ClipboardList, DollarSign, MapPin } from 'lucide-react';
+import { Users, UserCheck, Briefcase, Building2, Tags, Settings, ShieldCheck, Layers, FileText, Bell, ClipboardList, DollarSign, MapPin, CreditCard } from 'lucide-react';
 
 export const CompanyAdmin = () => {
   const { currentUser } = useAppState();
@@ -16,11 +16,12 @@ export const CompanyAdmin = () => {
     // { id: 'expense-categories', label: 'Expense Categories', icon: Tags, path: 'expense-categories' },
     // { id: 'policies', label: 'Company Policies', icon: Settings, path: 'policies' },
     { id: 'workflows', label: 'Approval Workflow', icon: ShieldCheck, path: 'workflows' },
-    // { id: 'expenses', label: 'Expenses', icon: DollarSign, path: 'expenses' },
+    { id: 'expenses', label: 'Expense Approval', icon: DollarSign, path: 'expenses' },
     // { id: 'travel-requests', label: 'Travel Requests', icon: MapPin, path: 'travel-requests' },
     // { id: 'reimbursements', label: 'Reimbursements', icon: ClipboardList, path: 'reimbursements' },
+    { id: 'billing', label: 'Billing & Subscription', icon: CreditCard, path: 'billing' },
     { id: 'reports', label: 'Reports', icon: FileText, path: 'reports' },
-    { id: 'notifications', label: 'Notifications', icon: Bell, path: 'notifications' }
+    // { id: 'notifications', label: 'Notifications', icon: Bell, path: 'notifications' }
   ];
 
   if (!currentUser) return null;
