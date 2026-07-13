@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { BILLING_ENDPOINTS } from '../../constants/apiConstants';
+import { BILLING_ENDPOINTS, USER_ENDPOINTS } from '../../constants/apiConstants';
 import {
   CreditCard, TrendingUp, Calendar, Clock, Download, ChevronRight,
   CheckCircle2, AlertTriangle, Shield, Loader2, Users, Database,
@@ -16,6 +16,7 @@ export const Billing = () => {
   const [loading, setLoading] = useState(true);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [userCount, setUserCount] = useState(0);
 
   const headers = {
     'Content-Type': 'application/json',
@@ -45,6 +46,19 @@ export const Billing = () => {
         if (plansData.success) setPlans(plansData.data);
         if (paymentsData.success) setPayments(paymentsData.data);
         if (invoicesData.success) setInvoices(invoicesData.data);
+
+        // Fetch current user count for the tenant
+        if (currentUser?.tenantSlug) {
+          try {
+            const usersRes = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
+              headers: { 'Authorization': headers.Authorization },
+            });
+            const usersData = await usersRes.json();
+            if (usersData.data) setUserCount(usersData.data.length);
+          } catch (err) {
+            console.error('Failed to fetch user count:', err);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch billing data:', error);
       } finally {
@@ -287,11 +301,14 @@ export const Billing = () => {
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-400 flex items-center gap-1"><Users className="w-3.5 h-3.5" /> User Capacity</span>
-                    <span className="text-slate-200 font-mono">{currentPlan.userLimit} accounts</span>
+                    <span className="text-slate-200 font-mono">{userCount} / {currentPlan.userLimit} accounts</span>
                   </div>
                   <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: '35%' }} />
+                    <div className={`h-full rounded-full transition-all duration-500 ${userCount >= currentPlan.userLimit ? 'bg-rose-500' : userCount >= currentPlan.userLimit * 0.8 ? 'bg-amber-500' : 'bg-indigo-500'}`} style={{ width: `${Math.min((userCount / currentPlan.userLimit) * 100, 100)}%` }} />
                   </div>
+                  {userCount >= currentPlan.userLimit && (
+                    <p className="text-[10px] text-rose-400 mt-1 font-semibold">User limit reached — upgrade plan to add more users</p>
+                  )}
                 </div>
                 <div>
                   <div className="flex justify-between text-xs mb-1">

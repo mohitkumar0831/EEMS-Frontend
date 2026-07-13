@@ -174,7 +174,7 @@ export const StateProvider = ({ children }) => {
     const userMatch = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
     if (userMatch) {
       setCurrentUser(userMatch);
-      showToast(`Welcome back, ${userMatch.name}! Signed in as ${userMatch.role}.`, 'success');
+      showToast(`${userMatch.name}! Signed in as ${userMatch.role}.`, 'success');
 
       const userTenant = userMatch.tenantId === 'platform' ? 'Platform' : (tenants.find(t => t.id === userMatch.tenantId)?.name || 'Unknown Company');
       addAuditLog('User Login', `Logged in successfully from ${userTenant}`, userMatch.tenantId);

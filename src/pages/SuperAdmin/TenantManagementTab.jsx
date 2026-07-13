@@ -170,6 +170,25 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                 <FormField label="Billing Cycle" name="billingCycle" value={formData.billingCycle} onChange={handleFormChange} type="select" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Yearly', label: 'Yearly' }]} />
                 <FormField label="Subscription Status" name="subscriptionStatus" value={formData.subscriptionStatus} onChange={handleFormChange} type="select" options={[{ value: 'Active', label: 'Active' }, { value: 'Expired', label: 'Expired' }, { value: 'Trial', label: 'Trial' }, { value: 'Suspended', label: 'Suspended' }]} />
               </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {[
+                  { plan: 'Free', limit: 10, activeCls: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+                  { plan: 'Basic', limit: 100, activeCls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                  { plan: 'Standard', limit: 500, activeCls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+                  { plan: 'Enterprise', limit: 2000, activeCls: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+                ].map(({ plan, limit, activeCls }) => (
+                  <span
+                    key={plan}
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
+                      formData.subscriptionPlan === plan
+                        ? activeCls
+                        : 'bg-slate-800/50 text-slate-500 border-white/5'
+                    }`}
+                  >
+                    {plan}: {limit} users max
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">

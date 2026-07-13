@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { API_BASE_URL } from '../../constants/apiConstants';
 import {
   Bell,
   BellOff,
@@ -9,7 +10,7 @@ import {
   TrendingUp,
   FileText,
   Users,
-  DollarSign,
+  IndianRupee,
   Shield,
   Settings,
   Info,
@@ -20,171 +21,140 @@ import {
   X
 } from 'lucide-react';
 
-const notificationData = [
-  {
-    id: 1,
-    type: 'alert',
-    category: 'Policy',
-    title: 'Policy Cap Exceeded — Meals',
-    desc: 'Employee meal expenses have exceeded the ₹150 monthly cap for 3 employees in the Engineering department. Manual review required.',
-    time: '5m ago',
-    ts: Date.now() - 5 * 60 * 1000,
-    read: false,
-    icon: AlertTriangle,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
-    dot: 'bg-amber-400'
-  },
-  {
-    id: 2,
-    type: 'approval',
-    category: 'Expense',
-    title: 'New Expense Claims — Awaiting Manager',
-    desc: '4 new expense claims have been submitted by employees and are currently pending manager sign-off. Oldest claim is 2 days old.',
-    time: '22m ago',
-    ts: Date.now() - 22 * 60 * 1000,
-    read: false,
-    icon: FileText,
-    color: 'text-indigo-400',
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/20',
-    dot: 'bg-indigo-400'
-  },
-  {
-    id: 3,
-    type: 'info',
-    category: 'Travel',
-    title: 'Travel Request Pending Finance Approval',
-    desc: 'A business trip request for the Chicago Sales Conference (est. ₹1,200) has been approved by the manager and is awaiting finance disbursement.',
-    time: '1h ago',
-    ts: Date.now() - 60 * 60 * 1000,
-    read: false,
-    icon: Plane,
-    color: 'text-sky-400',
-    bg: 'bg-sky-500/10',
-    border: 'border-sky-500/20',
-    dot: 'bg-sky-400'
-  },
-  {
-    id: 4,
-    type: 'success',
-    category: 'Reimbursement',
-    title: 'Reimbursements Processed — 6 Employees',
-    desc: 'Finance team has successfully processed ₹2,340.50 in reimbursements for 6 employees via ACH Direct Deposit. Settlement complete.',
-    time: '3h ago',
-    ts: Date.now() - 3 * 60 * 60 * 1000,
-    read: true,
-    icon: CreditCard,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/20',
-    dot: 'bg-emerald-400'
-  },
-  {
-    id: 5,
-    type: 'alert',
-    category: 'Compliance',
-    title: 'Audit Flag — Equipment Purchase',
-    desc: 'A ₹3,800 equipment purchase claim by John Smith has been flagged by the auditor for missing vendor invoice. Requires follow-up.',
-    time: '5h ago',
-    ts: Date.now() - 5 * 60 * 60 * 1000,
-    read: true,
-    icon: Shield,
-    color: 'text-rose-400',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/20',
-    dot: 'bg-rose-400'
-  },
-  {
-    id: 6,
-    type: 'info',
-    category: 'Team',
-    title: 'New Employee Registered',
-    desc: 'A new employee, Priya Mehta, has been registered under the Marketing department and is now active in the system.',
-    time: '8h ago',
-    ts: Date.now() - 8 * 60 * 60 * 1000,
-    read: true,
-    icon: Users,
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/10',
-    border: 'border-violet-500/20',
-    dot: 'bg-violet-400'
-  },
-  {
-    id: 7,
-    type: 'info',
-    category: 'Policy',
-    title: 'Company Policy Updated',
-    desc: 'The travel expense policy has been updated. New per-diem rate is ₹85/day. All employees have been notified automatically.',
-    time: 'Yesterday',
-    ts: Date.now() - 24 * 60 * 60 * 1000,
-    read: true,
-    icon: Settings,
-    color: 'text-slate-400',
-    bg: 'bg-slate-700/30',
-    border: 'border-slate-700/50',
-    dot: 'bg-slate-500'
-  },
-  {
-    id: 8,
-    type: 'success',
-    category: 'Expense',
-    title: 'Monthly Budget Utilisation Report Ready',
-    desc: 'June 2026 budget utilisation report is ready for download. Total company spend: ₹18,420 out of ₹25,000 budget (73.7%).',
-    time: '2 days ago',
-    ts: Date.now() - 2 * 24 * 60 * 60 * 1000,
-    read: true,
-    icon: TrendingUp,
-    color: 'text-teal-400',
-    bg: 'bg-teal-500/10',
-    border: 'border-teal-500/20',
-    dot: 'bg-teal-400'
-  },
-  {
-    id: 9,
-    type: 'alert',
-    category: 'Compliance',
-    title: 'Overdue Expense Submission Warning',
-    desc: 'Two employees have expense receipts from 25+ days ago that have not been submitted. Policy requires submission within 30 days.',
-    time: '2 days ago',
-    ts: Date.now() - 2 * 24 * 60 * 60 * 1000,
-    read: true,
-    icon: Clock,
-    color: 'text-orange-400',
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/20',
-    dot: 'bg-orange-400'
-  },
-  {
-    id: 10,
-    type: 'info',
-    category: 'Reimbursement',
-    title: 'Finance Settlement Slip Generated',
-    desc: 'Payout slip TXN-20260629-0042 has been generated for ₹540.00 reimbursement to Alice Martin. Reference retained in audit trail.',
-    time: '3 days ago',
-    ts: Date.now() - 3 * 24 * 60 * 60 * 1000,
-    read: true,
-    icon: DollarSign,
-    color: 'text-sky-400',
-    bg: 'bg-sky-500/10',
-    border: 'border-sky-500/20',
-    dot: 'bg-sky-400'
+const getTypeConfig = (type) => {
+  switch (type) {
+    case 'expense_created':
+      return {
+        category: 'Expense',
+        title: 'New Expense Submitted',
+        icon: FileText,
+        color: 'text-indigo-400',
+        bg: 'bg-indigo-500/10',
+        border: 'border-indigo-500/20',
+        dot: 'bg-indigo-400',
+        alertType: 'info'
+      };
+    case 'expense_requires_processing':
+      return {
+        category: 'Expense',
+        title: 'Expense Ready for Processing',
+        icon: IndianRupee,
+        color: 'text-sky-400',
+        bg: 'bg-sky-500/10',
+        border: 'border-sky-500/20',
+        dot: 'bg-sky-400',
+        alertType: 'info'
+      };
+    case 'expense_status_updated':
+    case 'expense_completed':
+      return {
+        category: 'Reimbursement',
+        title: 'Expense Status Updated',
+        icon: CheckCircle2,
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-500/10',
+        border: 'border-emerald-500/20',
+        dot: 'bg-emerald-400',
+        alertType: 'success'
+      };
+    default:
+      return {
+        category: 'Policy',
+        title: 'System Alert',
+        icon: AlertTriangle,
+        color: 'text-amber-400',
+        bg: 'bg-amber-500/10',
+        border: 'border-amber-500/20',
+        dot: 'bg-amber-400',
+        alertType: 'alert'
+      };
   }
-];
+};
 
 const CATEGORIES = ['All', 'Policy', 'Expense', 'Travel', 'Reimbursement', 'Compliance', 'Team'];
 
 export const Notifications = () => {
-  const [items, setItems] = useState(notificationData);
+  const { currentUser } = useAppState();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');    // 'All' | 'Unread' | category
   const [catFilter, setCatFilter] = useState('All');
 
+  const fetchNotifications = async () => {
+    if (!currentUser || !currentUser.token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const formatted = data.data.map(n => {
+          const config = getTypeConfig(n.type);
+          return {
+            id: n.id,
+            type: config.alertType,
+            category: config.category,
+            title: config.title,
+            desc: n.text,
+            time: n.time,
+            read: n.read,
+            icon: config.icon,
+            color: config.color,
+            bg: config.bg,
+            border: config.border,
+            dot: config.dot
+          };
+        });
+        setItems(formatted);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [currentUser]);
+
   const unreadCount = items.filter(n => !n.read).length;
 
-  const markAllRead = () => setItems(prev => prev.map(n => ({ ...n, read: true })));
-  const markRead = (id) => setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const dismiss = (id) => setItems(prev => prev.filter(n => n.id !== id));
+  const markAllRead = async () => {
+    if (!currentUser || !currentUser.token) return;
+    try {
+      await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      setItems(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark all read:', error);
+    }
+  };
+
+  const markRead = async (id) => {
+    if (!currentUser || !currentUser.token) return;
+    try {
+      await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (error) {
+      console.error('Failed to mark read:', error);
+    }
+  };
+
+  const dismiss = async (id) => {
+    setItems(prev => prev.filter(n => n.id !== id));
+  };
 
   const filtered = items.filter(n => {
     const passesRead = filter === 'Unread' ? !n.read : true;
@@ -197,6 +167,13 @@ export const Notifications = () => {
   const successCount = items.filter(n => n.type === 'success').length;
   const infoCount = items.filter(n => n.type === 'info').length;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-6">
 

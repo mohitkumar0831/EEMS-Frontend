@@ -35,8 +35,8 @@ export const Login = () => {
     e.preventDefault();
 
     try {
-      const endpoint = isSuperAdmin 
-        ? AUTH_ENDPOINTS.LOGIN 
+      const endpoint = isSuperAdmin
+        ? AUTH_ENDPOINTS.LOGIN
         : AUTH_ENDPOINTS.TENANT_LOGIN(workspaceSlug);
 
       if (!isSuperAdmin && !workspaceSlug.trim()) {
@@ -58,7 +58,7 @@ export const Login = () => {
         // Assume API returns { data: { user: {...}, token: '...' }, message: '...' }
         const userData = data.data?.user || data.user;
         const token = data.data?.accessToken || data.accessToken || data.data?.token || data.token;
-        
+
         if (userData) {
           // Normalize role from backend format if needed
           const roleMap = {
@@ -72,11 +72,11 @@ export const Login = () => {
           if (roleMap[userData.role]) {
             userData.role = roleMap[userData.role];
           }
-          
+
           const userWithToken = { ...userData, token };
           setCurrentUser(userWithToken);
-          showToast(`Welcome back, ${userData.name}! Signed in successfully.`, 'success');
-          
+          showToast(`${userData.name}! Signed in successfully.`, 'success');
+
           if (userData.role === 'SuperAdmin' || isSuperAdmin) {
             navigate('/dashboard/superadmin');
           } else if (userData.role === 'CompanyAdmin') {
@@ -112,7 +112,7 @@ export const Login = () => {
     } catch (error) {
       console.error('Login error:', error);
       showToast('Network error. Trying local demo login fallback...', 'warning');
-      
+
       // Fallback for UI demo purposes if backend isn't fully ready
       const res = login(email, password);
       if (res.success) {
@@ -138,11 +138,11 @@ export const Login = () => {
       showToast('Workspace slug is required for company password reset', 'error');
       return;
     }
-    
+
     setIsResetting(true);
     try {
-      const endpoint = isSuperAdmin 
-        ? AUTH_ENDPOINTS.FORGOT_PASSWORD 
+      const endpoint = isSuperAdmin
+        ? AUTH_ENDPOINTS.FORGOT_PASSWORD
         : AUTH_ENDPOINTS.TENANT_FORGOT_PASSWORD(workspaceSlug);
 
       const response = await fetch(endpoint, {
@@ -175,7 +175,7 @@ export const Login = () => {
       showToast('Please enter both OTP and new password', 'error');
       return;
     }
-    
+
     setIsResetting(true);
     try {
       const response = await fetch(AUTH_ENDPOINTS.RESET_PASSWORD, {
@@ -239,7 +239,7 @@ export const Login = () => {
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-teal-600/10 blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '12s' }} />
 
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 z-10 items-center">
-        
+
         {/* Left Side: Brand Showcase */}
         <div className="hidden lg:flex lg:col-span-5 flex-col gap-6 text-left pr-4">
           <div className="flex items-center gap-3">
@@ -280,48 +280,48 @@ export const Login = () => {
         <div className="lg:col-span-7 w-full">
           <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 p-6 sm:p-8 rounded-[2rem] shadow-2xl flex flex-col gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-            
-              {/* Header info */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3" /> Secure Access Portal
-                </span>
-                <h2 className="text-2xl font-bold text-slate-100 mt-1">
-                  {isTenantRoute ? `Welcome to ${slug}` : 'Welcome Back'}
-                </h2>
-                <p className="text-slate-400 text-xs">Login with your credentials or choose a pre-configured profile.</p>
-              </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Header info */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3" /> Secure Access Portal
+              </span>
+              <h2 className="text-2xl font-bold text-slate-100 mt-1">
+                {isTenantRoute ? `Welcome to ${slug}` : ''}
+              </h2>
+              <p className="text-slate-400 text-xs">Login with your credentials or choose a pre-configured profile.</p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
 
-                {isTenantRoute && (
-                  <div className="flex flex-col gap-1.5 mb-1">
-                    <div className="text-xs text-slate-400 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
-                      Logging into workspace: <span className="text-cyan-400 font-bold ml-1">{workspaceSlug}</span>
-                    </div>
+              {isTenantRoute && (
+                <div className="flex flex-col gap-1.5 mb-1">
+                  <div className="text-xs text-slate-400 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+                    Logging into workspace: <span className="text-cyan-400 font-bold ml-1">{workspaceSlug}</span>
                   </div>
-                )}
+                </div>
+              )}
 
-                {!isSuperAdmin && !isTenantRoute && (
-                  <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
-                    <label className="text-xs font-semibold text-slate-400">Workspace Slug</label>
-                    <div className={`relative rounded-xl border transition-all duration-300 ${focusedField === 'workspace' ? 'border-cyan-500 bg-slate-950/60 ring-2 ring-cyan-500/10' : 'border-slate-800 bg-slate-950/30'}`}>
-                      <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input
-                        type="text"
-                        value={workspaceSlug}
-                        onChange={(e) => setWorkspaceSlug(e.target.value)}
-                        onFocus={() => setFocusedField('workspace')}
-                        onBlur={() => setFocusedField(null)}
-                        placeholder="e.g. tech-nova-innovations"
-                        className="w-full bg-transparent py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none"
-                        required={!isSuperAdmin && !isTenantRoute}
-                      />
-                    </div>
+              {!isSuperAdmin && !isTenantRoute && (
+                <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
+                  <label className="text-xs font-semibold text-slate-400">Workspace Slug</label>
+                  <div className={`relative rounded-xl border transition-all duration-300 ${focusedField === 'workspace' ? 'border-cyan-500 bg-slate-950/60 ring-2 ring-cyan-500/10' : 'border-slate-800 bg-slate-950/30'}`}>
+                    <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="text"
+                      value={workspaceSlug}
+                      onChange={(e) => setWorkspaceSlug(e.target.value)}
+                      onFocus={() => setFocusedField('workspace')}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="e.g. tech-nova-innovations"
+                      className="w-full bg-transparent py-3 pl-11 pr-4 text-xs text-slate-100 placeholder-slate-600 focus:outline-none"
+                      required={!isSuperAdmin && !isTenantRoute}
+                    />
                   </div>
-                )}
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-400">Email Address</label>
@@ -343,8 +343,8 @@ export const Login = () => {
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-slate-400">Password</label>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowForgotPassword(true)}
                     className="text-[10px] font-bold text-cyan-400 hover:underline cursor-pointer"
                   >
@@ -387,12 +387,12 @@ export const Login = () => {
           <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
             <h3 className="text-lg font-bold text-slate-100 mb-2">Reset Password</h3>
             <p className="text-xs text-slate-400 mb-6">
-              {resetStep === 1 
+              {resetStep === 1
                 ? "Enter your email address and we'll send you a 6-digit OTP to reset your password."
                 : `Enter the OTP sent to ${forgotPasswordEmail} and your new password.`}
             </p>
             <form onSubmit={resetStep === 1 ? handleForgotPassword : handleResetPassword} className="flex flex-col gap-4">
-              
+
               {resetStep === 1 && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-slate-400">Email Address</label>
@@ -427,7 +427,7 @@ export const Login = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-400">New Password</label>
                     <div className="relative rounded-xl border border-slate-700 bg-slate-950/50 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/10 transition-all">

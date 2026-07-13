@@ -99,10 +99,32 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!currentUser || !currentUser.token) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/notifications`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setNotifications(data.data);
+          const unread = data.data.filter(n => !n.read).length;
+          setUnreadCount(unread);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+  }, [currentUser]);
+
+  useEffect(() => {
     if (!socket) return;
-    
+
     const handleNewNotification = (data) => {
-      setNotifications((prev) => [data, ...prev]);
+      setNotifications((prev) => [{ ...data, read: false }, ...prev]);
       setUnreadCount((prev) => prev + 1);
     };
 
@@ -112,6 +134,38 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
       socket.off('new_notification', handleNewNotification);
     };
   }, [socket]);
+
+  const handleMarkAllRead = async () => {
+    if (!currentUser || !currentUser.token) return;
+    try {
+      await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all read:', error);
+    }
+  };
+
+  const handleMarkOneRead = async (id) => {
+    if (!currentUser || !currentUser.token) return;
+    try {
+      await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to mark notification read:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100 relative">
@@ -154,7 +208,7 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-slate-200 truncate max-w-[170px]">{currentUser?.name}</span>
               <span className="text-[10px] font-extrabold tracking-wider text-purple-400 uppercase truncate max-w-[170px]">{currentUser?.role}</span>
-              <span className="text-[9px] text-slate-500 truncate max-w-[170px] mt-0.5">{realTenantName}</span>
+              {/* <span className="text-[9px] text-slate-500 truncate max-w-[170px] mt-0.5">{realTenantName}</span> */}
             </div>
           </div>
         </div>
@@ -316,11 +370,8 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
                 <div className="absolute right-0 top-12 z-50 w-80 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-4 animate-slide-in flex flex-col gap-3">
                   <div className="flex items-center justify-between border-b border-white/5 pb-2">
                     <span className="text-xs font-bold text-slate-200">System Notifications</span>
-                    <span 
-                      onClick={() => {
-                        setNotifications([]);
-                        setUnreadCount(0);
-                      }}
+                    <span
+                      onClick={handleMarkAllRead}
                       className="text-[9px] font-bold text-indigo-400 hover:underline cursor-pointer"
                     >
                       Mark all read
@@ -333,8 +384,12 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
                       </div>
                     ) : (
                       notifications.map(n => (
-                        <div key={n.id} className="flex flex-col gap-1 p-2 rounded-lg bg-white/[0.01] hover:bg-white/[0.03] transition-all">
-                          <p className="text-xs text-slate-300 leading-normal">{n.text}</p>
+                        <div
+                          key={n.id}
+                          onClick={() => !n.read && handleMarkOneRead(n.id)}
+                          className={`flex flex-col gap-1 p-2 rounded-lg transition-all cursor-pointer relative ${n.read ? 'bg-white/[0.01] hover:bg-white/[0.03]' : 'bg-indigo-500/5 hover:bg-indigo-500/10 border-l-2 border-indigo-500'}`}
+                        >
+                          <p className={`text-xs leading-normal ${n.read ? 'text-slate-400' : 'text-slate-200 font-semibold'}`}>{n.text}</p>
                           <span className="text-[9px] text-slate-500 align-right self-end">{n.time}</span>
                         </div>
                       ))

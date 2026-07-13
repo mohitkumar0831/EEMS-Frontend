@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Eye, EyeOff } from 'lucide-react';
+import { Plus, Eye, EyeOff, Users, AlertTriangle, ArrowUpRight } from 'lucide-react';
 
 const FormField = ({ label, children }) => (
   <div className="flex flex-col gap-1.5 w-full">
@@ -31,8 +31,12 @@ export const UsersTab = ({
   formData,
   handleChange,
   handleRegisterUser,
-  resetForm
+  resetForm,
+  planInfo
 }) => {
+  const isAtLimit = planInfo && planInfo.currentCount >= planInfo.userLimit;
+  const usagePercent = planInfo ? Math.min((planInfo.currentCount / planInfo.userLimit) * 100, 100) : 0;
+  const isNearLimit = planInfo && planInfo.currentCount >= planInfo.userLimit * 0.8;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -52,6 +56,58 @@ export const UsersTab = ({
         <h3 className="text-xl font-bold text-slate-100">Add New User</h3>
         <p className="text-slate-500 text-xs mt-1">Onboard staff profiles and configure system access permissions.</p>
       </div>
+
+      {/* Plan Capacity Banner */}
+      {planInfo && (
+        <div className={`rounded-2xl border p-4 sm:p-5 ${
+          isAtLimit
+            ? 'bg-rose-500/5 border-rose-500/20'
+            : isNearLimit
+            ? 'bg-amber-500/5 border-amber-500/20'
+            : 'bg-slate-900 border-white/5'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isAtLimit ? 'bg-rose-500/10 border border-rose-500/20' : isNearLimit ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-indigo-500/10 border border-indigo-500/20'
+              }`}>
+                <Users className={`w-5 h-5 ${isAtLimit ? 'text-rose-400' : isNearLimit ? 'text-amber-400' : 'text-indigo-400'}`} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-200">User Capacity</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    {planInfo.planName} Plan
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {planInfo.currentCount} of {planInfo.userLimit} users used
+                </p>
+              </div>
+            </div>
+            {isAtLimit && (
+              <div className="flex items-center gap-2 text-xs text-rose-400 bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-500/20">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span className="font-semibold">Limit reached — upgrade to add more users</span>
+              </div>
+            )}
+          </div>
+          <div className="mt-3">
+            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isAtLimit ? 'bg-rose-500' : isNearLimit ? 'bg-amber-500' : 'bg-indigo-500'
+                }`}
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[10px] text-slate-500">0</span>
+              <span className="text-[10px] text-slate-500">{planInfo.userLimit} max</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-4 sm:p-6 shadow-xl w-full">
         <form onSubmit={handleRegisterUser} className="flex flex-col gap-6 w-full">

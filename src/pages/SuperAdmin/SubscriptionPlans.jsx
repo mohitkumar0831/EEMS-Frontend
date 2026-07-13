@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { BILLING_ENDPOINTS } from '../../constants/apiConstants';
 import { Shield, Users, Database, DollarSign, Award, Layers, Save, Plus, TrendingUp, CreditCard, AlertTriangle, Loader2 } from 'lucide-react';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 export const SubscriptionPlans = () => {
   const { showToast, currentUser } = useAppState();
@@ -114,12 +115,7 @@ export const SubscriptionPlans = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-        <span className="ml-2 text-slate-400 text-sm">Loading subscription plans...</span>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
@@ -173,18 +169,16 @@ export const SubscriptionPlans = () => {
       {/* Plan Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {plans.map((plan) => (
-          <div 
-            key={plan._id || plan.name} 
+          <div
+            key={plan._id || plan.name}
             onClick={() => handleSelectPlan(plan)}
-            className={`bg-slate-900 border p-5 rounded-2xl flex flex-col justify-between shadow-sm cursor-pointer transition-all duration-300 relative overflow-hidden group ${
-              selectedPlan?._id === plan._id ? 'border-indigo-500 bg-indigo-500/[0.02] shadow-indigo-500/5' : 'border-white/5 hover:border-white/10'
-            }`}
+            className={`bg-slate-900 border p-5 rounded-2xl flex flex-col justify-between shadow-sm cursor-pointer transition-all duration-300 relative overflow-hidden group ${selectedPlan?._id === plan._id ? 'border-indigo-500 bg-indigo-500/[0.02] shadow-indigo-500/5' : 'border-white/5 hover:border-white/10'
+              }`}
           >
             <div className="flex justify-between items-start">
               <div>
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                  planColors[plan.name]?.badge || 'bg-slate-800 text-slate-400 border border-white/5'
-                }`}>
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${planColors[plan.name]?.badge || 'bg-slate-800 text-slate-400 border border-white/5'
+                  }`}>
                   {plan.name}
                 </span>
                 <div className="text-2xl font-extrabold text-slate-100 mt-3 font-mono">₹{plan.priceMonthly}/mo</div>
@@ -276,35 +270,35 @@ export const SubscriptionPlans = () => {
             <form onSubmit={handleUpdateLimit} className="flex flex-col gap-4 mt-2">
               <label className="flex flex-col gap-1 text-xs text-slate-400">
                 <span className="font-medium text-slate-300">Monthly Licensing Cost (₹)</span>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={editForm.priceMonthly}
                   onChange={(e) => setEditForm(prev => ({ ...prev, priceMonthly: parseInt(e.target.value) || 0 }))}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500" 
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
                 />
               </label>
 
               <label className="flex flex-col gap-1 text-xs text-slate-400">
                 <span className="font-medium text-slate-300">User Account Quota</span>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={editForm.userLimit}
                   onChange={(e) => setEditForm(prev => ({ ...prev, userLimit: parseInt(e.target.value) || 0 }))}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500" 
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
                 />
               </label>
 
               <label className="flex flex-col gap-1 text-xs text-slate-400">
                 <span className="font-medium text-slate-300">File Storage Capacity (GB)</span>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={editForm.storageGB}
                   onChange={(e) => setEditForm(prev => ({ ...prev, storageGB: parseInt(e.target.value) || 0 }))}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500" 
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
                 />
               </label>
 
-              <button 
+              <button
                 type="submit"
                 disabled={saving}
                 className="w-full mt-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"

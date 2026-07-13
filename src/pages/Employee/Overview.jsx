@@ -157,12 +157,12 @@ export const Overview = () => {
                 <h3 className="text-sm font-bold text-slate-200">Recent Claims Activity</h3>
                 <p className="text-xs text-slate-500 mt-1">Audit status tracking on your latest expense claim submissions.</p>
               </div>
-              <button
+              {/* <button
                 onClick={() => navigate('/dashboard/employee/reimbursements')}
                 className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 View History <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              </button> */}
             </div>
 
             {recentClaims.length === 0 ? (
@@ -180,12 +180,12 @@ export const Overview = () => {
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-extrabold text-slate-200">₹{exp.amount.toFixed(2)}</span>
                       <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${exp.status === 'Paid'
-                          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                          : exp.status === 'Approved'
-                            ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
-                            : exp.status === 'Rejected'
-                              ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
-                              : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                        : exp.status === 'Approved'
+                          ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
+                          : exp.status === 'Rejected'
+                            ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
+                            : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
                         }`}>
                         {exp.status}
                       </span>
@@ -203,12 +203,12 @@ export const Overview = () => {
                 <h3 className="text-sm font-bold text-slate-200">Recent Travel Plans</h3>
                 <p className="text-xs text-slate-500 mt-1">Status of travel requests submitted for authorization.</p>
               </div>
-              <button
+              {/* <button
                 onClick={() => navigate('/dashboard/employee/reimbursements')}
                 className="text-[10px] font-bold text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 View Requests <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              </button> */}
             </div>
 
             {recentTravel.length === 0 ? (
@@ -226,10 +226,10 @@ export const Overview = () => {
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-extrabold text-slate-200">₹{tr.estimatedCost.toFixed(2)}</span>
                       <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${tr.status === 'Approved'
-                          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                          : tr.status === 'Rejected'
-                            ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
-                            : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                        : tr.status === 'Rejected'
+                          ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
+                          : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
                         }`}>
                         {tr.status}
                       </span>
@@ -302,38 +302,6 @@ export const Overview = () => {
               </div>
             )}
           </div>
-
-          {/* Card 3: Active Policies Roster */}
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl flex flex-col gap-4">
-            <div className="border-b border-white/5 pb-2.5">
-              <h4 className="text-sm font-bold text-slate-200">Policy Spending Caps</h4>
-              <p className="text-[10px] text-slate-500 mt-0.5">Corporate allowance caps for category claims.</p>
-            </div>
-
-            {policies.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-6">No policy guidelines configured.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {policies.map(policy => (
-                  <div key={policy.id} className="flex items-center justify-between p-3 bg-slate-950/20 border border-white/5 rounded-2xl">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center font-bold text-xs shrink-0 text-slate-400">
-                        {policy.category.charAt(0)}
-                      </div>
-                      <div className="flex flex-col min-w-0 text-[10px]">
-                        <span className="font-bold text-slate-300 truncate">{policy.category}</span>
-                        <span className="text-slate-550 truncate mt-0.5">{policy.rule || 'Compliance Cap'}</span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-extrabold text-slate-200 shrink-0">
-                      ₹{policy.limit.toFixed(0)} max
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
         </div>
 
       </div>

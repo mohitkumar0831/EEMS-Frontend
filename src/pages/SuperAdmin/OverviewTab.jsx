@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Globe, Users, Settings, ShieldAlert, TrendingUp, DollarSign,
   ArrowUpRight, ArrowDownRight, Building2, Briefcase, Clock,
   CheckCircle2, AlertTriangle, XCircle, Plane, Activity
 } from 'lucide-react';
+import { useAppState } from '../../context/StateContext';
+import { BILLING_ENDPOINTS } from '../../constants/apiConstants';
 
 export const OverviewTab = ({ stats }) => {
   if (!stats) return null;
@@ -31,15 +33,51 @@ export const OverviewTab = ({ stats }) => {
   const categoryColors = ['bg-indigo-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
   const categoryTextColors = ['text-indigo-400', 'text-purple-400', 'text-emerald-400', 'text-amber-400', 'text-rose-400'];
 
-  // Monthly mock data for sparkline chart
-  const monthlyData = [
-    { m: 'Jan', val: 32, spend: 4200 },
-    { m: 'Feb', val: 45, spend: 6800 },
-    { m: 'Mar', val: 58, spend: 8100 },
-    { m: 'Apr', val: 42, spend: 5400 },
-    { m: 'May', val: 68, spend: 9200 },
-    { m: 'Jun', val: 88, spend: 12500 }
-  ];
+  const { currentUser } = useAppState();
+  const [monthlyData, setMonthlyData] = useState([]);
+
+  useEffect(() => {
+    const fetchMonthlyVolume = async () => {
+      try {
+        const year = new Date().getFullYear();
+        const res = await fetch(BILLING_ENDPOINTS.GET_MONTHLY_VOLUME(year), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': currentUser?.token ? `Bearer ${currentUser.token}` : undefined,
+          }
+        });
+        const data = await res.json();
+
+        if (data.success && data.data) {
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+          // Map data to chart format
+          let maxSpend = Math.max(...data.data.map(d => d.totalSpend), 1);
+
+          const formatted = data.data.map(d => ({
+            m: monthNames[d._id - 1], // _id is month number (1-12)
+            spend: d.totalSpend,
+            val: Math.max(10, (d.totalSpend / maxSpend) * 100) // Minimum 10% height for visibility
+          }));
+
+          // Fill missing months up to the current month or available data
+          const currentMonth = new Date().getMonth() + 1; // 1-12
+          const fullData = [];
+
+          for (let i = 1; i <= currentMonth; i++) {
+            const found = formatted.find(f => f.m === monthNames[i - 1]);
+            if (found) fullData.push(found);
+            else fullData.push({ m: monthNames[i - 1], spend: 0, val: 5 }); // 5% height for empty months
+          }
+
+          setMonthlyData(fullData);
+        }
+      } catch (err) {
+        console.error('Failed to fetch monthly volume', err);
+      }
+    };
+    fetchMonthlyVolume();
+  }, [currentUser]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,19 +105,18 @@ export const OverviewTab = ({ stats }) => {
       </div>
 
       {/* ── Primary KPI Cards ─────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Tenants */}
         <div className="bg-slate-900 border border-white/5 p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="flex flex-col gap-1 z-10">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company Admins</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Company</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-extrabold text-slate-100">{roleCounts['CompanyAdmin'] || 0}</span>
               <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5">
-                <ArrowUpRight className="w-3 h-3" /> +1 this quarter
               </span>
             </div>
-            <span className="text-[10px] text-slate-500">Registered company administrators</span>
+            <span className="text-[10px] text-slate-500">Registered company</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 z-10">
             <Globe className="w-6 h-6" />
@@ -116,25 +153,6 @@ export const OverviewTab = ({ stats }) => {
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 z-10">
             <DollarSign className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Policies */}
-        <div className="bg-slate-900 border border-white/5 p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="flex flex-col gap-1 z-10">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Policies</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-extrabold text-slate-100">{activePolicies}</span>
-              <span className={`text-[10px] font-bold flex items-center gap-0.5 ${flaggedClaims > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                {flaggedClaims > 0 && <AlertTriangle className="w-3 h-3" />}
-                {flaggedClaims} violations
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-500">Compliance rules enforced</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 z-10">
-            <Settings className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -195,7 +213,7 @@ export const OverviewTab = ({ stats }) => {
               <p className="text-[11px] text-slate-500 mt-0.5">Monthly expense processing volume and financial throughput</p>
             </div>
             <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
-              H1 2026
+              {new Date().getFullYear()}
             </span>
           </div>
 
@@ -235,7 +253,7 @@ export const OverviewTab = ({ stats }) => {
                   <div className="flex justify-between items-center text-xs mb-1.5">
                     <span className="font-semibold text-slate-300">{cat}</span>
                     <span className={`font-mono font-bold ${categoryTextColors[idx % categoryTextColors.length]}`}>
-                      {pct.toFixed(1)}% · ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {pct.toFixed(1)}% · ₹{amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5">

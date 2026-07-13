@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { UsersTab } from './UsersTab';
-import { USER_ENDPOINTS } from '../../constants/apiConstants';
+import { USER_ENDPOINTS, BILLING_ENDPOINTS } from '../../constants/apiConstants';
 import { PageSkeleton } from '../../components/PageSkeleton';
 
 const initialFormState = {
@@ -51,6 +51,12 @@ export const Users = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [tenantUsers, setTenantUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [planInfo, setPlanInfo] = useState(null); // { planName, userLimit, currentCount }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': currentUser?.token ? `Bearer ${currentUser.token}` : undefined,
+  };
 
   const fetchEmployees = async () => {
     try {
@@ -62,17 +68,65 @@ export const Users = () => {
       const data = await response.json();
       if (response.ok) {
         setTenantUsers(data.data || []);
+        return data.data || [];
       }
     } catch (error) {
       console.error('Failed to fetch employees', error);
+    }
+    return [];
+  };
+
+  // Fetch subscription & plan info to enforce user limits
+  const fetchPlanInfo = async (employees) => {
+    try {
+      const tenantId = currentUser?.tenantId;
+      if (!tenantId) return;
+
+      // Fetch subscription to get the plan
+      const subRes = await fetch(BILLING_ENDPOINTS.GET_SUBSCRIPTION(tenantId), { headers });
+      const subData = await subRes.json();
+
+      if (subData.success && subData.data) {
+        const subscription = subData.data;
+        const planId = subscription.planId?._id || subscription.planId;
+
+        // Fetch all plans to find the current plan's userLimit
+        const plansRes = await fetch(BILLING_ENDPOINTS.GET_PLANS, { headers });
+        const plansData = await plansRes.json();
+
+        if (plansData.success && plansData.data) {
+          const currentPlan = plansData.data.find(p => p._id === planId) || 
+                              plansData.data.find(p => p.name === subscription.planName);
+          if (currentPlan) {
+            setPlanInfo({
+              planName: currentPlan.name,
+              userLimit: currentPlan.userLimit,
+              currentCount: employees.length,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch plan info:', error);
     }
   };
 
   useEffect(() => {
     if (currentUser?.tenantSlug) {
-      fetchEmployees();
+      const init = async () => {
+        const employees = await fetchEmployees();
+        await fetchPlanInfo(employees);
+      };
+      init();
     }
   }, [currentUser]);
+
+  // Update currentCount whenever tenantUsers changes
+  useEffect(() => {
+    if (planInfo) {
+      setPlanInfo(prev => prev ? { ...prev, currentCount: tenantUsers.length } : null);
+    }
+  }, [tenantUsers.length]);
 
   const resetForm = () => {
     setFormData(initialFormState);
@@ -96,6 +150,15 @@ export const Users = () => {
 
   const handleRegisterUser = async (e) => {
     e.preventDefault();
+
+    // ── Plan-based user limit check (client-side) ───────────────────────────
+    if (planInfo && planInfo.currentCount >= planInfo.userLimit) {
+      showToast(
+        `User limit reached! Your ${planInfo.planName} plan allows up to ${planInfo.userLimit} users. You currently have ${planInfo.currentCount} users. Please upgrade your plan.`,
+        'error'
+      );
+      return;
+    }
 
     const {
       firstName, lastName, employeeId, email, username, password, confirmPassword, role,
@@ -258,6 +321,7 @@ export const Users = () => {
       handleChange={handleChange}
       handleRegisterUser={handleRegisterUser}
       resetForm={resetForm}
+      planInfo={planInfo}
     />
   );
 };

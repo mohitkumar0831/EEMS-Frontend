@@ -1,11 +1,11 @@
 // --- LOCAL DEVELOPMENT ---
-// export const API_BASE_URL = 'http://localhost:4000/api/v1';
-// export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
+export const API_BASE_URL = 'http://localhost:4000/api/v1';
+export const NOTIFICATION_SERVICE_URL = 'http://localhost:4500';
 
 // --- DEPLOYED / PRODUCTION ---
 // Uncomment the lines below (and comment the local ones above) when deploying
-export const API_BASE_URL = 'http://103.192.198.240:9002/api/v1';
-export const NOTIFICATION_SERVICE_URL = 'http://103.192.198.240:4500';
+// export const API_BASE_URL = 'http://103.192.198.240:9002/api/v1';
+// export const NOTIFICATION_SERVICE_URL = 'http://103.192.198.240:4500';
 
 export const AUTH_ENDPOINTS = {
   REGISTER_SUPER_ADMIN: `${API_BASE_URL}/auth/register-super-admin`,
@@ -89,6 +89,7 @@ export const BILLING_ENDPOINTS = {
   CREATE_ORDER: `${API_BASE_URL}/billing/payments/create-order`,
   VERIFY_PAYMENT: `${API_BASE_URL}/billing/payments/verify`,
   GET_ALL_PAYMENTS: `${API_BASE_URL}/billing/payments`,
+  GET_MONTHLY_VOLUME: (year) => `${API_BASE_URL}/billing/payments/monthly-volume?year=${year}`,
   GET_PAYMENT_HISTORY: (tenantId) => `${API_BASE_URL}/billing/payments/tenant/${tenantId}`,
 
   // Invoices
