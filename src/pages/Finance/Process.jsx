@@ -94,13 +94,13 @@ export const FinanceProcess = () => {
     if (currentUser?.tenantSlug) {
       fetchData();
     }
-    
+
     // Load Razorpay Script
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
     document.body.appendChild(script);
-    
+
     return () => {
       document.body.removeChild(script);
     };
@@ -120,12 +120,12 @@ export const FinanceProcess = () => {
     if (!selectedExpense) return;
 
     try {
-      const payoutRouteName = payoutMethod === 'ACH' 
-        ? 'ACH Direct Deposit' 
-        : payoutMethod === 'Wire' 
-          ? 'Wire Transfer' 
-          : payoutMethod === 'CorpCard' 
-            ? 'Corporate Credit Card' 
+      const payoutRouteName = payoutMethod === 'ACH'
+        ? 'ACH Direct Deposit'
+        : payoutMethod === 'Wire'
+          ? 'Wire Transfer'
+          : payoutMethod === 'CorpCard'
+            ? 'Corporate Credit Card'
             : 'Check Clearance';
 
       // 1. Create Razorpay Order
@@ -170,12 +170,12 @@ export const FinanceProcess = () => {
                 paymentReference: referenceNumber || response.razorpay_payment_id
               })
             });
-            
+
             const verifyData = await verifyRes.json();
-            
+
             if (verifyData.success) {
               showToast('Payment verified and disbursed successfully!', 'success');
-              
+
               setSlipData({
                 id: selectedExpense._id,
                 title: selectedExpense.title,
@@ -212,7 +212,7 @@ export const FinanceProcess = () => {
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response){
+      rzp.on('payment.failed', function (response) {
         showToast(`Payment Failed: ${response.error.description}`, 'error');
       });
       rzp.open();
@@ -348,8 +348,8 @@ export const FinanceProcess = () => {
                   setSelectedExpense(null);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === 'pending'
-                    ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
-                    : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-300'
                   }`}
               >
                 Awaiting Disbursement ({pendingCount})
@@ -360,8 +360,8 @@ export const FinanceProcess = () => {
                   setSelectedExpense(null);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === 'history'
-                    ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
-                    : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-300'
                   }`}
               >
                 Disbursed History ({paidCount})
@@ -420,8 +420,8 @@ export const FinanceProcess = () => {
                       <div className="flex flex-col items-end gap-1.5">
                         <span className="text-xs font-extrabold text-slate-100">₹{exp.amount.toFixed(2)}</span>
                         <span className={`px-2 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase shrink-0 ${exp.status === 'Paid'
-                            ? 'bg-emerald-500/10 text-emerald-455 border border-emerald-500/25'
-                            : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/25'
+                          ? 'bg-emerald-500/10 text-emerald-455 border border-emerald-500/25'
+                          : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/25'
                           }`}>
                           {exp.status === 'Paid' ? 'PAID / SETTLED' : 'APPROVED BY L1'}
                         </span>
@@ -456,7 +456,7 @@ export const FinanceProcess = () => {
                     <span className="text-[10px] text-indigo-400 uppercase tracking-wider mt-0.5">{selectedExpense.employeeEmail}</span>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="flex flex-col p-2 bg-slate-900/50 rounded-lg border border-white/5">
                     <span className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Role / Dept</span>

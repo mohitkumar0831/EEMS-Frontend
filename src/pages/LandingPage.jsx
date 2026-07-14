@@ -33,10 +33,10 @@ export const LandingPage = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   // Interactive Sandbox state
   const [activeSandboxRole, setActiveSandboxRole] = useState('Employee');
-  
+
   // Interactive Live Pipeline Simulator state
   const [pipeStage, setPipeStage] = useState(0); // 0: Idle, 1: Submitted, 2: Approved, 3: Settled, 4: Audited
   const [pipeLogs, setPipeLogs] = useState([
@@ -201,7 +201,7 @@ export const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 font-sans overflow-x-hidden relative">
-      
+
       {/* Decorative High-Tech Grid Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
         <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #1e293b 1px, transparent 0)', backgroundSize: '24px 24px' }} />
@@ -223,15 +223,15 @@ export const LandingPage = () => {
             </div>
 
             <nav className="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <a href="#sandbox"     className="hover:text-cyan-400 transition-colors">Sandbox Preview</a>
-              <a href="#simulator"   className="hover:text-cyan-400 transition-colors">Flow Simulator</a>
-              <a href="#compliance"  className="hover:text-cyan-400 transition-colors">Compliance</a>
+              <a href="#sandbox" className="hover:text-cyan-400 transition-colors">Sandbox Preview</a>
+              <a href="#simulator" className="hover:text-cyan-400 transition-colors">Flow Simulator</a>
+              <a href="#compliance" className="hover:text-cyan-400 transition-colors">Compliance</a>
               <a href="#integration" className="hover:text-cyan-400 transition-colors">Integrations</a>
             </nav>
 
             <div className="hidden md:flex items-center gap-3">
               <Link to="/login" className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white border border-white/5 hover:border-white/10 rounded-xl transition-all">Sign In</Link>
-              <Link to="/register" className="px-4 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 rounded-xl shadow-lg shadow-cyan-500/10 transition-all">Register Company</Link>
+              {/* <Link to="/register" className="px-4 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 rounded-xl shadow-lg shadow-cyan-500/10 transition-all">Register Company</Link> */}
             </div>
 
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer">
@@ -243,12 +243,12 @@ export const LandingPage = () => {
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-950 border-t border-white/5 px-4 py-4 flex flex-col gap-3">
-            <a href="#sandbox"     onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Sandbox Preview</a>
-            <a href="#simulator"   onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Flow Simulator</a>
-            <a href="#compliance"  onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Compliance</a>
+            <a href="#sandbox" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Sandbox Preview</a>
+            <a href="#simulator" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Flow Simulator</a>
+            <a href="#compliance" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Compliance</a>
             <a href="#integration" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Integrations</a>
             <div className="flex gap-3 pt-2 border-t border-white/5">
-              <Link to="/login"    className="flex-1 text-center py-2 text-xs font-bold border border-white/5 rounded-xl text-slate-300">Sign In</Link>
+              <Link to="/login" className="flex-1 text-center py-2 text-xs font-bold border border-white/5 rounded-xl text-slate-300">Sign In</Link>
               <Link to="/register" className="flex-1 text-center py-2 text-xs font-bold bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 rounded-xl">Register</Link>
             </div>
           </div>
@@ -258,24 +258,24 @@ export const LandingPage = () => {
       {/* ── Hero Section ── */}
       <section className="relative min-h-screen flex items-center justify-center px-4 pt-20 pb-16">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Left Column: Headline */}
           <div className="lg:col-span-6 flex flex-col items-start gap-6 text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
               <Cpu className="w-3.5 h-3.5" /> Next-Gen Spend Automation
             </div>
-            
+
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight text-slate-100">
               Automate expense flows with absolute{' '}
               <span className="bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent">
                 transparency
               </span>
             </h1>
-            
+
             <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
               Design custom approval pipelines, verify compliance logs with a dedicated auditor dashboard, and process instant reimbursements in Indian Rupee (₹).
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2">
               <Link to="/register" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all text-xs">
                 Get Started Free
@@ -307,7 +307,7 @@ export const LandingPage = () => {
           <div className="lg:col-span-6 w-full">
             <div className="relative bg-slate-950/80 border border-white/5 rounded-3xl p-5 shadow-2xl flex flex-col gap-4 overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-              
+
               {/* Header Bar */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-900">
                 <div className="flex items-center gap-2">
@@ -346,11 +346,10 @@ export const LandingPage = () => {
                   <button
                     key={role}
                     onClick={() => setActiveSandboxRole(role)}
-                    className={`flex-1 text-center py-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${
-                      activeSandboxRole === role
-                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold'
-                        : 'text-slate-500 hover:text-slate-350'
-                    }`}
+                    className={`flex-1 text-center py-2 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer ${activeSandboxRole === role
+                      ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold'
+                      : 'text-slate-500 hover:text-slate-350'
+                      }`}
                   >
                     {role}
                   </button>
@@ -386,19 +385,18 @@ export const LandingPage = () => {
                   { stage: 4, label: 'Auditor Oversight', desc: 'Workspace audits, transaction ledger locks, and validation status' }
                 ].map(step => {
                   const isActive = pipeStage >= step.stage;
-                  const isCurrent  = pipeStage === step.stage;
+                  const isCurrent = pipeStage === step.stage;
                   return (
                     <div key={step.stage} className="flex gap-4 relative">
                       {step.stage < 4 && (
                         <div className={`absolute left-[17px] top-9 bottom-[-16px] w-[2px] transition-colors duration-300 ${pipeStage > step.stage ? 'bg-cyan-500' : 'bg-slate-900'}`} />
                       )}
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${
-                        isCurrent
-                          ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20 animate-pulse'
-                          : isActive
-                            ? 'bg-slate-900 text-cyan-400 border border-cyan-500/30'
-                            : 'bg-slate-950 text-slate-650 border border-slate-900'
-                      }`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${isCurrent
+                        ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20 animate-pulse'
+                        : isActive
+                          ? 'bg-slate-900 text-cyan-400 border border-cyan-500/30'
+                          : 'bg-slate-950 text-slate-650 border border-slate-900'
+                        }`}>
                         {step.stage}
                       </div>
                       <div className="flex flex-col pt-0.5">
@@ -484,7 +482,7 @@ export const LandingPage = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
             <Building2 className="w-3.5 h-3.5" /> Integration Ready
           </div>
-          
+
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Fits into your existing enterprise stack</h2>
           <p className="text-slate-400 text-xs leading-relaxed max-w-xl">
             Export transaction logs to your bookkeeping systems with native CSV outputs. Direct bank integrations support automated payouts upon finance team clearance.
