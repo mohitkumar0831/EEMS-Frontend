@@ -295,7 +295,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
             <table className="w-full text-left text-xs min-w-[500px]">
               <thead>
                 <tr className="text-slate-400 text-[10px] uppercase tracking-wider font-bold border-b border-white/5">
-                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">Sr.no</th>
                   <th className="px-4 py-3">Employee</th>
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Category</th>
@@ -334,7 +334,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
             <table className="w-full text-left text-xs min-w-[500px]">
               <thead>
                 <tr className="text-slate-400 text-[10px] uppercase tracking-wider font-bold border-b border-white/5">
-                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">Sr.no</th>
                   <th className="px-4 py-3">Type</th>
                   <th className="px-4 py-3">Employee</th>
                   <th className="px-4 py-3">Submitted On</th>

@@ -70,6 +70,12 @@ export const ReportsTab = () => {
   const totalApprovedCompanySpend = employeeReportData.reduce((sum, item) => sum + item.approvedSpend, 0);
   const totalPendingCompanySpend = employeeReportData.reduce((sum, item) => sum + item.pendingSpend, 0);
   const totalActiveClaimsCount = employeeReportData.reduce((sum, item) => sum + item.totalClaimsCount, 0);
+  const totalDisbursedCompanySpend = employeeReportData.reduce((sum, item) => {
+    if (item.disbursedSpend !== undefined) return sum + item.disbursedSpend;
+    return sum + item.expenses
+      .filter(e => ['paid', 'audited'].includes((e.status || '').toLowerCase()))
+      .reduce((s, e) => s + (e.amount || 0), 0);
+  }, 0);
   const averageSpendPerEmployee = employeeReportData.length ? totalApprovedCompanySpend / employeeReportData.length : 0;
 
   const toggleRow = (empId) => {
@@ -187,11 +193,11 @@ export const ReportsTab = () => {
 
       {/* Spend Stat Cards */}
       <div className="flex xl:grid xl:grid-cols-4 gap-4 overflow-x-auto xl:overflow-visible pb-3 xl:pb-0 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-        {/* Total Approved Spend */}
+        {/* Total Disbursed Spend */}
         <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl min-w-[220px] xl:min-w-0 flex items-center justify-between gap-3 shrink-0 xl:shrink hover:border-indigo-500/20 transition-all duration-300">
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] text-slate-500 font-bold tracking-wider uppercase block">Total Approved Spend</span>
-            <span className="text-2xl font-bold text-slate-100 block mt-1.5">₹{totalApprovedCompanySpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="text-[10px] text-slate-500 font-bold tracking-wider uppercase block">Total Spending (Paid)</span>
+            <span className="text-2xl font-bold text-slate-100 block mt-1.5">₹{totalDisbursedCompanySpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-300 shrink-0">
             <TrendingUp className="w-5 h-5" />
@@ -354,7 +360,7 @@ export const ReportsTab = () => {
 
                         {/* Reimbursed Spend */}
                         <td className="px-4 py-4 text-right font-bold text-slate-100">
-                          ₹{item.approvedSpend.toFixed(2)}
+                          ₹{(item.disbursedSpend !== undefined ? item.disbursedSpend : item.expenses.filter(e => e.status === 'Paid').reduce((sum, e) => sum + (e.amount || 0), 0)).toFixed(2)}
                         </td>
                       </tr>
 

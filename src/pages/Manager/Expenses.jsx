@@ -30,7 +30,7 @@ export const Expenses = () => {
   const { currentUser, showToast } = useAppState();
   const [managerExpenses, setManagerExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [comment, setComment] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,19 +43,19 @@ export const Expenses = () => {
         headers: { 'Authorization': `Bearer ${currentUser.token}` }
       });
       const expenseData = await expenseResponse.json();
-      
+
       // Fetch employees to map names
       const employeeResponse = await fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), {
         headers: { 'Authorization': `Bearer ${currentUser.token}` }
       });
       const employeeData = await employeeResponse.json();
-      
+
       if (expenseData.success && employeeData.success) {
         const employeesMap = {};
         employeeData.data.forEach(emp => {
           employeesMap[emp._id] = emp;
         });
-        
+
         const mappedExpenses = expenseData.data.map(exp => {
           const emp = employeesMap[exp.employeeId] || {};
           return {
@@ -70,7 +70,7 @@ export const Expenses = () => {
           };
         });
         setManagerExpenses(mappedExpenses);
-        
+
         // Update selectedExpense if it was selected before refresh
         if (selectedExpense) {
           const updated = mappedExpenses.find(e => e._id === selectedExpense._id);
@@ -217,7 +217,7 @@ export const Expenses = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-4">
         <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 flex items-center justify-between gap-3 shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Claims Queue</span>
@@ -238,7 +238,7 @@ export const Expenses = () => {
           </div>
         </div>
 
-        <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 flex items-center justify-between gap-3 shadow-xl">
+        {/* <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 flex items-center justify-between gap-3 shadow-xl">
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Policy Flags</span>
             <span className="text-xl font-bold text-amber-400 mt-1 block">{flaggedCount} Violations</span>
@@ -246,7 +246,7 @@ export const Expenses = () => {
           <div className="p-2 bg-amber-500/10 rounded-xl text-amber-400">
             <AlertCircle className="w-4.5 h-4.5" />
           </div>
-        </div>
+        </div> */}
 
         <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 flex items-center justify-between gap-3 shadow-xl">
           <div>
@@ -274,8 +274,8 @@ export const Expenses = () => {
                   setSelectedExpense(null);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === 'pending'
-                    ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
-                    : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-300'
                   }`}
               >
                 Pending Review ({pendingCount})
@@ -286,8 +286,8 @@ export const Expenses = () => {
                   setSelectedExpense(null);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === 'history'
-                    ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
-                    : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
+                  : 'text-slate-500 hover:text-slate-300'
                   }`}
               >
                 Audit History ({processedCount})
@@ -410,7 +410,7 @@ export const Expenses = () => {
                     <span className="text-[10px] text-indigo-400 uppercase tracking-wider mt-0.5">{selectedExpense.employeeEmail}</span>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="flex flex-col p-2 bg-slate-900/50 rounded-lg border border-white/5">
                     <span className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Role / Dept</span>
@@ -570,8 +570,8 @@ export const Expenses = () => {
               {(selectedExpense.status !== 'Submitted' && selectedExpense.status !== 'Under Review' && selectedExpense.status !== 'Draft') && (
                 <div className="border-t border-white/5 pt-4.5 mt-auto text-center">
                   <div className={`p-4 rounded-2xl border flex flex-col items-center gap-2 ${(selectedExpense.status === 'Manager Rejected' || selectedExpense.status === 'Finance Rejected')
-                      ? 'bg-rose-500/5 border-rose-500/20 text-rose-400'
-                      : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
+                    ? 'bg-rose-500/5 border-rose-500/20 text-rose-400'
+                    : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400'
                     }`}>
                     {(selectedExpense.status === 'Manager Rejected' || selectedExpense.status === 'Finance Rejected') ? (
                       <>
