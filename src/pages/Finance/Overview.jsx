@@ -224,7 +224,7 @@ export const FinanceOverview = () => {
 
         {/* Unique Claimants */}
         <div className="bg-slate-900/60 border border-white/5 p-4 rounded-2xl flex flex-col gap-1 shadow-lg">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Claimants</span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Claims</span>
           <span className="text-lg font-extrabold text-violet-300">{uniqueClaimants}</span>
           <span className="text-[10px] text-slate-500">employees with submissions</span>
         </div>

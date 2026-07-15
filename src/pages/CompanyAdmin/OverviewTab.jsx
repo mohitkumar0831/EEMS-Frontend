@@ -101,7 +101,7 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
   return (
     <div className="flex flex-col gap-8">
       {/* Top KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 xl:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 xl:gap-6">
         {/* Total Employees */}
         <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-indigo-500/30 transition-all duration-300">
           <div className="min-w-0 flex-1">
@@ -138,19 +138,6 @@ export const OverviewTab = ({ dashboardMetrics, departmentData, totalEmployees, 
           </div>
           <div className="rounded-xl bg-amber-500/10 p-2.5 text-amber-300 shrink-0">
             <ShieldAlert className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Pending Travel Requests */}
-        <div className="bg-slate-900/80 rounded-2xl p-4 border border-white/10 shadow-xl flex items-center justify-between gap-3 hover:border-sky-500/30 transition-all duration-300">
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate" title="Pending Travel Requests">
-              Pending Travel
-            </div>
-            <div className="mt-1.5 text-2xl font-bold text-slate-100 truncate">{pendingTravel}</div>
-          </div>
-          <div className="rounded-xl bg-sky-500/10 p-2.5 text-sky-300 shrink-0">
-            <Clock className="w-5 h-5" />
           </div>
         </div>
 

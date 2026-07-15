@@ -39,6 +39,40 @@ export const UsersTab = ({
   const isNearLimit = planInfo && planInfo.currentCount >= planInfo.userLimit * 0.8;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [filterRole, setFilterRole] = useState('All');
+
+  const getValidationCls = (value, type) => {
+    if (!value) return inputCls;
+    let isValid = true;
+    switch (type) {
+      case 'name':
+        isValid = /^[a-zA-Z\s]+$/.test(value);
+        break;
+      case 'email':
+        isValid = /\.(com|in|org)$/i.test(value) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        break;
+      case 'phone':
+        isValid = /^\d{10}$/.test(value);
+        break;
+      case 'pan':
+        isValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(value);
+        break;
+      case 'account':
+        isValid = /^\d{9,18}$/.test(value);
+        break;
+      case 'ifsc':
+        isValid = /^[A-Z]{4}0[A-Z0-9]{6}$/i.test(value);
+        break;
+      default:
+        return inputCls;
+    }
+
+    if (isValid) {
+      return 'w-full bg-emerald-950/20 border border-emerald-500/50 rounded-xl py-2.5 px-3.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all';
+    } else {
+      return 'w-full bg-rose-950/20 border border-rose-500/50 rounded-xl py-2.5 px-3.5 text-xs text-rose-100 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all';
+    }
+  };
 
   const roleDetails = [
     { id: 'Employee', title: 'Employee', desc: 'Can submit expense claims and view personal reimbursements.' },
@@ -59,18 +93,16 @@ export const UsersTab = ({
 
       {/* Plan Capacity Banner */}
       {planInfo && (
-        <div className={`rounded-2xl border p-4 sm:p-5 ${
-          isAtLimit
-            ? 'bg-rose-500/5 border-rose-500/20'
-            : isNearLimit
+        <div className={`rounded-2xl border p-4 sm:p-5 ${isAtLimit
+          ? 'bg-rose-500/5 border-rose-500/20'
+          : isNearLimit
             ? 'bg-amber-500/5 border-amber-500/20'
             : 'bg-slate-900 border-white/5'
-        }`}>
+          }`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                isAtLimit ? 'bg-rose-500/10 border border-rose-500/20' : isNearLimit ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-indigo-500/10 border border-indigo-500/20'
-              }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isAtLimit ? 'bg-rose-500/10 border border-rose-500/20' : isNearLimit ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-indigo-500/10 border border-indigo-500/20'
+                }`}>
                 <Users className={`w-5 h-5 ${isAtLimit ? 'text-rose-400' : isNearLimit ? 'text-amber-400' : 'text-indigo-400'}`} />
               </div>
               <div>
@@ -95,14 +127,13 @@ export const UsersTab = ({
           <div className="mt-3">
             <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isAtLimit ? 'bg-rose-500' : isNearLimit ? 'bg-amber-500' : 'bg-indigo-500'
-                }`}
+                className={`h-full rounded-full transition-all duration-500 ${isAtLimit ? 'bg-rose-500' : isNearLimit ? 'bg-amber-500' : 'bg-indigo-500'
+                  }`}
                 style={{ width: `${usagePercent}%` }}
               />
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-[10px] text-slate-500">0</span>
+              <span className="text-[10px] text-slate-500">{planInfo.currentCount}</span>
               <span className="text-[10px] text-slate-500">{planInfo.userLimit} max</span>
             </div>
           </div>
@@ -136,19 +167,16 @@ export const UsersTab = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
               <FormField label="First Name *">
-                <input type="text" value={formData.firstName} onChange={(e) => handleChange('firstName', e.target.value)} placeholder="John" className={inputCls} required />
+                <input type="text" value={formData.firstName} onChange={(e) => handleChange('firstName', e.target.value)} placeholder="John" className={getValidationCls(formData.firstName, 'name')} required />
               </FormField>
               <FormField label="Last Name *">
-                <input type="text" value={formData.lastName} onChange={(e) => handleChange('lastName', e.target.value)} placeholder="Doe" className={inputCls} required />
-              </FormField>
-              <FormField label="Employee ID *">
-                <input type="text" value={formData.employeeId} onChange={(e) => handleChange('employeeId', e.target.value)} placeholder="EMP-824" className={inputCls} required />
+                <input type="text" value={formData.lastName} onChange={(e) => handleChange('lastName', e.target.value)} placeholder="Doe" className={getValidationCls(formData.lastName, 'name')} required />
               </FormField>
               <FormField label="Email *">
-                <input type="email" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="john@company.com" className={inputCls} required />
+                <input type="email" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="john@company.com" className={getValidationCls(formData.email, 'email')} required />
               </FormField>
               <FormField label="Mobile Number">
-                <input type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+91 98765 43210" className={inputCls} />
+                <input type="tel" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="+91 98765 43210" className={getValidationCls(formData.phone, 'phone')} />
               </FormField>
               {/* <FormField label="Profile Photo File">
                 <input type="text" value={formData.profilePhoto} onChange={(e) => handleChange('profilePhoto', e.target.value)} placeholder="avatar.png (optional)" className={inputCls} />
@@ -209,9 +237,7 @@ export const UsersTab = ({
 
             {formData.role === 'Employee' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
-                <FormField label="Expense Limit (₹)">
-                  <input type="number" value={formData.expenseLimit} onChange={(e) => handleChange('expenseLimit', e.target.value)} placeholder="15000" className={inputCls} />
-                </FormField>
+
                 <FormField label="Employee Type">
                   <select value={formData.employmentType} onChange={(e) => handleChange('employmentType', e.target.value)} className={selectCls}>
                     <option value="Permanent">Permanent</option>
@@ -223,13 +249,13 @@ export const UsersTab = ({
                   <input type="text" value={formData.officeLocation} onChange={(e) => handleChange('officeLocation', e.target.value)} placeholder="Mumbai HQ" className={inputCls} />
                 </FormField>
                 <FormField label="PAN Number">
-                  <input type="text" value={formData.panNumber} onChange={(e) => handleChange('panNumber', e.target.value)} placeholder="ABCDE1234F" className={inputCls} />
+                  <input type="text" value={formData.panNumber} onChange={(e) => handleChange('panNumber', e.target.value)} placeholder="ABCDE1234F" className={getValidationCls(formData.panNumber, 'pan')} />
                 </FormField>
                 <FormField label="Bank Account Number">
-                  <input type="text" value={formData.bankAccountNumber} onChange={(e) => handleChange('bankAccountNumber', e.target.value)} placeholder="1234567890" className={inputCls} />
+                  <input type="text" value={formData.bankAccountNumber} onChange={(e) => handleChange('bankAccountNumber', e.target.value)} placeholder="1234567890" className={getValidationCls(formData.bankAccountNumber, 'account')} />
                 </FormField>
                 <FormField label="IFSC Code">
-                  <input type="text" value={formData.ifscCode} onChange={(e) => handleChange('ifscCode', e.target.value)} placeholder="HDFC0001234" className={inputCls} />
+                  <input type="text" value={formData.ifscCode} onChange={(e) => handleChange('ifscCode', e.target.value)} placeholder="HDFC0001234" className={getValidationCls(formData.ifscCode, 'ifsc')} />
                 </FormField>
               </div>
             )}
@@ -326,8 +352,20 @@ export const UsersTab = ({
 
       {/* Directory Table */}
       <div className="bg-slate-900/60 border border-white/5 rounded-3xl shadow-xl overflow-hidden w-full">
-        <div className="px-6 py-4 border-b border-white/5">
+        <div className="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="text-sm font-bold text-slate-200">Company Users Directory</h3>
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="bg-slate-950/40 border border-slate-800 rounded-xl py-2 px-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer w-full sm:w-auto"
+          >
+            <option value="All">All Roles</option>
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="finance">Finance</option>
+            <option value="auditor">Auditor</option>
+            <option value="admin">Admin</option>
+          </select>
         </div>
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-xs text-slate-350 border-collapse min-w-[700px]">
@@ -341,12 +379,12 @@ export const UsersTab = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {tenantUsers.length === 0 ? (
+              {(filterRole === 'All' ? tenantUsers : tenantUsers.filter(u => (u.role || '').toLowerCase() === filterRole.toLowerCase())).length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500 whitespace-nowrap">No users created yet.</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500 whitespace-nowrap">No users found.</td>
                 </tr>
               ) : (
-                tenantUsers.map((u) => (
+                (filterRole === 'All' ? tenantUsers : tenantUsers.filter(u => (u.role || '').toLowerCase() === filterRole.toLowerCase())).map((u) => (
                   <tr key={u._id || u.id} className="hover:bg-white/[0.02] transition-all">
                     <td className="px-6 py-4 font-semibold text-slate-200 whitespace-nowrap">{u.name || `${u.firstName || ''} ${u.lastName || ''}`}</td>
                     <td className="px-6 py-4 text-slate-300 whitespace-nowrap">{u.role}</td>

@@ -30,16 +30,11 @@ const initialTenantForm = {
   adminName: '',
   adminEmail: '',
   adminPhone: '',
-  temporaryPassword: '',
   timeZone: 'UTC',
-  currency: 'USD',
+  currency: 'INR',
   dateFormat: 'DD/MM/YYYY',
   language: 'English',
-  financialYearStart: '',
-  companyStatus: 'Active',
-  emailVerified: 'No',
-  tenantId: '',
-  createdDate: ''
+  companyStatus: 'Active'
 };
 
 export const TenantManagement = () => {
@@ -116,11 +111,10 @@ export const TenantManagement = () => {
         adminPhone: formData.adminPhone || undefined,
 
         config: {
-          timeZone: formData.timeZone || 'UTC',
-          currency: formData.currency || 'USD',
+          timeZone: formData.timeZone,
+          currency: formData.currency,
           dateFormat: formData.dateFormat || 'DD/MM/YYYY',
-          language: formData.language || 'English',
-          financialYearStart: formData.financialYearStart || undefined
+          language: formData.language || 'English'
         }
       };
 

@@ -521,48 +521,59 @@ export const Overview = () => {
       </div> */}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {/* Submitted Claims */}
-        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450">Submitted Claims</span>
-            <span className="text-3xl font-extrabold text-slate-100">{totalClaims}</span>
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-slate-900/60 p-5 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450 truncate" title="Submitted Claims">Submitted Claims</span>
+            <span className="text-2xl lg:text-xl xl:text-3xl font-extrabold text-slate-100 break-words" title={totalClaims}>{totalClaims}</span>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
-            <FileSpreadsheet className="h-6 w-6" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
+            <FileSpreadsheet className="h-6 w-6 shrink-0" />
           </div>
         </div>
 
         {/* Claims Pending Review */}
-        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450">Pending Review</span>
-            <span className="text-3xl font-extrabold text-slate-100">{pendingClaimsCount}</span>
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-slate-900/60 p-5 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450 truncate" title="Pending Review">Pending Review</span>
+            <span className="text-2xl lg:text-xl xl:text-3xl font-extrabold text-slate-100 break-words" title={pendingClaimsCount}>{pendingClaimsCount}</span>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-400">
-            <AlertTriangle className="h-6 w-6" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-400">
+            <AlertTriangle className="h-6 w-6 shrink-0" />
           </div>
         </div>
 
         {/* Approved (Unpaid) */}
-        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450">Approved (Unpaid)</span>
-            <span className="text-3xl font-extrabold text-slate-100">{approvedClaimsCount}</span>
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-slate-900/60 p-5 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450 truncate" title="Approved (Unpaid)">Approved (Unpaid)</span>
+            <span className="text-2xl lg:text-xl xl:text-3xl font-extrabold text-slate-100 break-words" title={approvedClaimsCount}>{approvedClaimsCount}</span>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400">
-            <CheckCircle2 className="h-6 w-6" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400">
+            <CheckCircle2 className="h-6 w-6 shrink-0" />
+          </div>
+        </div>
+
+        {/* Reimbursed */}
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-slate-900/60 p-5 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450 truncate" title="Reimbursed">Reimbursed</span>
+            <span className="text-2xl lg:text-xl xl:text-3xl font-extrabold text-slate-100 break-words" title={totalReimbursedCount}>{totalReimbursedCount}</span>
+          </div>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400">
+            <CheckCircle2 className="h-6 w-6 shrink-0" />
           </div>
         </div>
 
         {/* Total Reimbursed */}
-        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450">Total Reimbursed</span>
-            <span className="text-3xl font-extrabold text-slate-100">₹{totalReimbursed.toFixed(2)}</span>
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-slate-900/60 p-5 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-450 truncate" title="Total Reimbursed">Total Reimbursed</span>
+            <span className="text-2xl lg:text-xl xl:text-3xl font-extrabold text-slate-100 break-all" title={`₹${totalReimbursed.toFixed(2)}`}>₹{totalReimbursed.toFixed(2)}</span>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-            <Wallet className="h-6 w-6" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+            <Wallet className="h-6 w-6 shrink-0" />
           </div>
         </div>
       </div>
@@ -583,7 +594,7 @@ export const Overview = () => {
       </div>
 
       {/* Main Sections */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6">
 
         {/* Recent Claims list card */}
         <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl">
@@ -617,44 +628,6 @@ export const Overview = () => {
                           : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
                       }`}>
                       {exp.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Travel Request Card */}
-        <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-200">Recent Plans</h3>
-              <p className="text-xs text-slate-500 mt-1">Status of plans requests submitted for authorization.</p>
-            </div>
-          </div>
-
-          {recentTravel.length === 0 ? (
-            <div className="py-10 text-center border border-dashed border-slate-800/80 rounded-2xl bg-slate-950/10">
-              <p className="text-xs text-slate-500">No plans submitted.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {recentTravel.slice(0, 4).map((tr) => (
-                <div key={tr.id} className="flex items-center justify-between rounded-2xl border border-white/5 bg-slate-950/20 p-3.5 hover:border-slate-800 transition-colors">
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-xs font-bold text-slate-200">{tr.destination}</span>
-                    <span className="text-[10px] text-slate-550">{tr.purpose}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-extrabold text-slate-200">₹{tr.estimatedCost.toFixed(2)}</span>
-                    <span className={`rounded-lg border px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${tr.status === 'Approved'
-                      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                      : tr.status === 'Rejected'
-                        ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
-                        : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
-                      }`}>
-                      {tr.status}
                     </span>
                   </div>
                 </div>

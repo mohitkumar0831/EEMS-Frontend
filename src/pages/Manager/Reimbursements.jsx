@@ -27,7 +27,7 @@ export const Reimbursements = () => {
         setLoading(false);
       }
     };
-    
+
     if (currentUser?.id && currentUser?.tenantSlug) {
       fetchExpenses();
     }
@@ -79,27 +79,26 @@ export const Reimbursements = () => {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-                      exp.status === 'Paid'
-                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                        : exp.status === 'Approved'
-                          ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
-                          : exp.status === 'Rejected'
-                            ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
-                            : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
-                    }`}>
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${exp.status === 'Paid'
+                      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                      : exp.status === 'Approved'
+                        ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
+                        : exp.status === 'Rejected'
+                          ? 'border-rose-500/20 bg-rose-500/10 text-rose-400'
+                          : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
+                      }`}>
                       {exp.status}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     {exp.payoutReceiptUrl ? (
-                      <button 
+                      <button
                         onClick={() => window.open(exp.payoutReceiptUrl, '_blank')}
                         className="p-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-400 text-emerald-500 hover:text-emerald-400 cursor-pointer shadow-inner shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all"
                         title="Download Payout Receipt"
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        Slip
+                        Receipt
                       </button>
                     ) : (
                       <span className="text-slate-600 italic text-[10px]">N/A</span>

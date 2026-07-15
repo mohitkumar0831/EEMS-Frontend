@@ -6,6 +6,7 @@ import {
   CheckCircle2, AlertTriangle, Shield, Loader2, Users, Database,
   Receipt, ArrowUpRight, Zap, Crown
 } from 'lucide-react';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 export const Billing = () => {
   const { currentUser, showToast } = useAppState();
@@ -186,14 +187,7 @@ export const Billing = () => {
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-        <span className="ml-2 text-slate-400 text-sm">Loading billing information...</span>
-      </div>
-    );
-  }
+  if (loading) return <PageSkeleton />;
 
   const needsPayment = subscription && ['Trial', 'PastDue', 'Expired'].includes(subscription.status);
   const currentPlan = plans.find(p => p._id === subscription?.planId?._id || p._id === subscription?.planId);
@@ -202,13 +196,12 @@ export const Billing = () => {
     <div className="flex flex-col gap-6">
       {/* Subscription Status Banner */}
       {subscription && (
-        <div className={`rounded-2xl border p-6 relative overflow-hidden ${
-          subscription.status === 'Active'
-            ? 'bg-gradient-to-r from-emerald-600/10 via-emerald-500/5 to-slate-900 border-emerald-500/10'
-            : subscription.status === 'Trial'
+        <div className={`rounded-2xl border p-6 relative overflow-hidden ${subscription.status === 'Active'
+          ? 'bg-gradient-to-r from-emerald-600/10 via-emerald-500/5 to-slate-900 border-emerald-500/10'
+          : subscription.status === 'Trial'
             ? 'bg-gradient-to-r from-amber-600/10 via-amber-500/5 to-slate-900 border-amber-500/10'
             : 'bg-gradient-to-r from-rose-600/10 via-rose-500/5 to-slate-900 border-rose-500/10'
-        }`}>
+          }`}>
           <div className="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
           <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -251,9 +244,8 @@ export const Billing = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${
-              activeTab === tab ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${activeTab === tab ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             {tab === 'overview' ? 'Overview' : tab === 'payments' ? 'Payment History' : 'Available Plans'}
           </button>
@@ -371,11 +363,10 @@ export const Billing = () => {
                       <td className="px-6 py-4 text-slate-200 font-medium">{p.description}</td>
                       <td className="px-6 py-4 text-slate-100 font-mono font-semibold">₹{p.totalAmount?.toFixed(2)}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                          p.status === 'Captured' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${p.status === 'Captured' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                           p.status === 'Failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                          'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                        }`}>
+                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          }`}>
                           {p.status === 'Captured' ? 'Paid' : p.status}
                         </span>
                       </td>
@@ -405,9 +396,8 @@ export const Billing = () => {
           {plans.map(plan => {
             const isCurrent = subscription?.planName === plan.name;
             return (
-              <div key={plan._id} className={`bg-slate-900 border p-5 rounded-2xl flex flex-col gap-4 transition-all ${
-                isCurrent ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-white/5 hover:border-white/10'
-              }`}>
+              <div key={plan._id} className={`bg-slate-900 border p-5 rounded-2xl flex flex-col gap-4 transition-all ${isCurrent ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-white/5 hover:border-white/10'
+                }`}>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{plan.name}</span>

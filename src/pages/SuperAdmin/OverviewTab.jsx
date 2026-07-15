@@ -6,6 +6,188 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { BILLING_ENDPOINTS } from '../../constants/apiConstants';
+const GenericBarChart = ({ title, subtitle, data, yAxisLabel, isCurrency = false }) => {
+  const [hoveredBar, setHoveredBar] = useState(null);
+
+  const maxCount = Math.max(...data.map(d => d.value), 5);
+
+  const width = 500;
+  const height = 240;
+  const paddingLeft = 45;
+  const paddingRight = 55;
+  const paddingTop = 20;
+  const paddingBottom = 40;
+
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
+
+  return (
+    <div className="relative w-full rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-xl hover:border-indigo-500/20 transition-all duration-300">
+      <div className="flex flex-col gap-1 mb-4">
+        <h4 className="text-sm font-bold text-slate-200">{title}</h4>
+        <p className="text-[10px] text-slate-500">{subtitle}</p>
+      </div>
+
+      <div className="relative">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
+          <defs>
+            <linearGradient id="barGrad0" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.35" />
+            </linearGradient>
+            <linearGradient id="barGrad1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.35" />
+            </linearGradient>
+            <linearGradient id="barGrad2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ec4899" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#db2777" stopOpacity="0.35" />
+            </linearGradient>
+            <linearGradient id="barGrad3" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#0d9488" stopOpacity="0.35" />
+            </linearGradient>
+            <linearGradient id="barGrad4" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#d97706" stopOpacity="0.35" />
+            </linearGradient>
+          </defs>
+
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+            const y = paddingTop + chartHeight * (1 - ratio);
+            const val = Math.round(ratio * maxCount);
+            return (
+              <g key={idx}>
+                <line
+                  x1={paddingLeft}
+                  y1={y}
+                  x2={width - paddingRight}
+                  y2={y}
+                  stroke="#334155"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                  opacity="0.3"
+                />
+                <text
+                  x={paddingLeft - 10}
+                  y={y + 4}
+                  textAnchor="end"
+                  fill="#94a3b8"
+                  className="text-[9px] font-medium"
+                >
+                  {isCurrency ? (val > 1000 ? (val / 1000).toFixed(1) + 'k' : val) : val}
+                </text>
+              </g>
+            );
+          })}
+
+          <line
+            x1={paddingLeft}
+            y1={paddingTop + chartHeight}
+            x2={width - paddingRight}
+            y2={paddingTop + chartHeight}
+            stroke="#334155"
+            strokeWidth="1.5"
+            opacity="0.5"
+          />
+
+          {data.map((item, idx) => {
+            const segmentWidth = chartWidth / data.length;
+            const barWidth = Math.min(36, segmentWidth - 10);
+            const x = paddingLeft + segmentWidth * idx + (segmentWidth - barWidth) / 2;
+
+            const valRatio = item.value / maxCount;
+            const barHeight = valRatio * chartHeight;
+            const y = paddingTop + chartHeight - barHeight;
+
+            const isHovered = hoveredBar === idx;
+            const colorId = `url(#barGrad${idx % 5})`;
+
+            return (
+              <g
+                key={idx}
+                onMouseEnter={() => setHoveredBar(idx)}
+                onMouseLeave={() => setHoveredBar(null)}
+                className="cursor-pointer"
+              >
+                <rect
+                  x={paddingLeft + segmentWidth * idx}
+                  y={paddingTop}
+                  width={segmentWidth}
+                  height={chartHeight}
+                  fill="transparent"
+                />
+
+                <rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={Math.max(barHeight, 4)}
+                  rx={6}
+                  ry={6}
+                  fill={colorId}
+                  stroke={isHovered ? '#fff' : 'transparent'}
+                  strokeWidth={1.5}
+                  className="transition-all duration-300 ease-out"
+                  style={{
+                    filter: isHovered ? 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.4))' : 'none',
+                    transformOrigin: `${x + barWidth / 2}px ${paddingTop + chartHeight}px`,
+                    transform: isHovered ? 'scale(1.03)' : 'scale(1)'
+                  }}
+                />
+
+                <text
+                  x={x + barWidth / 2}
+                  y={y - 6}
+                  textAnchor="middle"
+                  fill={isHovered ? '#f8fafc' : '#94a3b8'}
+                  className="text-[9px] font-bold transition-colors duration-200"
+                >
+                  {isCurrency ? (item.value > 1000 ? (item.value / 1000).toFixed(1) + 'k' : item.value) : item.value}
+                </text>
+
+                <text
+                  x={x + barWidth / 2}
+                  y={paddingTop + chartHeight + 16}
+                  textAnchor="middle"
+                  fill={isHovered ? '#f8fafc' : '#64748b'}
+                  className="text-[10px] font-bold tracking-wide transition-colors duration-200"
+                >
+                  {item.label.length > 8 ? item.label.substring(0, 6) + '..' : item.label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+
+        {hoveredBar !== null && (
+          <div
+            className="absolute z-10 rounded-xl border border-white/10 bg-slate-950/80 p-2.5 shadow-2xl backdrop-blur-md transition-all pointer-events-none duration-150"
+            style={{
+              left: `${(paddingLeft + (chartWidth / data.length) * hoveredBar + (chartWidth / data.length) / 2) / width * 100}%`,
+              top: '15%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <div className="flex flex-col gap-0.5 items-center">
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{data[hoveredBar].label}</span>
+              <span className="text-xs font-extrabold text-slate-100">
+                {isCurrency ? `₹${data[hoveredBar].value.toLocaleString()}` : data[hoveredBar].value}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5 text-[9px] font-semibold text-slate-500">
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+          <span>Left Axis: {yAxisLabel}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const OverviewTab = ({ stats }) => {
   if (!stats) return null;
@@ -26,12 +208,23 @@ export const OverviewTab = ({ stats }) => {
     pendingTravel = 0,
     auditLogs = [],
     tenants = [],
-    usersPerTenantMap = {}
+    usersPerTenantMap = {},
+    tenantSpendMap = {}
   } = stats;
 
   const categoryEntries = Object.entries(categorySpend).sort((a, b) => b[1] - a[1]);
   const categoryColors = ['bg-indigo-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
   const categoryTextColors = ['text-indigo-400', 'text-purple-400', 'text-emerald-400', 'text-amber-400', 'text-rose-400'];
+
+  const topCompaniesByUsers = [...tenants]
+    .map(t => ({ label: t.companyName || t.name || 'Unknown', value: usersPerTenantMap[t._id || t.id] || 0 }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  const topCompaniesBySpend = [...tenants]
+    .map(t => ({ label: t.companyName || t.name || 'Unknown', value: tenantSpendMap[t._id || t.id] || 0 }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
 
   const { currentUser } = useAppState();
   const [monthlyData, setMonthlyData] = useState([]);
@@ -208,9 +401,9 @@ export const OverviewTab = ({ stats }) => {
             <div>
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <TrendingUp className="w-4.5 h-4.5 text-indigo-400" />
-                Platform Transaction Activity
+                Platform Subscription Transaction Activity
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Monthly expense processing volume and financial throughput</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Subscription processing volume</p>
             </div>
             <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
               {new Date().getFullYear()}
@@ -272,7 +465,7 @@ export const OverviewTab = ({ stats }) => {
         </div>
       </div>
 
-      {/* ── Bottom Row: Tenant Grid + Role Distribution + Activity Log ─── */}
+      {/* ── Bottom Row: Tenant Grid + Role Distribution + Company Metrics ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tenant Workspace Health Cards */}
         <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col h-[300px]">
@@ -357,112 +550,16 @@ export const OverviewTab = ({ stats }) => {
           </div>
         </div>
 
-        {/* Activity Log Stream */}
-        <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col h-[300px]">
-          <div className="flex items-center justify-between shrink-0 mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                <Activity className="w-4.5 h-4.5 text-indigo-400" />
-                Live Activity Stream
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">{auditLogs.length} total records</p>
-            </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          </div>
-
-          <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {auditLogs.slice(0, 10).map(log => (
-              <div key={log.id} className="flex gap-3 text-xs border-b border-slate-800/50 pb-3 last:border-0">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Activity className="w-3.5 h-3.5 text-indigo-400" />
-                </div>
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-indigo-400 truncate">{log.action}</span>
-                  </div>
-                  <p className="text-slate-400 leading-normal truncate" title={log.details}>{log.details}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[9px] text-slate-500 font-medium">{log.user}</span>
-                    <span className="text-[9px] text-slate-600">•</span>
-                    <span className="text-[9px] text-slate-500 font-mono">
-                      {new Date(log.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {auditLogs.length === 0 && (
-              <p className="text-center py-6 text-slate-500 text-xs">No activity logs recorded yet</p>
-            )}
-          </div>
+        {/* Users per Company Chart */}
+        <div className="h-[300px]">
+          <GenericBarChart
+            title="Users per Company"
+            subtitle="Top companies by registered user base"
+            data={topCompaniesByUsers}
+            yAxisLabel="Total Users"
+          />
         </div>
       </div>
-
-      {/* ── Recent Expense Claims Table ───────────────── */}
-      {/* <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900 shadow-sm">
-        <div className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <DollarSign className="w-4.5 h-4.5 text-indigo-400" />
-              Recent Expense Claims Pipeline
-            </h3>
-            <p className="text-slate-400 text-[11px] mt-0.5">Latest claims from all tenant workspaces</p>
-          </div>
-          <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg">
-            {expenses.length} total
-          </span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-950/10">
-                <th className="px-6 py-3.5">Employee</th>
-                <th className="px-6 py-3.5">Claim Title</th>
-                <th className="px-6 py-3.5">Category</th>
-                <th className="px-6 py-3.5">Amount</th>
-                <th className="px-6 py-3.5">Date</th>
-                <th className="px-6 py-3.5">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/40 text-xs">
-              {expenses.slice(0, 6).map((exp) => {
-                const tenant = tenants.find(t => t.id === exp.tenantId);
-                const statusStyles = {
-                  Pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-                  Approved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                  Paid: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-                  'Under Review': 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-                  Rejected: 'bg-red-500/10 text-red-400 border-red-500/20'
-                };
-
-                return (
-                  <tr key={exp.id} className="transition-all hover:bg-white/[0.01]">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200">{exp.employeeName}</span>
-                        <span className="text-[9px] text-slate-500 mt-0.5">{tenant?.name || 'Unknown'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-300 font-medium max-w-[200px] truncate" title={exp.title}>{exp.title}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-bold">{exp.category}</span>
-                    </td>
-                    <td className="px-6 py-4 font-mono font-bold text-slate-200">
-                      ₹{exp.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 text-slate-400 font-mono">{exp.date}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${statusStyles[exp.status] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                        {exp.status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
     </div>
   );
 };

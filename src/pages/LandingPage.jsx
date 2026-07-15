@@ -249,7 +249,7 @@ export const LandingPage = () => {
             <a href="#integration" onClick={() => setMobileMenuOpen(false)} className="text-sm text-slate-350 py-1.5">Integrations</a>
             <div className="flex gap-3 pt-2 border-t border-white/5">
               <Link to="/login" className="flex-1 text-center py-2 text-xs font-bold border border-white/5 rounded-xl text-slate-300">Sign In</Link>
-              <Link to="/register" className="flex-1 text-center py-2 text-xs font-bold bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 rounded-xl">Register</Link>
+              {/* <Link to="/register" className="flex-1 text-center py-2 text-xs font-bold bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 rounded-xl">Register</Link> */}
             </div>
           </div>
         )}
@@ -277,13 +277,13 @@ export const LandingPage = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2">
-              <Link to="/register" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all text-xs">
+              <Link to="/login" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all text-xs">
                 Get Started Free
                 <ArrowRight className="w-4 h-4 text-slate-950 stroke-[2.5]" />
               </Link>
-              <Link to="/login" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-white/5 hover:border-white/10 text-slate-300 hover:text-white font-bold rounded-xl transition-all text-xs bg-slate-900/30">
+              {/* <Link to="/login" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-white/5 hover:border-white/10 text-slate-300 hover:text-white font-bold rounded-xl transition-all text-xs bg-slate-900/30">
                 Explore Demo Roles
-              </Link>
+              </Link> */}
             </div>
 
             {/* Quick statistics */}
@@ -505,8 +505,8 @@ export const LandingPage = () => {
           Create a corporate tenant workspace and onboard your employees in less than 5 minutes.
         </p>
         <div className="flex gap-3 mt-2">
-          <Link to="/register" className="px-5 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/10 cursor-pointer">Register Workspace</Link>
-          <Link to="/login" className="px-5 py-3 border border-white/5 hover:border-white/10 text-slate-300 font-bold text-xs rounded-xl transition-all bg-slate-900/30">Sign In</Link>
+          {/* <Link to="/register" className="px-5 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/10 cursor-pointer">Register Workspace</Link> */}
+          {/* <Link to="/login" className="px-5 py-3 border border-white/5 hover:border-white/10 text-slate-300 font-bold text-xs rounded-xl transition-all bg-slate-900/30">Sign In</Link> */}
         </div>
       </section>
 

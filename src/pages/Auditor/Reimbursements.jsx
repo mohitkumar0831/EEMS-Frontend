@@ -131,7 +131,7 @@ export const Reimbursements = () => {
                           title="Download Payout Receipt"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          Slip
+                          Receipt
                         </button>
                       ) : (
                         <span className="text-slate-600 italic text-[10px]">N/A</span>

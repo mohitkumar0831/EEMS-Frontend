@@ -13,7 +13,7 @@ export const Auditor = () => {
     { id: 'file-claim', label: 'File Expense Claim', icon: FileSpreadsheet, path: 'file-claim' },
     { id: 'reimbursements', label: 'My Reimbursements', icon: Wallet, path: 'reimbursements' },
     // { id: 'activity', label: 'Activity Logs', icon: Activity, path: 'activity' },
-    { id: 'export', label: 'Export Reports', icon: ArrowDownToLine, path: 'export' }
+    // { id: 'export', label: 'Export Reports', icon: ArrowDownToLine, path: 'export' }
   ];
 
   if (!currentUser) return null;

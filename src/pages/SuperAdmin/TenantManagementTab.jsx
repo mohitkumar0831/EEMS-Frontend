@@ -142,11 +142,11 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                 <FormField label="Company Name" name="companyName" value={formData.companyName} onChange={handleFormChange} placeholder="Acme Corp" required />
                 <FormField label="Company Code" name="companyCode" value={formData.companyCode} onChange={handleFormChange} placeholder="ACM001" required />
                 <FormField label="Industry Type" name="industry" value={formData.industry} onChange={handleFormChange} type="select" options={[{ value: '', label: 'Select industry' }, { value: 'Technology', label: 'Technology' }, { value: 'Finance', label: 'Finance' }, { value: 'Healthcare', label: 'Healthcare' }, { value: 'Retail', label: 'Retail' }, { value: 'Manufacturing', label: 'Manufacturing' }, { value: 'Education', label: 'Education' }, { value: 'Other', label: 'Other' }]} required />
-                <FormField label="Company Registration Number" name="companyRegistrationNumber" value={formData.companyRegistrationNumber} onChange={handleFormChange} placeholder="REG-001234" />
-                <FormField label="GST Number" name="gstNumber" value={formData.gstNumber} onChange={handleFormChange} placeholder="GST-123456" />
-                <FormField label="Company Website" name="companyWebsite" value={formData.companyWebsite} onChange={handleFormChange} type="url" placeholder="https://example.com" />
+                <FormField label="Company Registration Number" name="companyRegistrationNumber" value={formData.companyRegistrationNumber} onChange={handleFormChange} placeholder="REG-001234" required />
+                <FormField label="GST Number" name="gstNumber" value={formData.gstNumber} onChange={handleFormChange} placeholder="GST-123456" required />
+                <FormField label="Company Website" name="companyWebsite" value={formData.companyWebsite} onChange={handleFormChange} type="url" placeholder="https://example.com" required />
                 <FormField label="Company Email" name="companyEmail" value={formData.companyEmail} onChange={handleFormChange} type="email" placeholder="contact@company.com" required />
-                <FormField label="Company Phone" name="companyPhone" value={formData.companyPhone} onChange={handleFormChange} type="tel" placeholder="+1 555 123 4567" />
+                <FormField label="Company Phone" name="companyPhone" value={formData.companyPhone} onChange={handleFormChange} type="tel" placeholder="+91 1234567890" required />
               </div>
             </div>
 
@@ -164,11 +164,11 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Subscription Details</h4>
               <div className="grid gap-4 md:grid-cols-2">
-                <FormField label="Subscription Plan" name="subscriptionPlan" value={formData.subscriptionPlan} onChange={handleFormChange} type="select" options={[{ value: 'Free', label: 'Free' }, { value: 'Basic', label: 'Basic' }, { value: 'Standard', label: 'Standard' }, { value: 'Enterprise', label: 'Enterprise' }]} />
+                <FormField label="Subscription Plan" name="subscriptionPlan" value={formData.subscriptionPlan} onChange={handleFormChange} type="select" options={[{ value: 'Free', label: 'Free' }, { value: 'Basic', label: 'Basic' }, { value: 'Standard', label: 'Standard' }, { value: 'Enterprise', label: 'Enterprise' }]} required />
                 <FormField label="Plan Start Date" name="planStartDate" value={formData.planStartDate} onChange={handleFormChange} type="date" />
                 <FormField label="Plan Expiry Date" name="planExpiryDate" value={formData.planExpiryDate} onChange={handleFormChange} type="date" />
                 <FormField label="Billing Cycle" name="billingCycle" value={formData.billingCycle} onChange={handleFormChange} type="select" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Yearly', label: 'Yearly' }]} />
-                <FormField label="Subscription Status" name="subscriptionStatus" value={formData.subscriptionStatus} onChange={handleFormChange} type="select" options={[{ value: 'Active', label: 'Active' }, { value: 'Expired', label: 'Expired' }, { value: 'Trial', label: 'Trial' }, { value: 'Suspended', label: 'Suspended' }]} />
+                <FormField label="Subscription Status" name="subscriptionStatus" value={formData.subscriptionStatus} onChange={handleFormChange} type="select" options={[{ value: 'Active', label: 'Active' }, { value: 'Expired', label: 'Expired' }, { value: 'Trial', label: 'Trial' }, { value: 'Suspended', label: 'Suspended' }]} required />
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 {[
@@ -179,11 +179,10 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                 ].map(({ plan, limit, activeCls }) => (
                   <span
                     key={plan}
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
-                      formData.subscriptionPlan === plan
-                        ? activeCls
-                        : 'bg-slate-800/50 text-slate-500 border-white/5'
-                    }`}
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${formData.subscriptionPlan === plan
+                      ? activeCls
+                      : 'bg-slate-800/50 text-slate-500 border-white/5'
+                      }`}
                   >
                     {plan}: {limit} users max
                   </span>
@@ -194,12 +193,12 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Company Address</h4>
               <div className="grid gap-4 md:grid-cols-2">
-                <FormField label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleFormChange} placeholder="123 Main Street" />
+                <FormField label="Address Line 1" name="addressLine1" value={formData.addressLine1} onChange={handleFormChange} placeholder="123 Main Street" required />
                 <FormField label="Address Line 2" name="addressLine2" value={formData.addressLine2} onChange={handleFormChange} placeholder="Suite 100" />
-                <FormField label="City" name="city" value={formData.city} onChange={handleFormChange} placeholder="New York" />
-                <FormField label="State" name="state" value={formData.state} onChange={handleFormChange} placeholder="NY" />
-                <FormField label="Country" name="country" value={formData.country} onChange={handleFormChange} type="select" options={[{ value: '', label: 'Select country' }, { value: 'United States', label: 'United States' }, { value: 'United Kingdom', label: 'United Kingdom' }, { value: 'Canada', label: 'Canada' }, { value: 'India', label: 'India' }, { value: 'Australia', label: 'Australia' }, { value: 'Other', label: 'Other' }]} />
-                <FormField label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleFormChange} placeholder="10001" />
+                <FormField label="City" name="city" value={formData.city} onChange={handleFormChange} placeholder="New York" required />
+                <FormField label="State" name="state" value={formData.state} onChange={handleFormChange} placeholder="NY" required />
+                <FormField label="Country" name="country" value={formData.country} onChange={handleFormChange} type="select" options={[{ value: '', label: 'Select country' }, { value: 'United States', label: 'United States' }, { value: 'United Kingdom', label: 'United Kingdom' }, { value: 'Canada', label: 'Canada' }, { value: 'India', label: 'India' }, { value: 'Australia', label: 'Australia' }, { value: 'Other', label: 'Other' }]} required />
+                <FormField label="Postal Code" name="postalCode" value={formData.postalCode} onChange={handleFormChange} placeholder="10001" required />
               </div>
             </div>
 
@@ -209,7 +208,7 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                 <FormField label="Admin Name" name="adminName" value={formData.adminName} onChange={handleFormChange} placeholder="Alex Admin" required />
                 <FormField label="Admin Email" name="adminEmail" value={formData.adminEmail} onChange={handleFormChange} type="email" placeholder="admin@company.com" required />
                 <FormField label="Admin Phone" name="adminPhone" value={formData.adminPhone} onChange={handleFormChange} type="tel" placeholder="+1 555 987 6543" />
-                <FormField label="Temporary Password" name="temporaryPassword" value={formData.temporaryPassword} onChange={handleFormChange} type="password" placeholder="Auto-generated" />
+
               </div>
             </div>
 
@@ -220,7 +219,7 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
                 <FormField label="Currency" name="currency" value={formData.currency} onChange={handleFormChange} type="select" options={[{ value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }, { value: 'GBP', label: 'GBP' }, { value: 'INR', label: 'INR' }, { value: 'AUD', label: 'AUD' }]} />
                 <FormField label="Date Format" name="dateFormat" value={formData.dateFormat} onChange={handleFormChange} type="select" options={[{ value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' }, { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' }, { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' }]} />
                 <FormField label="Language" name="language" value={formData.language} onChange={handleFormChange} type="select" options={[{ value: 'English', label: 'English' }, { value: 'French', label: 'French' }, { value: 'German', label: 'German' }, { value: 'Spanish', label: 'Spanish' }]} />
-                <FormField label="Financial Year Start" name="financialYearStart" value={formData.financialYearStart} onChange={handleFormChange} type="date" />
+
               </div>
             </div>
 
@@ -228,7 +227,7 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Status</h4>
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField label="Company Status" name="companyStatus" value={formData.companyStatus} onChange={handleFormChange} type="select" options={[{ value: 'Active', label: 'Active' }, { value: 'Inactive', label: 'Inactive' }, { value: 'Suspended', label: 'Suspended' }]} />
-                <FormField label="Email Verified" name="emailVerified" value={formData.emailVerified} onChange={handleFormChange} type="select" options={[{ value: 'Yes', label: 'Yes' }, { value: 'No', label: 'No' }]} />
+
                 <FormField label="Tenant ID" name="tenantId" value={formData.tenantId || 'Auto-generated UUID'} onChange={handleFormChange} readOnly />
                 <FormField label="Created Date" name="createdDate" value={formData.createdDate || 'Auto-generated'} onChange={handleFormChange} readOnly />
               </div>

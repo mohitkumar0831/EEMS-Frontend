@@ -555,7 +555,7 @@ export const AuditorOverview = () => {
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Ledger Claims</span>
             <div className="text-2xl font-extrabold text-slate-100 mt-1">{totalClaims}</div>
-            <span className="text-[10px] text-indigo-400">{uniqueClaimants} active claimants</span>
+            <span className="text-[10px] text-indigo-400">{uniqueClaimants} active claims</span>
           </div>
           <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
             <ClipboardList className="w-5 h-5" />
@@ -566,7 +566,7 @@ export const AuditorOverview = () => {
           <div>
             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Flagged Claims</span>
             <div className="text-2xl font-extrabold text-rose-400 mt-1">{flaggedExpensesCount}</div>
-            <span className="text-[10px] text-rose-400">₹{flaggedValue.toFixed(2)} under probe</span>
+            {/* <span className="text-[10px] text-rose-400">₹{flaggedValue.toFixed(2)} under probe</span> */}
           </div>
           <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
             <ShieldAlert className="w-5 h-5" />

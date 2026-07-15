@@ -3,6 +3,16 @@ import { useAppState } from '../../context/StateContext';
 import { ScrollText, Search, Filter, ShieldCheck, Mail } from 'lucide-react';
 import { AUDIT_ENDPOINTS, TENANT_ENDPOINTS } from '../../constants/apiConstants';
 
+const DUMMY_AUDIT_LOGS = [
+  { id: 'log-001', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), action: 'tenant.registered', user: 'Mohit Kumar', tenantId: 'platform', details: 'New tenant registered: ACME Solutions (acme-solutions)' },
+  { id: 'log-002', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), action: 'expense.created', user: 'Ravi Sharma', tenantId: '6a490345d1a45e7ae3a290db', details: 'Expense submitted for ₹4,500 in category Travel' },
+  { id: 'log-003', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), action: 'billing.payment_success', user: 'System', tenantId: '6a490345d1a45e7ae3a290db', details: 'Payment successful for order ORD-8392, plan: Enterprise Tier' },
+  { id: 'log-004', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), action: 'expense.status_updated', user: 'Ankit Gupta', tenantId: '6a4cc44563a7c033374eebd9', details: 'Expense EXP-4928 status changed to Approved' },
+  { id: 'log-005', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), action: 'employee.registered', user: 'CompanyAdmin', tenantId: '6a50d7b4eaed26bf0130457d', details: 'New employee registered: alex.wong@maatrubhumi.com' },
+  { id: 'log-006', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), action: 'tenant.status_updated', user: 'SuperAdmin', tenantId: '6a50d7b4eaed26bf0130457d', details: 'Tenant aditya-solutions status updated to Suspended' },
+  { id: 'log-007', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), action: 'expense.created', user: 'Ravi Sharma', tenantId: '6a50d7b4eaed26bf0130457d', details: 'Expense submitted for ₹12,000 in category Hardware' }
+];
+
 export const AuditLogs = () => {
   const { currentUser } = useAppState();
   const [auditLogs, setAuditLogs] = useState([]);
@@ -24,9 +34,13 @@ export const AuditLogs = () => {
         const logsData = await logsRes.json();
         const tenantsData = await tenantsRes.json();
 
-        if (logsData.success && logsData.data) {
-          setAuditLogs(logsData.data);
+        let finalLogs = [...DUMMY_AUDIT_LOGS]; // Fallback static data
+
+        if (logsData.success && logsData.data && logsData.data.length > 0) {
+          finalLogs = [...logsData.data, ...finalLogs]; // Show real logs first, then dummy logs
         }
+        setAuditLogs(finalLogs);
+
         if (tenantsData.success && tenantsData.data) {
           setTenants(tenantsData.data);
         }
