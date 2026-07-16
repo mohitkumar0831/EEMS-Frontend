@@ -519,12 +519,12 @@ export const Overview = () => {
   return (
     <div className="flex flex-col gap-8">
       {/* Title */}
-      <div className="flex flex-col gap-1">
+      {/* <div className="flex flex-col gap-1">
         <h3 className="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">Approvals Dashboard</h3>
         <p className="text-slate-400 text-xs leading-relaxed">
           Overview of pending team budget claims, travel authorizations, and active department staff standings.
         </p>
-      </div>
+      </div> */}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

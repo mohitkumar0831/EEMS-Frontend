@@ -290,7 +290,7 @@ export const Expenses = () => {
                   : 'text-slate-500 hover:text-slate-300'
                   }`}
               >
-                Audit History ({processedCount})
+                Claim History ({processedCount})
               </button>
             </div>
 

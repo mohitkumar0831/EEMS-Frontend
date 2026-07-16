@@ -114,7 +114,7 @@ export const FinanceProcess = () => {
   const pendingPayouts = allExpenses.filter(e => e.status === 'Manager Approved' || e.status === 'Finance Approved');
 
   // Processed history: claims that have been paid
-  const paidPayouts = allExpenses.filter(e => e.status === 'Paid');
+  const paidPayouts = allExpenses.filter(e => ['Paid', 'Audited', 'Audit Failed'].includes(e.status));
 
   const handleProcessPayment = async () => {
     if (!selectedExpense) return;
@@ -419,11 +419,13 @@ export const FinanceProcess = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col items-end gap-1.5">
                         <span className="text-xs font-extrabold text-slate-100">₹{exp.amount.toFixed(2)}</span>
-                        <span className={`px-2 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase shrink-0 ${exp.status === 'Paid'
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase shrink-0 ${['Paid', 'Audited', 'Audit Failed'].includes(exp.status)
                           ? 'bg-emerald-500/10 text-emerald-455 border border-emerald-500/25'
                           : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/25'
                           }`}>
-                          {exp.status === 'Paid' ? 'PAID / SETTLED' : 'APPROVED BY L1'}
+                          {['Paid', 'Audited', 'Audit Failed'].includes(exp.status)
+                            ? (exp.status === 'Paid' ? 'PAID / SETTLED' : exp.status.toUpperCase())
+                            : 'APPROVED BY L1'}
                         </span>
                       </div>
                       <ArrowRight className={`w-4 h-4 text-slate-655 transition-transform ${isSelected ? 'translate-x-1 text-slate-400' : ''}`} />
@@ -600,7 +602,7 @@ export const FinanceProcess = () => {
               )}
 
               {/* Already Settled State with Slip Generator Link */}
-              {selectedExpense.status === 'Paid' && (
+              {['Paid', 'Audited', 'Audit Failed'].includes(selectedExpense.status) && (
                 <div className="border-t border-white/5 pt-4.5 mt-auto">
                   <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex flex-col items-center justify-center gap-3 text-center">
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">

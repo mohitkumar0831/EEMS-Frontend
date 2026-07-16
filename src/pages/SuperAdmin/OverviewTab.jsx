@@ -539,7 +539,7 @@ export const OverviewTab = ({ stats }) => {
                     <span className="font-semibold text-slate-300 flex items-center gap-1.5">
                       <span>{color.icon}</span> {role}
                     </span>
-                    <span className={`font-mono font-bold ${color.text}`}>{count} ({pct.toFixed(0)}%)</span>
+                    <span className={`font-mono font-bold ${color.text}`}>{count} ({pct.toFixed(1)}%)</span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
                     <div className={`h-full ${color.bar} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
