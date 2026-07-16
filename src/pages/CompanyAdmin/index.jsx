@@ -14,7 +14,7 @@ export const CompanyAdmin = () => {
     // { id: 'finance-team', label: 'Finance Team', icon: Briefcase, path: 'finance-team' },
     // { id: 'departments', label: 'Departments', icon: Building2, path: 'departments' },
     // { id: 'expense-categories', label: 'Expense Categories', icon: Tags, path: 'expense-categories' },
-    // { id: 'policies', label: 'Company Policies', icon: Settings, path: 'policies' },
+    { id: 'policies', label: 'Company Policies', icon: Settings, path: 'policies' },
     // { id: 'workflows', label: 'Approval Workflow', icon: ShieldCheck, path: 'workflows' },
     { id: 'expenses', label: 'Expense Approval', icon: DollarSign, path: 'expenses' },
     // { id: 'travel-requests', label: 'Travel Requests', icon: MapPin, path: 'travel-requests' },

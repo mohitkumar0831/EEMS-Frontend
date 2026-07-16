@@ -23,11 +23,12 @@ import {
   FileSpreadsheet,
   X,
   Printer,
-  Download
+  Download,
+  AlertTriangle
 } from 'lucide-react';
 
 export const FinanceProcess = () => {
-  const { currentUser, showToast } = useAppState();
+  const { currentUser, showToast, policies } = useAppState();
   const [allExpenses, setAllExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -483,6 +484,7 @@ export const FinanceProcess = () => {
                 <div className="flex flex-col gap-2 pt-2 text-slate-300">
                   <div className="flex justify-between"><span className="text-slate-500">Amount:</span><span className="text-emerald-400 font-bold text-sm">₹{selectedExpense.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Category:</span><span className="text-slate-300 font-semibold">{selectedExpense.category}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Days Spanned:</span><span className="text-slate-300 font-semibold">{selectedExpense.daysSpanned || 1} day(s)</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Transaction Date:</span><span className="text-slate-400">{new Date(selectedExpense.submittedAt || selectedExpense.createdAt).toLocaleDateString()}</span></div>
                   <div className="flex flex-col gap-1 mt-1">
                     <span className="text-slate-500">Business Purpose:</span>
@@ -513,6 +515,38 @@ export const FinanceProcess = () => {
                   <span className="text-[10px]">Manager L1 Signature verified and validated.</span>
                 </div>
               )}
+
+              {(() => {
+                const activePolicy = (policies || []).find(p => {
+                  const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+                    (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+                    (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+                  return isMatchTenant && p.category.toLowerCase() === selectedExpense.category.toLowerCase();
+                });
+                const numDays = selectedExpense.daysSpanned || 1;
+                const dailyAmount = numDays > 0 ? selectedExpense.amount / numDays : selectedExpense.amount;
+                const exceeds = activePolicy && dailyAmount > activePolicy.limit;
+
+                if (exceeds) {
+                  return (
+                    <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex flex-col gap-1.5 border-l-4 border-l-rose-500">
+                      <div className="flex items-center gap-2 text-rose-400 font-bold">
+                        <AlertTriangle className="w-4.5 h-4.5 text-rose-400 shrink-0" />
+                        <span>Compliance Alert: Policy Violation</span>
+                      </div>
+                      <p className="text-[11px] text-slate-355 leading-relaxed">
+                        This claim of <strong className="text-rose-400 font-mono">₹{selectedExpense.amount.toFixed(2)}</strong> ({numDays} days) has an average daily rate of <strong className="text-rose-400 font-mono">₹{dailyAmount.toFixed(2)}/day</strong>, which exceeds the maximum limit of <strong className="text-slate-100 font-mono">₹{activePolicy.limit.toFixed(2)}/day</strong> set for the category <strong className="text-indigo-400">{selectedExpense.category}</strong>.
+                      </p>
+                      {activePolicy.rule && (
+                        <div className="text-[9px] text-slate-500 font-medium">
+                          <strong>Rule:</strong> {activePolicy.rule}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Receipt File Preview Card */}
               {selectedExpense.receiptId && (

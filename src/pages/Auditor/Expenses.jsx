@@ -58,16 +58,16 @@ const LifecycleStep = ({ icon: Icon, label, sublabel, done, active, flagged }) =
 };
 
 export const AuditorExpenses = () => {
-  const { currentUser, showToast } = useAppState();
+  const { currentUser, showToast, policies } = useAppState();
   const [companyExpenses, setCompanyExpenses] = useState([]);
   const [employees, setEmployees] = useState({});
   const [loading, setLoading] = useState(true);
-  
+
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const [searchQuery, setSearchQuery]         = useState('');
-  const [filterStatus, setFilterStatus]       = useState('all');
-  const [auditRemark, setAuditRemark]         = useState('');
-  const [activeTab, setActiveTab]             = useState('pending'); // 'pending' | 'cleared' | 'flagged'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [auditRemark, setAuditRemark] = useState('');
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'cleared' | 'flagged'
 
   const fetchData = async () => {
     if (!currentUser?.tenantSlug) return;
@@ -78,9 +78,9 @@ export const AuditorExpenses = () => {
         fetch(EXPENSE_ENDPOINTS.GET_ALL_EXPENSES(currentUser.tenantSlug), { headers }),
         fetch(USER_ENDPOINTS.GET_EMPLOYEES(currentUser.tenantSlug), { headers })
       ]);
-      
+
       if (!expRes.ok || !empRes.ok) throw new Error('Failed to fetch data');
-      
+
       const expData = await expRes.json();
       const empData = await empRes.json();
 
@@ -93,23 +93,23 @@ export const AuditorExpenses = () => {
       setEmployees(empMap);
 
       if (expData.success) {
-         const mapped = expData.data.map(exp => {
-           const emp = empMap[exp.employeeId] || {};
-           return {
-             ...exp,
-             id: exp._id,
-             date: new Date(exp.createdAt).toLocaleDateString(),
-             employeeName: emp.firstName ? `${emp.firstName} ${emp.lastName}` : 'Unknown Employee',
-             employeeEmail: emp.email || 'N/A',
-             employeeDesignation: emp.designation || 'N/A',
-             employeeDepartment: emp.department || 'N/A',
-             employeeBank: emp.bankAccountNumber || 'N/A',
-             employeeIfsc: emp.ifscCode || 'N/A',
-             employeePan: emp.panNumber || 'N/A',
-             receiptUrl: exp.receiptId?.filePath || null
-           };
-         });
-         setCompanyExpenses(mapped);
+        const mapped = expData.data.map(exp => {
+          const emp = empMap[exp.employeeId] || {};
+          return {
+            ...exp,
+            id: exp._id,
+            date: new Date(exp.createdAt).toLocaleDateString(),
+            employeeName: emp.firstName ? `${emp.firstName} ${emp.lastName}` : 'Unknown Employee',
+            employeeEmail: emp.email || 'N/A',
+            employeeDesignation: emp.designation || 'N/A',
+            employeeDepartment: emp.department || 'N/A',
+            employeeBank: emp.bankAccountNumber || 'N/A',
+            employeeIfsc: emp.ifscCode || 'N/A',
+            employeePan: emp.panNumber || 'N/A',
+            receiptUrl: exp.receiptId?.filePath || null
+          };
+        });
+        setCompanyExpenses(mapped);
       }
     } catch (error) {
       console.error(error);
@@ -129,7 +129,7 @@ export const AuditorExpenses = () => {
   const auditFlagged = companyExpenses.filter(e => e.status === 'Audit Failed' || e.status === 'Flagged');
 
   const statusCounts = {
-    all:     companyExpenses.length,
+    all: companyExpenses.length,
     pending: auditPending.length,
     cleared: auditCleared.length,
     flagged: auditFlagged.length
@@ -187,21 +187,21 @@ export const AuditorExpenses = () => {
   };
 
   const getCategoryIcon = (cat) => {
-    if (cat === 'Meals')     return <Utensils className="w-3.5 h-3.5 text-amber-400" />;
-    if (cat === 'Travel')    return <Plane    className="w-3.5 h-3.5 text-sky-400" />;
-    if (cat === 'Equipment') return <Laptop   className="w-3.5 h-3.5 text-indigo-400" />;
+    if (cat === 'Meals') return <Utensils className="w-3.5 h-3.5 text-amber-400" />;
+    if (cat === 'Travel') return <Plane className="w-3.5 h-3.5 text-sky-400" />;
+    if (cat === 'Equipment') return <Laptop className="w-3.5 h-3.5 text-indigo-400" />;
     return <FileText className="w-3.5 h-3.5 text-slate-400" />;
   };
 
   const statusBadge = (status) => {
     const map = {
-      Paid:           'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-      Audited:        'bg-violet-500/10 text-violet-400 border-violet-500/25',
-      Flagged:        'bg-rose-500/10 text-rose-400 border-rose-500/20',
-      Approved:       'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-      Pending:        'bg-amber-500/10 text-amber-400 border-amber-500/20',
+      Paid: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+      Audited: 'bg-violet-500/10 text-violet-400 border-violet-500/25',
+      Flagged: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+      Approved: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+      Pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
       'Under Review': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-      Rejected:       'bg-slate-700/50 text-slate-400 border-slate-700',
+      Rejected: 'bg-slate-700/50 text-slate-400 border-slate-700',
     };
     return map[status] || 'bg-slate-800 text-slate-400 border-slate-700';
   };
@@ -214,14 +214,14 @@ export const AuditorExpenses = () => {
     return {
       submitted: true,
       managerApproved: ['Approved', 'Paid', 'Audited', 'Flagged'].includes(exp.status),
-      financePaid:     ['Paid', 'Audited', 'Flagged'].includes(exp.status),
-      audited:         exp.status === 'Audited',
-      flagged:         exp.status === 'Flagged',
+      financePaid: ['Paid', 'Audited', 'Flagged'].includes(exp.status),
+      audited: exp.status === 'Audited',
+      flagged: exp.status === 'Flagged',
     };
   };
 
   // Stats
-  const totalPaidValue   = auditPending.reduce((s, e) => s + e.amount, 0);
+  const totalPaidValue = auditPending.reduce((s, e) => s + e.amount, 0);
   const totalAuditedValue = auditCleared.reduce((s, e) => s + e.amount, 0);
   const totalFlaggedValue = auditFlagged.reduce((s, e) => s + e.amount, 0);
 
@@ -296,17 +296,16 @@ export const AuditorExpenses = () => {
             <div className="flex bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 w-max">
               {[
                 { key: 'pending', label: `Awaiting Audit`, count: auditPending.length },
-                { key: 'cleared', label: `Cleared`,        count: auditCleared.length },
-                { key: 'flagged', label: `Flagged`,        count: auditFlagged.length },
+                { key: 'cleared', label: `Cleared`, count: auditCleared.length },
+                { key: 'flagged', label: `Flagged`, count: auditFlagged.length },
               ].map(tab => (
                 <button
                   key={tab.key}
                   onClick={() => { setActiveTab(tab.key); setSelectedExpense(null); }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                    activeTab === tab.key
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === tab.key
                       ? 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold'
                       : 'text-slate-500 hover:text-slate-300'
-                  }`}
+                    }`}
                 >
                   {tab.label} ({tab.count})
                 </button>
@@ -342,28 +341,51 @@ export const AuditorExpenses = () => {
             <div className="divide-y divide-white/5 overflow-y-auto max-h-[520px] flex-grow">
               {filteredList.map(exp => {
                 const isSelected = selectedExpense?.id === exp.id;
+
+                // Policy check for list items
+                const activePolicy = (policies || []).find(p => {
+                  const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+                    (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+                    (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+                  return isMatchTenant && p.category.toLowerCase() === exp.category.toLowerCase();
+                });
+                const itemDays = exp.daysSpanned || 1;
+                const itemDailyAmount = itemDays > 0 ? exp.amount / itemDays : exp.amount;
+                const exceeds = activePolicy && itemDailyAmount > activePolicy.limit;
+
                 return (
                   <button
                     key={exp.id}
                     onClick={() => { setSelectedExpense(exp); setAuditRemark(''); }}
-                    className={`w-full flex items-center justify-between px-6 py-4 text-left hover:bg-white/[0.02] transition-all border-l-2 cursor-pointer ${
-                      isSelected
+                    className={`w-full flex items-center justify-between px-6 py-4 text-left hover:bg-white/[0.02] transition-all border-l-2 cursor-pointer ${isSelected
                         ? 'border-l-violet-500 bg-violet-500/[0.02]'
                         : 'border-l-transparent'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-slate-950/50 border border-white/5 flex items-center justify-center shrink-0">
                         {getCategoryIcon(exp.category)}
                       </div>
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-xs font-bold text-slate-200 truncate">{exp.title}</span>
+                        <span className="text-xs font-bold text-slate-200 truncate flex items-center gap-1.5">
+                          {exp.title}
+                          {exceeds && (
+                            <span className="text-[8px] font-extrabold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-1 py-0.2 rounded shrink-0 flex items-center gap-0.5">
+                              <ShieldAlert className="w-2 h-2" /> VIOLATION
+                            </span>
+                          )}
+                        </span>
                         <span className="text-[10px] text-slate-500 font-medium">
                           {exp.employeeName} · {exp.category} · {exp.date}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
+                      {exceeds && (
+                        <div className="w-5 h-5 rounded-full bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400 shrink-0 animate-pulse" title="Policy Violation Alert">
+                          <ShieldAlert className="w-3 h-3" />
+                        </div>
+                      )}
                       <div className="flex flex-col items-end gap-1">
                         <span className="text-xs font-extrabold text-slate-100">₹{exp.amount.toFixed(2)}</span>
                         <span className={`px-2 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase border ${statusBadge(exp.status)}`}>
@@ -400,7 +422,7 @@ export const AuditorExpenses = () => {
                     <span className="text-[10px] text-violet-400 uppercase tracking-wider mt-0.5">{selectedExpense.employeeEmail}</span>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="flex flex-col p-2 bg-slate-900/50 rounded-lg border border-white/5">
                     <span className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Role / Dept</span>
@@ -424,6 +446,7 @@ export const AuditorExpenses = () => {
                 </div>
                 <div className="flex flex-col gap-1.5 text-[11px] pt-1">
                   <div className="flex justify-between"><span className="text-slate-500">Category:</span><span className="text-slate-200 font-semibold">{selectedExpense.category}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Days Spanned:</span><span className="text-slate-200 font-semibold">{selectedExpense.daysSpanned || 1} day(s)</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Filing Date:</span><span className="text-slate-400">{selectedExpense.date}</span></div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Status:</span>
@@ -455,6 +478,48 @@ export const AuditorExpenses = () => {
                   </button>
                 </div>
               )}
+                    {(() => {
+                const activePolicy = (policies || []).find(p => {
+                  const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+                    (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+                    (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+                  return isMatchTenant && p.category.toLowerCase() === selectedExpense.category.toLowerCase();
+                });
+                const numDays = selectedExpense.daysSpanned || 1;
+                const dailyAmount = numDays > 0 ? selectedExpense.amount / numDays : selectedExpense.amount;
+                const exceeds = activePolicy && dailyAmount > activePolicy.limit;
+
+                if (exceeds) {
+                  return (
+                    <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex flex-col gap-1.5 border-l-4 border-l-rose-500">
+                      <div className="flex items-center gap-2 text-rose-400 font-bold">
+                        <ShieldAlert className="w-4.5 h-4.5 animate-pulse" />
+                        <span>Compliance Alert: Policy Violation</span>
+                      </div>
+                      <p className="text-[11px] text-slate-355 leading-relaxed">
+                        This claim of <strong className="text-rose-400 font-mono">₹{selectedExpense.amount.toFixed(2)}</strong> ({numDays} days) has an average daily rate of <strong className="text-rose-400 font-mono">₹{dailyAmount.toFixed(2)}/day</strong>, which exceeds the maximum limit of <strong className="text-slate-100 font-mono">₹{activePolicy.limit.toFixed(2)}/day</strong> set for the category <strong className="text-indigo-400">{selectedExpense.category}</strong>.
+                      </p>
+                      {activePolicy.rule && (
+                        <div className="text-[9px] text-slate-550 font-medium">
+                          <strong>Rule:</strong> {activePolicy.rule}
+                        </div>
+                      )}
+                    </div>
+                  );
+                } else if (activePolicy) {
+                  return (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex flex-col gap-1.5 border-l-4 border-l-emerald-500">
+                      <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                        <ShieldCheck className="w-4.5 h-4.5" />
+                        <span>Compliance Check: Passed</span>
+                      </div>
+                      <p className="text-[11px] text-slate-355 leading-relaxed">
+                        The claim of <strong className="text-emerald-400 font-mono">₹{selectedExpense.amount.toFixed(2)}</strong> ({numDays} days) has an average daily rate of <strong className="text-emerald-400 font-mono">₹{dailyAmount.toFixed(2)}/day</strong>, which is within the company policy limit of <strong className="text-slate-100 font-mono">₹{activePolicy.limit.toFixed(2)}/day</strong>.
+                      </p>
+                    </div>
+                  );
+                }
+              })()}
 
               {/* Payout Disbursal Receipt */}
               {selectedExpense.payoutReceiptUrl && (
@@ -479,10 +544,10 @@ export const AuditorExpenses = () => {
                   <div className="flex flex-col gap-2">
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lifecycle Journey</span>
                     <div className="flex flex-col gap-3 pl-4 border-l border-slate-800 py-1">
-                      <LifecycleStep icon={User}         label="Employee Filed"     sublabel={selectedExpense.date} done />
-                      <LifecycleStep icon={Check}        label="Manager Approved"   sublabel="L1 sign-off complete" done={lc.managerApproved} active={!lc.managerApproved} />
-                      <LifecycleStep icon={DollarSign}   label="Finance Disbursed"  sublabel="Funds transferred"    done={lc.financePaid} active={lc.managerApproved && !lc.financePaid} />
-                      <LifecycleStep icon={Shield}       label="Auditor Review"     sublabel="Compliance check"     done={lc.audited} active={lc.financePaid && !lc.audited && !lc.flagged} flagged={lc.flagged} />
+                      <LifecycleStep icon={User} label="Employee Filed" sublabel={selectedExpense.date} done />
+                      <LifecycleStep icon={Check} label="Manager Approved" sublabel="L1 sign-off complete" done={lc.managerApproved} active={!lc.managerApproved} />
+                      <LifecycleStep icon={DollarSign} label="Finance Disbursed" sublabel="Funds transferred" done={lc.financePaid} active={lc.managerApproved && !lc.financePaid} />
+                      <LifecycleStep icon={Shield} label="Auditor Review" sublabel="Compliance check" done={lc.audited} active={lc.financePaid && !lc.audited && !lc.flagged} flagged={lc.flagged} />
                       {lc.flagged
                         ? <LifecycleStep icon={Flag} label="Flagged" sublabel="Sent to compliance" flagged />
                         : <LifecycleStep icon={ShieldCheck} label="Audit Complete" sublabel="Claim fully cleared" done={lc.audited} />
@@ -525,22 +590,40 @@ export const AuditorExpenses = () => {
                       className="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-200 resize-none focus:outline-none focus:border-violet-500 placeholder-slate-600 transition-all leading-relaxed"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={handleFlag}
-                      className="flex items-center justify-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 font-bold text-xs py-2.5 px-3 rounded-xl cursor-pointer transition-all active:scale-95 uppercase tracking-wider"
-                    >
-                      <Flag className="w-3.5 h-3.5" />
-                      Flag
-                    </button>
-                    <button
-                      onClick={handleAudit}
-                      className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl cursor-pointer shadow-lg shadow-violet-500/10 transition-all active:scale-95 uppercase tracking-wider"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      Clear
-                    </button>
-                  </div>
+                  {(() => {
+                    const activePolicy = (policies || []).find(p => {
+                      const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+                        (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+                        (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+                      return isMatchTenant && p.category.toLowerCase() === selectedExpense.category.toLowerCase();
+                    });
+                    const exceeds = activePolicy && selectedExpense.amount > activePolicy.limit;
+
+                    return (
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={handleFlag}
+                          className={`flex items-center justify-center gap-1.5 font-bold text-xs py-2.5 px-3 rounded-xl cursor-pointer transition-all active:scale-95 uppercase tracking-wider ${exceeds
+                              ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-500/20 animate-pulse border border-transparent'
+                              : 'bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400'
+                            }`}
+                        >
+                          <Flag className="w-3.5 h-3.5" />
+                          Flag
+                        </button>
+                        <button
+                          onClick={handleAudit}
+                          className={`flex items-center justify-center gap-1.5 font-bold text-xs py-2.5 px-3 rounded-xl cursor-pointer transition-all active:scale-95 uppercase tracking-wider ${exceeds
+                              ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-750'
+                              : 'bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white shadow-lg shadow-violet-500/10'
+                            }`}
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Clear
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

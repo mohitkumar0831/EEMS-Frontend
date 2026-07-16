@@ -43,7 +43,8 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
         }
       }
     });
-  }, [location.pathname, menuItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -118,7 +119,7 @@ export const DashboardLayout = ({ menuItems, children, activeTab: externalActive
       }
     };
     fetchNotifications();
-  }, [currentUser]);
+  }, [currentUser?.token]);
 
   useEffect(() => {
     if (!socket) return;

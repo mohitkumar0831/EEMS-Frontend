@@ -101,3 +101,9 @@ export const AUDIT_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/audit/logs`,
 };
 
+export const POLICY_ENDPOINTS = {
+  GET_ALL: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}/policies`,
+  CREATE_OR_UPDATE: (slug) => `${API_BASE_URL}/expenses/tenant/${slug}/policies`,
+  UPDATE_BY_ID: (slug, id) => `${API_BASE_URL}/expenses/tenant/${slug}/policies/${id}`,
+};
+

@@ -63,6 +63,7 @@ import { AuditorActivity } from './pages/Auditor/Activity';
 import { AuditorExportReports } from './pages/Auditor/ExportReports';
 import { FileExpenseClaim as AuditorFileExpenseClaim } from './pages/Auditor/FileExpenseClaim';
 import { Reimbursements as AuditorReimbursements } from './pages/Auditor/Reimbursements';
+import { AuditorPolicies } from './pages/Auditor/Policies';
 import { ToastList } from './components/ToastList';
 import './App.css';
 
@@ -223,6 +224,7 @@ function App() {
             <Route path="export" element={<AuditorExportReports />} />
             <Route path="file-claim" element={<AuditorFileExpenseClaim />} />
             <Route path="reimbursements" element={<AuditorReimbursements />} />
+            <Route path="policies" element={<AuditorPolicies />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

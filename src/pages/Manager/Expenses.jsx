@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 export const Expenses = () => {
-  const { currentUser, showToast } = useAppState();
+  const { currentUser, showToast, policies } = useAppState();
   const [managerExpenses, setManagerExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -389,15 +389,37 @@ export const Expenses = () => {
             <div className="flex flex-col gap-4 text-xs flex-grow">
 
               {/* Flag notification */}
-              {selectedExpense.status === 'Under Review' && (
-                <div className="bg-amber-950/40 border border-amber-500/25 p-3.5 rounded-2xl text-amber-400 flex items-start gap-2.5 leading-relaxed">
-                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
-                  <div>
-                    <span className="font-bold block text-xs">Policy Violation Flagged</span>
-                    This expense claim has exceeded the standard category spending limit defined by policy rules.
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const activePolicy = (policies || []).find(p => {
+                  const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+                    (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+                    (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+                  return isMatchTenant && p.category.toLowerCase() === selectedExpense.category.toLowerCase();
+                });
+                const numDays = selectedExpense.daysSpanned || 1;
+                const dailyAmount = numDays > 0 ? selectedExpense.amount / numDays : selectedExpense.amount;
+                const isViolation = activePolicy && dailyAmount > activePolicy.limit;
+
+                if (selectedExpense.status === 'Under Review' || isViolation) {
+                  return (
+                    <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex flex-col gap-1.5 border-l-4 border-l-amber-500">
+                      <div className="flex items-center gap-2 text-amber-400 font-bold">
+                        <AlertCircle className="w-4.5 h-4.5" />
+                        <span>Policy Violation Warning</span>
+                      </div>
+                      <p className="text-[11px] text-slate-355 leading-relaxed">
+                        This claim of <strong className="text-amber-400 font-mono">₹{selectedExpense.amount?.toFixed(2)}</strong> ({numDays} days) has an average daily rate of <strong className="text-amber-400 font-mono">₹{dailyAmount.toFixed(2)}/day</strong>, which exceeds the maximum limit of <strong className="text-slate-100 font-mono">₹{activePolicy ? activePolicy.limit.toFixed(2) : '0.00'}/day</strong> set for the category <strong className="text-indigo-400">{selectedExpense.category}</strong>.
+                      </p>
+                      {activePolicy?.rule && (
+                        <div className="text-[9px] text-slate-500 font-medium">
+                          <strong>Rule:</strong> {activePolicy.rule}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Employee Summary Card */}
               <div className="flex flex-col gap-3 bg-slate-950/20 border border-white/5 p-4 rounded-2xl">
@@ -434,6 +456,7 @@ export const Expenses = () => {
                 </div>
                 <div className="flex flex-col gap-2 pt-2 leading-relaxed text-slate-300">
                   <div className="flex justify-between"><span className="text-slate-500">Category:</span><span className="text-slate-300 font-semibold">{selectedExpense.category}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Days Spanned:</span><span className="text-slate-300 font-semibold">{selectedExpense.daysSpanned || 1} day(s)</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Transaction Date:</span><span className="text-slate-400">{new Date(selectedExpense.submittedAt || selectedExpense.createdAt).toLocaleDateString()}</span></div>
                   <div className="flex flex-col gap-1 mt-1">
                     <span className="text-slate-500">Employee Description:</span>

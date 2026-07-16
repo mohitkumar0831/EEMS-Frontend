@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/StateContext';
 import { EXPENSE_ENDPOINTS } from '../../constants/apiConstants';
 import {
@@ -426,7 +427,8 @@ const SpendByCategoryChart = ({ categoryDetails, totalMySpent }) => {
 };
 
 export const AuditorOverview = () => {
-  const { currentUser, auditLogs } = useAppState();
+  const navigate = useNavigate();
+  const { currentUser, auditLogs, policies } = useAppState();
   const [dashboardMetrics, setDashboardMetrics] = useState(null);
   const [apiExpenses, setApiExpenses] = useState([]);
 
@@ -543,10 +545,43 @@ export const AuditorOverview = () => {
     return <FileText className="w-3.5 h-3.5 text-slate-400" />;
   };
 
+  // Calculate if there are any policy violations in the expenses awaiting audit (status === 'Paid')
+  const pendingViolations = apiExpenses.filter(exp => {
+    if (exp.status !== 'Paid') return false;
+    const activePolicy = (policies || []).find(p => {
+      const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+        (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+        (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+      return isMatchTenant && p.category.toLowerCase() === exp.category.toLowerCase();
+    });
+    return activePolicy && exp.amount > activePolicy.limit;
+  });
+
   if (!currentUser) return null;
 
   return (
     <div className="flex flex-col gap-6">
+
+      {/* Compliance Alert Banner */}
+      {pendingViolations.length > 0 && (
+        <div className="bg-rose-500/10 border border-rose-500/20 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl border-l-4 border-l-rose-500">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-rose-450 shrink-0 mt-0.5 animate-pulse" />
+            <div className="flex flex-col gap-1 text-xs">
+              <span className="font-extrabold text-rose-300 text-sm">Action Required: Spend Policy Violations Detected</span>
+              <p className="text-slate-400 leading-relaxed">
+                Automated compliance checks found <strong className="text-rose-400 font-bold">{pendingViolations.length} claim(s)</strong> awaiting audit that exceed the maximum category caps. Review immediately to file corrective actions.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(`/${currentUser.tenantSlug}/dashboard/auditor/expenses`)}
+            className="bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold py-2.5 px-4 rounded-xl cursor-pointer shadow-lg shadow-rose-650/20 active:scale-95 transition-all whitespace-nowrap uppercase tracking-wider shrink-0"
+          >
+            Audit Now
+          </button>
+        </div>
+      )}
 
       {/* ── Row 1: Primary KPI Cards ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

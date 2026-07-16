@@ -28,6 +28,7 @@ export const FileExpenseClaim = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Meals');
   const [amount, setAmount] = useState('');
+  const [daysSpanned, setDaysSpanned] = useState(1);
   const [description, setDescription] = useState('');
   const [receiptFile, setReceiptFile] = useState(null);
   const [assignedManagerId, setAssignedManagerId] = useState('');
@@ -70,7 +71,9 @@ export const FileExpenseClaim = () => {
   );
   
   const numericAmount = parseFloat(amount) || 0;
-  const isOverPolicyLimit = activePolicy && numericAmount > activePolicy.limit;
+  const numDays = parseInt(daysSpanned) || 1;
+  const dailyAmount = numDays > 0 ? numericAmount / numDays : numericAmount;
+  const isOverPolicyLimit = activePolicy && dailyAmount > activePolicy.limit;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileClaim = async (e) => {
@@ -113,6 +116,7 @@ export const FileExpenseClaim = () => {
         title: title.trim(),
         category: category,
         amount: numericAmount,
+        daysSpanned: numDays,
         description: description.trim() || undefined,
         employeeId: employeeId,
         assignedManagerId: assignedManagerId || undefined,
@@ -197,8 +201,8 @@ export const FileExpenseClaim = () => {
               />
             </div>
 
-            {/* Category & Amount Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Category, Amount & Days Spanned Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Expense Category</label>
                 <select
@@ -226,6 +230,18 @@ export const FileExpenseClaim = () => {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Days Spanned</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={daysSpanned}
+                  onChange={(e) => setDaysSpanned(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-3 px-4 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/10 font-bold"
+                  required
+                />
               </div>
             </div>
 
@@ -321,8 +337,14 @@ export const FileExpenseClaim = () => {
                 </div>
                 <div className="flex justify-between items-center text-slate-400">
                   <span>Standard Spending Cap:</span>
-                  <span className="font-extrabold text-slate-205">₹{activePolicy.limit.toFixed(2)}</span>
+                  <span className="font-extrabold text-slate-205">₹{activePolicy.limit.toFixed(2)}/day</span>
                 </div>
+                {numDays > 1 && (
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span>Calculated Daily Rate:</span>
+                    <span className="font-bold text-indigo-400">₹{dailyAmount.toFixed(2)}/day</span>
+                  </div>
+                )}
 
                 {/* Limit status indicator */}
                 {numericAmount > 0 && (
@@ -346,8 +368,8 @@ export const FileExpenseClaim = () => {
                     </div>
                     <p className="text-[10px] text-slate-400 leading-normal">
                       {isOverPolicyLimit 
-                        ? `Your claim amount of ₹${numericAmount.toFixed(2)} exceeds the limit (₹${activePolicy.limit.toFixed(2)}). It will be flagged for compliance review.`
-                        : `Your claim amount of ₹${numericAmount.toFixed(2)} is within policy bounds. It will be routed directly for approval.`
+                        ? `Your daily rate of ₹${dailyAmount.toFixed(2)} exceeds the limit (₹${activePolicy.limit.toFixed(2)}/day). It will be flagged for compliance review.`
+                        : `Your daily rate of ₹${dailyAmount.toFixed(2)} is within policy bounds (₹${activePolicy.limit.toFixed(2)}/day). It will be routed directly for approval.`
                       }
                     </p>
                   </div>

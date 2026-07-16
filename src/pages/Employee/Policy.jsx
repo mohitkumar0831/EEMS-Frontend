@@ -130,11 +130,39 @@ const generalRules = [
 
 export const EmployeePolicy = () => {
   const [expanded, setExpanded] = useState(null);
-  const { currentUser, tenants } = useAppState();
+  const { currentUser, tenants, policies } = useAppState();
 
   const tenantName = currentUser?.tenantId === 'platform'
     ? 'ExpenseFlow Platform'
     : tenants?.find(t => t.id === currentUser?.tenantId)?.name || 'Your Company';
+
+  const getDynamicCapAndRules = (catId, defaultCap, defaultRules) => {
+    const categoryMapping = {
+      meals: 'Meals',
+      travel: 'Travel',
+      equipment: 'Equipment'
+    };
+    const targetCategory = categoryMapping[catId];
+    if (!targetCategory) return { cap: defaultCap, rules: defaultRules };
+
+    const activePolicy = (policies || []).find(p => {
+      const isMatchTenant = p.tenantId === currentUser?.tenantId ||
+        (p.tenantId === 'tenant-1' && (currentUser?.tenantId === 'tenant-1' || currentUser?.tenantSlug?.toLowerCase().includes('acme'))) ||
+        (p.tenantId === 'tenant-2' && (currentUser?.tenantId === 'tenant-2' || currentUser?.tenantSlug?.toLowerCase().includes('stark')));
+      return isMatchTenant && p.category.toLowerCase() === targetCategory.toLowerCase();
+    });
+
+    if (activePolicy) {
+      const capStr = `₹${activePolicy.limit.toFixed(2)}`;
+      const rules = [
+        `Maximum limit of ₹${activePolicy.limit.toFixed(2)} is set for ${targetCategory}.`,
+        activePolicy.rule ? `Policy rule: "${activePolicy.rule}"` : `Spending must adhere to the rules specified for ${targetCategory}.`,
+        ...defaultRules.slice(2)
+      ];
+      return { cap: capStr, rules };
+    }
+    return { cap: defaultCap, rules: defaultRules };
+  };
 
   return (
     <div className="flex flex-col gap-7">
@@ -194,6 +222,8 @@ export const EmployeePolicy = () => {
           {categories.map(cat => {
             const Icon    = cat.icon;
             const isOpen  = expanded === cat.id;
+            const { cap, rules } = getDynamicCapAndRules(cat.id, cat.cap, cat.rules);
+
             return (
               <div
                 key={cat.id}
@@ -212,12 +242,12 @@ export const EmployeePolicy = () => {
                     </div>
                     <div className="flex flex-col items-start gap-0.5 text-left">
                       <span className="text-sm font-bold text-slate-200">{cat.label}</span>
-                      <span className="text-[10px] text-slate-500">Cap: <span className="font-bold text-slate-300">{cat.cap}</span></span>
+                      <span className="text-[10px] text-slate-500">Cap: <span className="font-bold text-slate-300">{cap}</span></span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`px-2.5 py-1 rounded-xl text-[9px] font-bold uppercase tracking-wider border ${cat.bg} ${cat.color} ${cat.border}`}>
-                      {cat.rules.length} rules
+                      {rules.length} rules
                     </span>
                     {isOpen
                       ? <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -230,7 +260,7 @@ export const EmployeePolicy = () => {
                 {isOpen && (
                   <div className="px-5 pb-5 border-t border-white/5 pt-4">
                     <ul className="flex flex-col gap-2.5">
-                      {cat.rules.map((rule, idx) => (
+                      {rules.map((rule, idx) => (
                         <li key={idx} className="flex items-start gap-3 text-xs text-slate-400 leading-relaxed">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                           {rule}

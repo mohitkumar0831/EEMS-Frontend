@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { POLICY_ENDPOINTS } from '../constants/apiConstants';
 
 const StateContext = createContext();
 
@@ -135,6 +136,43 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('ems_policies', JSON.stringify(policies));
   }, [policies]);
+
+  const fetchPolicies = useCallback(async () => {
+    if (!currentUser || !currentUser.tenantSlug || !currentUser.token) return;
+    try {
+      const res = await fetch(POLICY_ENDPOINTS.GET_ALL(currentUser.tenantSlug), {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        const normalized = json.data.map(p => ({
+          ...p,
+          id: p._id || p.id,
+          tenantId: currentUser.tenantId
+        }));
+        
+        // Deduplicate locally by category to ensure UI is clean
+        const unique = [];
+        const seen = new Set();
+        for (const p of normalized) {
+          const catLower = p.category.toLowerCase();
+          if (!seen.has(catLower)) {
+            seen.add(catLower);
+            unique.push(p);
+          }
+        }
+        setPolicies(unique);
+      }
+    } catch (err) {
+      console.error('Error fetching policies from API:', err);
+    }
+  }, [currentUser?.tenantSlug, currentUser?.token, currentUser?.tenantId]);
+
+  useEffect(() => {
+    fetchPolicies();
+  }, [fetchPolicies]);
   useEffect(() => {
     localStorage.setItem('ems_expenses', JSON.stringify(expenses));
   }, [expenses]);
@@ -315,23 +353,108 @@ export const StateProvider = ({ children }) => {
   };
 
   // Company Admin actions
-  const updateCompanyPolicy = (policyId, limit, rule) => {
-    setPolicies(prev => prev.map(p => p.id === policyId ? { ...p, limit: parseFloat(limit), rule } : p));
-    showToast('Spending policy limit updated.', 'success');
-    addAuditLog('Policy Updated', `Modified spending policy limit to ₹${limit}`, currentUser.tenantId);
+  const updateCompanyPolicy = async (policyId, limit, rule) => {
+    if (!currentUser) return;
+
+    // Fallback for local/mock mode
+    if (!currentUser.tenantSlug || !currentUser.token) {
+      const updatedPol = {
+        id: policyId,
+        tenantId: currentUser.tenantId,
+        limit: parseFloat(limit),
+        rule
+      };
+      setPolicies(prev => prev.map(p => p.id === policyId ? { ...p, ...updatedPol } : p));
+      showToast('Spending policy limit updated (Local Mode).', 'success');
+      addAuditLog('Policy Updated', `Modified spending policy limit to ₹${limit}`, currentUser.tenantId);
+      return;
+    }
+
+    try {
+      const res = await fetch(POLICY_ENDPOINTS.UPDATE_BY_ID(currentUser.tenantSlug, policyId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          limit: parseFloat(limit),
+          rule
+        })
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        const updatedPol = {
+          ...json.data,
+          id: json.data._id || json.data.id,
+          tenantId: currentUser.tenantId
+        };
+        setPolicies(prev => prev.map(p => p.id === policyId ? updatedPol : p));
+        showToast('Spending policy limit updated.', 'success');
+        addAuditLog('Policy Updated', `Modified spending policy limit to ₹${limit}`, currentUser.tenantId);
+      } else {
+        showToast(json.message || 'Failed to update policy', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to update company policy:', err);
+      showToast('Error updating policy', 'error');
+    }
   };
 
-  const addCompanyPolicy = (category, limit, rule) => {
-    const newPol = {
-      id: 'pol-' + Date.now(),
-      tenantId: currentUser.tenantId,
-      category,
-      limit: parseFloat(limit),
-      rule
-    };
-    setPolicies(prev => [...prev, newPol]);
-    showToast('New spending policy added.', 'success');
-    addAuditLog('Policy Created', `Added spending policy for ${category} with cap ₹${limit}`, currentUser.tenantId);
+  const addCompanyPolicy = async (category, limit, rule) => {
+    if (!currentUser) return;
+
+    // Fallback for local/mock mode
+    if (!currentUser.tenantSlug || !currentUser.token) {
+      const newPol = {
+        id: 'pol-' + Date.now(),
+        tenantId: currentUser.tenantId,
+        category,
+        limit: parseFloat(limit),
+        rule
+      };
+      setPolicies(prev => {
+        const filtered = prev.filter(p => !(p.category.toLowerCase() === category.toLowerCase() && p.tenantId === currentUser.tenantId));
+        return [...filtered, newPol];
+      });
+      showToast('Spending policy saved successfully (Local Mode).', 'success');
+      addAuditLog('Policy Created', `Added spending policy for ${category} with cap ₹${limit}`, currentUser.tenantId);
+      return;
+    }
+
+    try {
+      const res = await fetch(POLICY_ENDPOINTS.CREATE_OR_UPDATE(currentUser.tenantSlug), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          category,
+          limit: parseFloat(limit),
+          rule
+        })
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        const newPol = {
+          ...json.data,
+          id: json.data._id || json.data.id,
+          tenantId: currentUser.tenantId
+        };
+        setPolicies(prev => {
+          const filtered = prev.filter(p => !(p.category.toLowerCase() === category.toLowerCase() && p.tenantId === currentUser.tenantId));
+          return [...filtered, newPol];
+        });
+        showToast('Spending policy saved successfully.', 'success');
+        addAuditLog('Policy Created', `Added spending policy for ${category} with cap ₹${limit}`, currentUser.tenantId);
+      } else {
+        showToast(json.message || 'Failed to save policy', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to add company policy:', err);
+      showToast('Error saving policy', 'error');
+    }
   };
 
   // Employee actions
@@ -540,34 +663,39 @@ export const StateProvider = ({ children }) => {
     addAuditLog('Reimbursement Paid', `Finance processed reimbursement payment for expense ID: ${expenseId}`, currentUser.tenantId);
   };
 
+  const contextValue = useMemo(() => ({
+    tenants,
+    users,
+    policies,
+    expenses,
+    travelRequests,
+    auditLogs,
+    currentUser,
+    toasts,
+    login,
+    logout,
+    registerUser,
+    createTenant,
+    updateCompanyPolicy,
+    addCompanyPolicy,
+    submitExpense,
+    submitTravel,
+    approveExpense,
+    rejectExpense,
+    reviewTravelRequest,
+    processPayment,
+    auditExpense,
+    flagExpense,
+    showToast,
+    addAuditLog,
+    setCurrentUser
+  }), [
+    tenants, users, policies, expenses, travelRequests, auditLogs,
+    currentUser, toasts
+  ]);
+
   return (
-    <StateContext.Provider value={{
-      tenants,
-      users,
-      policies,
-      expenses,
-      travelRequests,
-      auditLogs,
-      currentUser,
-      toasts,
-      login,
-      logout,
-      registerUser,
-      createTenant,
-      updateCompanyPolicy,
-      addCompanyPolicy,
-      submitExpense,
-      submitTravel,
-      approveExpense,
-      rejectExpense,
-      reviewTravelRequest,
-      processPayment,
-      auditExpense,
-      flagExpense,
-      showToast,
-      addAuditLog,
-      setCurrentUser
-    }}>
+    <StateContext.Provider value={contextValue}>
       {children}
     </StateContext.Provider>
   );
