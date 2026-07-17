@@ -226,6 +226,20 @@ export const StateProvider = ({ children }) => {
     if (currentUser) {
       addAuditLog('User Logout', 'Signed out from session', currentUser.tenantId);
       setCurrentUser(null);
+      
+      // Reset local context states to defaults to prevent leaks between sessions
+      setPolicies(DEFAULT_POLICIES);
+      setExpenses(DEFAULT_EXPENSES);
+      setTravelRequests(DEFAULT_TRAVEL);
+      setAuditLogs(DEFAULT_LOGS);
+
+      // Clear local storage for these resources
+      localStorage.removeItem('ems_policies');
+      localStorage.removeItem('ems_expenses');
+      localStorage.removeItem('ems_travel');
+      localStorage.removeItem('ems_logs');
+      localStorage.removeItem('ems_current_user');
+
       showToast('Logged out successfully.', 'info');
     }
   };

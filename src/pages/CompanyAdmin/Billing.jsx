@@ -174,6 +174,108 @@ export const Billing = () => {
     }
   };
 
+  const handleUpgradePlan = async (targetPlanId) => {
+    if (!subscription) return;
+    const targetPlan = plans.find(p => p._id === targetPlanId);
+    if (!targetPlan) return;
+
+    // Check if it is an upgrade
+    const isUpgrade = targetPlan.priceMonthly > (subscription.currentAmount || 0);
+    
+    if (!isUpgrade) {
+      showToast('For downgrades or custom contracts, please contact platform support.', 'info');
+      return;
+    }
+
+    setPaymentLoading(true);
+
+    try {
+      // 1. Create Razorpay order specifically for upgrade
+      const orderRes = await fetch(BILLING_ENDPOINTS.CREATE_ORDER, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          subscriptionId: subscription._id,
+          tenantId: subscription.tenantId,
+          tenantSlug: subscription.tenantSlug,
+          targetPlanId: targetPlan._id,
+        }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderData.success) {
+        showToast(orderData.message || 'Failed to create payment order', 'error');
+        setPaymentLoading(false);
+        return;
+      }
+
+      const { orderId, amount, currency, razorpayKeyId, planName, billingCycle } = orderData.data;
+
+      // 2. Open Razorpay checkout
+      const options = {
+        key: razorpayKeyId,
+        amount: amount,
+        currency: currency,
+        name: 'EEMS Platform Upgrade',
+        description: `Upgrade to ${planName} Plan - ${billingCycle} Subscription`,
+        order_id: orderId,
+        handler: async (response) => {
+          try {
+            // 3. Verify payment
+            const verifyRes = await fetch(BILLING_ENDPOINTS.VERIFY_PAYMENT, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                subscriptionId: subscription._id,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              showToast(`Plan successfully upgraded to ${planName}!`, 'success');
+              setSubscription(verifyData.data.subscription);
+              
+              // Switch to Overview tab to show updated details
+              setActiveTab('overview');
+              
+              // Refresh payments & invoices
+              const [pRes, iRes] = await Promise.all([
+                fetch(BILLING_ENDPOINTS.GET_PAYMENT_HISTORY(tenantId), { headers }),
+                fetch(BILLING_ENDPOINTS.GET_INVOICES(tenantId), { headers }),
+              ]);
+              const pData = await pRes.json();
+              const iData = await iRes.json();
+              if (pData.success) setPayments(pData.data);
+              if (iData.success) setInvoices(iData.data);
+            } else {
+              showToast(verifyData.message || 'Payment verification failed', 'error');
+            }
+          } catch (err) {
+            showToast('Payment verification error', 'error');
+          }
+          setPaymentLoading(false);
+        },
+        modal: {
+          ondismiss: () => setPaymentLoading(false),
+        },
+        prefill: {
+          email: currentUser?.email,
+          contact: currentUser?.phone,
+        },
+        theme: { color: '#6366f1' },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      showToast('Failed to initiate upgrade payment', 'error');
+      setPaymentLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -426,9 +528,13 @@ export const Billing = () => {
                   </div>
                 )}
 
-                {!isCurrent && (
-                  <button className="mt-auto w-full py-2.5 px-4 border border-indigo-500/30 text-indigo-400 rounded-xl text-xs font-semibold hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-1">
-                    {plan.priceMonthly > (subscription?.currentAmount || 0) ? 'Upgrade' : 'Downgrade'}
+                {!isCurrent && plan.priceMonthly > (subscription?.currentAmount || 0) && (
+                  <button
+                    onClick={() => handleUpgradePlan(plan._id)}
+                    disabled={paymentLoading}
+                    className="mt-auto w-full py-2.5 px-4 border border-indigo-500/30 text-indigo-400 rounded-xl text-xs font-semibold hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                  >
+                    Upgrade
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 )}

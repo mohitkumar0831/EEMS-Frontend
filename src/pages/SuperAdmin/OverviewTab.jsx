@@ -174,6 +174,9 @@ const GenericBarChart = ({ title, subtitle, data, yAxisLabel, isCurrency = false
               <span className="text-xs font-extrabold text-slate-100">
                 {isCurrency ? `₹${data[hoveredBar].value.toLocaleString()}` : data[hoveredBar].value}
               </span>
+              {data[hoveredBar].info && (
+                <span className="text-[9px] text-indigo-400 font-bold mt-0.5">{data[hoveredBar].info}</span>
+              )}
             </div>
           </div>
         )}
@@ -226,14 +229,30 @@ export const OverviewTab = ({ stats }) => {
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
+  const companySubscriptions = tenants.map(t => {
+    let planPrice = 0;
+    switch (t.subscriptionPlan) {
+      case 'Basic': planPrice = 150; break;
+      case 'Standard': planPrice = 450; break;
+      case 'Enterprise': planPrice = 1200; break;
+      default: planPrice = 0;
+    }
+    return {
+      label: t.companyName || t.name || 'Unknown',
+      value: planPrice,
+      info: `${t.subscriptionPlan || 'Free'} Plan`
+    };
+  });
+
   const { currentUser } = useAppState();
   const [monthlyData, setMonthlyData] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(''); // '' means All Months
 
   useEffect(() => {
     const fetchMonthlyVolume = async () => {
       try {
-        const year = new Date().getFullYear();
-        const res = await fetch(BILLING_ENDPOINTS.GET_MONTHLY_VOLUME(year), {
+        const res = await fetch(BILLING_ENDPOINTS.GET_MONTHLY_VOLUME(selectedYear, selectedMonth), {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': currentUser?.token ? `Bearer ${currentUser.token}` : undefined,
@@ -244,33 +263,45 @@ export const OverviewTab = ({ stats }) => {
         if (data.success && data.data) {
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-          // Map data to chart format
-          let maxSpend = Math.max(...data.data.map(d => d.totalSpend), 1);
+          if (selectedMonth) {
+            // Daily breakdown for selected month
+            const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+            const formatted = [];
+            let maxSpend = Math.max(...data.data.map(d => d.totalSpend), 1);
 
-          const formatted = data.data.map(d => ({
-            m: monthNames[d._id - 1], // _id is month number (1-12)
-            spend: d.totalSpend,
-            val: Math.max(10, (d.totalSpend / maxSpend) * 100) // Minimum 10% height for visibility
-          }));
+            for (let day = 1; day <= daysInMonth; day++) {
+              const found = data.data.find(d => d._id === day);
+              formatted.push({
+                m: `${day}`,
+                spend: found ? found.totalSpend : 0,
+                val: found ? Math.max(10, (found.totalSpend / maxSpend) * 100) : 0
+              });
+            }
+            setMonthlyData(formatted);
+          } else {
+            // Monthly breakdown for selected year
+            let maxSpend = Math.max(...data.data.map(d => d.totalSpend), 1);
 
-          // Fill missing months up to the current month or available data
-          const currentMonth = new Date().getMonth() + 1; // 1-12
-          const fullData = [];
+            const formatted = data.data.map(d => ({
+              m: monthNames[d._id - 1],
+              spend: d.totalSpend,
+              val: Math.max(10, (d.totalSpend / maxSpend) * 100)
+            }));
 
-          for (let i = 1; i <= currentMonth; i++) {
-            const found = formatted.find(f => f.m === monthNames[i - 1]);
-            if (found) fullData.push(found);
-            else fullData.push({ m: monthNames[i - 1], spend: 0, val: 5 }); // 5% height for empty months
+            const fullData = [];
+            for (let i = 1; i <= 12; i++) {
+              const found = formatted.find(f => f.m === monthNames[i - 1]);
+              fullData.push(found || { m: monthNames[i - 1], spend: 0, val: 0 });
+            }
+            setMonthlyData(fullData);
           }
-
-          setMonthlyData(fullData);
         }
       } catch (err) {
         console.error('Failed to fetch monthly volume', err);
       }
     };
     fetchMonthlyVolume();
-  }, [currentUser]);
+  }, [currentUser, selectedYear, selectedMonth]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -336,13 +367,13 @@ export const OverviewTab = ({ stats }) => {
         <div className="bg-slate-900 border border-white/5 p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="flex flex-col gap-1 z-10">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gross Platform Spend</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gross Platform Revenue</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-extrabold text-slate-100">
                 ₹{totalSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className="text-[10px] text-slate-500">{totalClaims} total claims submitted</span>
+            <span className="text-[10px] text-slate-500">Total subscription payments revenue</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 z-10">
             <DollarSign className="w-6 h-6" />
@@ -397,32 +428,65 @@ export const OverviewTab = ({ stats }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transaction Activity Chart */}
         <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl lg:col-span-2 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <TrendingUp className="w-4.5 h-4.5 text-indigo-400" />
                 Platform Subscription Transaction Activity
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Subscription processing volume</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {selectedMonth 
+                  ? `Daily subscription processing volume for ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth - 1]} ${selectedYear}`
+                  : `Monthly subscription processing volume for ${selectedYear}`
+                }
+              </p>
             </div>
-            <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
-              {new Date().getFullYear()}
-            </span>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value ? parseInt(e.target.value) : '')}
+                className="bg-slate-950/40 border border-slate-800 rounded-xl py-1.5 px-3 text-[10px] text-slate-300 font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="">All Months</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="bg-slate-950/40 border border-slate-800 rounded-xl py-1.5 px-3 text-[10px] text-slate-300 font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
+            </div>
           </div>
 
-          <div className="h-52 flex items-end gap-3 pt-6 px-2">
+          <div className="h-52 flex items-end gap-1.5 pt-6 px-1">
             {monthlyData.map((d, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-slate-300 bg-slate-800 border border-white/10 px-2 py-1 rounded-lg whitespace-nowrap mb-1">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-slate-300 bg-slate-800 border border-white/10 px-2 py-1 rounded-lg whitespace-nowrap mb-1 z-10">
                   ₹{d.spend.toLocaleString()}
                 </div>
                 <div
                   style={{ height: `${d.val}%` }}
-                  className="w-full max-w-[42px] bg-gradient-to-t from-indigo-600 to-purple-500 rounded-t-lg shadow-lg shadow-indigo-500/10 group-hover:from-indigo-500 group-hover:to-purple-400 transition-all duration-300 relative"
+                  className="w-full bg-gradient-to-t from-indigo-600 to-purple-500 rounded-t group-hover:from-indigo-500 group-hover:to-purple-400 transition-all duration-300 relative"
                 >
-                  <div className="absolute inset-0 bg-white/5 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-white/5 rounded-t opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <span className="text-[10px] text-slate-500 font-bold">{d.m}</span>
+                <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold">{d.m}</span>
               </div>
             ))}
           </div>
@@ -446,7 +510,7 @@ export const OverviewTab = ({ stats }) => {
                   <div className="flex justify-between items-center text-xs mb-1.5">
                     <span className="font-semibold text-slate-300">{cat}</span>
                     <span className={`font-mono font-bold ${categoryTextColors[idx % categoryTextColors.length]}`}>
-                      {pct.toFixed(1)}% · ₹{amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ₹{amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5">
@@ -465,8 +529,8 @@ export const OverviewTab = ({ stats }) => {
         </div>
       </div>
 
-      {/* ── Bottom Row: Tenant Grid + Role Distribution + Company Metrics ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── Bottom Row: Tenant Grid + Role Distribution ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tenant Workspace Health Cards */}
         <div className="bg-slate-900 border border-white/5 p-6 rounded-2xl flex flex-col h-[300px]">
           <div className="shrink-0 mb-4">
@@ -490,18 +554,16 @@ export const OverviewTab = ({ stats }) => {
                     </div>
                     <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-extrabold uppercase">{t.status || 'Active'}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="grid grid-cols-2 gap-3 text-center">
                     <div>
-                      <div className="text-sm font-extrabold text-slate-100">{t.userCount || '-'}</div>
+                      <div className="text-sm font-extrabold text-slate-100">{t.userCount || '0'}</div>
                       <div className="text-[9px] text-slate-500 font-semibold uppercase">Users</div>
                     </div>
                     <div>
-                      <div className="text-sm font-extrabold text-slate-100">{t.expenseCount || '-'}</div>
-                      <div className="text-[9px] text-slate-500 font-semibold uppercase">Claims</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-extrabold text-slate-100">{t.totalSpend ? `₹${t.totalSpend.toLocaleString('en-US', { minimumFractionDigits: 0 })}` : '-'}</div>
-                      <div className="text-[9px] text-slate-500 font-semibold uppercase">Spend</div>
+                      <div className="text-sm font-extrabold text-slate-100">
+                        ₹{(t.userSpend || 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                      </div>
+                      <div className="text-[9px] text-slate-500 font-semibold uppercase">User Spend</div>
                     </div>
                   </div>
                 </div>
@@ -549,7 +611,10 @@ export const OverviewTab = ({ stats }) => {
             })}
           </div>
         </div>
+      </div>
 
+      {/* ── Subscriptions and Users Charts ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Users per Company Chart */}
         <div className="h-[300px]">
           <GenericBarChart
@@ -557,6 +622,17 @@ export const OverviewTab = ({ stats }) => {
             subtitle="Top companies by registered user base"
             data={topCompaniesByUsers}
             yAxisLabel="Total Users"
+          />
+        </div>
+
+        {/* Subscription Plans Chart */}
+        <div className="h-[300px]">
+          <GenericBarChart
+            title="Company Subscription Plans"
+            subtitle="Active plan tiers and billing values across companies"
+            data={companySubscriptions}
+            yAxisLabel="Plan Value (₹)"
+            isCurrency={true}
           />
         </div>
       </div>

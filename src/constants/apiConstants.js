@@ -89,7 +89,7 @@ export const BILLING_ENDPOINTS = {
   CREATE_ORDER: `${API_BASE_URL}/billing/payments/create-order`,
   VERIFY_PAYMENT: `${API_BASE_URL}/billing/payments/verify`,
   GET_ALL_PAYMENTS: `${API_BASE_URL}/billing/payments`,
-  GET_MONTHLY_VOLUME: (year) => `${API_BASE_URL}/billing/payments/monthly-volume?year=${year}`,
+  GET_MONTHLY_VOLUME: (year, month = '') => `${API_BASE_URL}/billing/payments/monthly-volume?year=${year}${month ? `&month=${month}` : ''}`,
   GET_PAYMENT_HISTORY: (tenantId) => `${API_BASE_URL}/billing/payments/tenant/${tenantId}`,
 
   // Invoices

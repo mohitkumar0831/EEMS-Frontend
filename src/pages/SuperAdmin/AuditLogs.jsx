@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { ScrollText, Search, Filter, ShieldCheck, Mail } from 'lucide-react';
 import { AUDIT_ENDPOINTS, TENANT_ENDPOINTS } from '../../constants/apiConstants';
+import { PageSkeleton } from '../../components/PageSkeleton';
 
 const DUMMY_AUDIT_LOGS = [
   { id: 'log-001', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), action: 'tenant.registered', user: 'Mohit Kumar', tenantId: 'platform', details: 'New tenant registered: ACME Solutions (acme-solutions)' },
@@ -19,6 +20,7 @@ export const AuditLogs = () => {
   const [tenants, setTenants] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTenant, setSelectedTenant] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,6 +48,8 @@ export const AuditLogs = () => {
         }
       } catch (err) {
         console.error('Failed to fetch audit data', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -63,6 +67,10 @@ export const AuditLogs = () => {
 
     return matchesSearch && matchesTenant;
   });
+
+  if (loading) {
+    return <PageSkeleton />;
+  }
 
   return (
     <div className="flex flex-col gap-6">
