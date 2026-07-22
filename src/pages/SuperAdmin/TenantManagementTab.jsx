@@ -164,31 +164,118 @@ export const TenantManagementTab = ({ tenantsSummary = [], formData, handleFormC
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Subscription Details</h4>
               <div className="grid gap-4 md:grid-cols-2">
-                <FormField label="Subscription Plan" name="subscriptionPlan" value={formData.subscriptionPlan} onChange={handleFormChange} type="select" options={[{ value: 'Free', label: 'Free' }, { value: 'Basic', label: 'Basic' }, { value: 'Standard', label: 'Standard' }, { value: 'Enterprise', label: 'Enterprise' }]} required />
-                <FormField label="Plan Start Date" name="planStartDate" value={formData.planStartDate} onChange={handleFormChange} type="date" />
-                <FormField label="Plan Expiry Date" name="planExpiryDate" value={formData.planExpiryDate} onChange={handleFormChange} type="date" />
-                <FormField label="Billing Cycle" name="billingCycle" value={formData.billingCycle} onChange={handleFormChange} type="select" options={[{ value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Yearly', label: 'Yearly' }]} />
-                <FormField label="Subscription Status" name="subscriptionStatus" value={formData.subscriptionStatus} onChange={handleFormChange} type="select" options={[{ value: 'Active', label: 'Active' }, { value: 'Expired', label: 'Expired' }, { value: 'Trial', label: 'Trial' }, { value: 'Suspended', label: 'Suspended' }]} required />
+                <FormField
+                  label="Subscription Plan"
+                  name="subscriptionPlan"
+                  value={formData.subscriptionPlan}
+                  onChange={handleFormChange}
+                  type="select"
+                  options={[
+                    { value: 'Trial', label: 'Trial (1 Month Free)' },
+                    { value: 'Basic', label: 'Basic' },
+                    { value: 'Standard', label: 'Standard' },
+                    { value: 'Enterprise', label: 'Enterprise' },
+                  ]}
+                  required
+                />
+                {/* Only show billing cycle for paid plans — Trial is always 1 month */}
+                {formData.subscriptionPlan !== 'Trial' && (
+                  <FormField
+                    label="Billing Cycle"
+                    name="billingCycle"
+                    value={formData.billingCycle}
+                    onChange={handleFormChange}
+                    type="select"
+                    options={[
+                      { value: 'Monthly', label: 'Monthly' },
+                      { value: 'Quarterly', label: 'Quarterly' },
+                      { value: 'Half-Yearly', label: 'Half-Yearly' },
+                      { value: 'Yearly', label: 'Yearly' },
+                    ]}
+                  />
+                )}
               </div>
-              <div className="mt-4 flex flex-wrap gap-3">
-                {[
-                  { plan: 'Free', limit: 10, activeCls: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
-                  { plan: 'Basic', limit: 100, activeCls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-                  { plan: 'Standard', limit: 500, activeCls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-                  { plan: 'Enterprise', limit: 2000, activeCls: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-                ].map(({ plan, limit, activeCls }) => (
-                  <span
-                    key={plan}
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${formData.subscriptionPlan === plan
-                      ? activeCls
-                      : 'bg-slate-800/50 text-slate-500 border-white/5'
-                      }`}
-                  >
-                    {plan}: {limit} users max
-                  </span>
-                ))}
-              </div>
+
+              {/* Auto-calculated date preview */}
+              {(() => {
+                const CYCLE_MONTHS = { Monthly: 1, Quarterly: 3, 'Half-Yearly': 6, Yearly: 12 };
+                const months = formData.subscriptionPlan === 'Trial' ? 1 : (CYCLE_MONTHS[formData.billingCycle] || 1);
+                const startDate = new Date();
+                const endDate = new Date(startDate);
+                endDate.setMonth(endDate.getMonth() + months);
+                const fmt = (d) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                return (
+                  <div className="mt-4 flex flex-wrap gap-4 rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3">
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Plan Start</p>
+                      <p className="text-sm font-semibold text-slate-200 mt-0.5">{fmt(startDate)}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Auto-set to today</p>
+                    </div>
+                    <div className="w-px bg-white/5" />
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Plan End</p>
+                      <p className="text-sm font-semibold text-slate-200 mt-0.5">{fmt(endDate)}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {formData.subscriptionPlan === 'Trial'
+                          ? '1 month free trial'
+                          : `${months} month${months > 1 ? 's' : ''} — ${formData.billingCycle} cycle`}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Selected plan info badge */}
+              {(() => {
+                const PLAN_INFO = {
+                  Trial:      { label: 'Trial: 20 users max, 5GB storage — Free for 1 month',  cls: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+                  Basic:      { label: 'Basic: 100 users max — ₹150/mo base price',             cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                  Standard:   { label: 'Standard: 500 users max — ₹400/mo base price',          cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+                  Enterprise: { label: 'Enterprise: 2000 users max — ₹900/mo base price',       cls: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+                };
+                const info = PLAN_INFO[formData.subscriptionPlan];
+                if (!info) return null;
+                return (
+                  <div className={`mt-3 inline-flex text-[10px] font-bold px-3 py-1.5 rounded-lg border ${info.cls}`}>
+                    {info.label}
+                  </div>
+                );
+              })()}
+
+              {/* Live pricing preview — only for paid plans */}
+              {formData.subscriptionPlan && formData.subscriptionPlan !== 'Trial' && formData.billingCycle && (() => {
+                const BASE_PRICES = { Basic: 150, Standard: 400, Enterprise: 900 };
+                const DISCOUNTS = { Monthly: 0, Quarterly: 0.10, 'Half-Yearly': 0.20, Yearly: 0.30 };
+                const MONTHS = { Monthly: 1, Quarterly: 3, 'Half-Yearly': 6, Yearly: 12 };
+                const base = BASE_PRICES[formData.subscriptionPlan] || 0;
+                const disc = DISCOUNTS[formData.billingCycle] || 0;
+                const months = MONTHS[formData.billingCycle] || 1;
+                const discountedPerMonth = Math.round(base * (1 - disc));
+                const total = discountedPerMonth * months;
+                const saving = Math.round(base * disc * months);
+                return (
+                  <div className="mt-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 flex flex-wrap items-center gap-4">
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Effective Price</p>
+                      <p className="text-lg font-extrabold text-indigo-300 font-mono">₹{discountedPerMonth}<span className="text-xs text-slate-400 font-normal">/mo</span></p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Billed Total</p>
+                      <p className="text-lg font-extrabold text-slate-100 font-mono">₹{total.toLocaleString()}</p>
+                    </div>
+                    {disc > 0 && (
+                      <div className="ml-auto">
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                          You save ₹{saving} ({Math.round(disc * 100)}% off)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
+
+
 
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-5">
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Company Address</h4>

@@ -11,11 +11,25 @@ export const SubscriptionPlans = () => {
   const [billingStats, setBillingStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [viewCycle, setViewCycle] = useState('Monthly');
+
+  const CYCLE_DISCOUNT = { Monthly: 0, Quarterly: 0.10, 'Half-Yearly': 0.20, Yearly: 0.30 };
+  const CYCLE_MONTHS   = { Monthly: 1, Quarterly: 3,    'Half-Yearly': 6,    Yearly: 12 };
+
+  const getEffectivePrice = (plan, cycle) => {
+    const disc = CYCLE_DISCOUNT[cycle] ?? 0;
+    return Math.round((plan.priceMonthly || 0) * (1 - disc));
+  };
+
+  const getBilledTotal = (plan, cycle) => {
+    return getEffectivePrice(plan, cycle) * (CYCLE_MONTHS[cycle] ?? 1);
+  };
 
   // Editable form state for the selected plan
   const [editForm, setEditForm] = useState({
     priceMonthly: 0,
     priceQuarterly: 0,
+    priceHalfYearly: 0,
     priceYearly: 0,
     userLimit: 0,
     storageGB: 0,
@@ -40,6 +54,7 @@ export const SubscriptionPlans = () => {
             setEditForm({
               priceMonthly: data.data[data.data.length - 1].priceMonthly,
               priceQuarterly: data.data[data.data.length - 1].priceQuarterly,
+              priceHalfYearly: data.data[data.data.length - 1].priceHalfYearly || Math.round((data.data[data.data.length - 1].priceMonthly || 0) * 6 * 0.8),
               priceYearly: data.data[data.data.length - 1].priceYearly,
               userLimit: data.data[data.data.length - 1].userLimit,
               storageGB: data.data[data.data.length - 1].storageGB,
@@ -73,6 +88,7 @@ export const SubscriptionPlans = () => {
     setEditForm({
       priceMonthly: plan.priceMonthly,
       priceQuarterly: plan.priceQuarterly,
+      priceHalfYearly: plan.priceHalfYearly || Math.round((plan.priceMonthly || 0) * 6 * 0.8),
       priceYearly: plan.priceYearly,
       userLimit: plan.userLimit,
       storageGB: plan.storageGB,
@@ -108,6 +124,7 @@ export const SubscriptionPlans = () => {
   };
 
   const planColors = {
+    Trial: { badge: 'bg-amber-500/10 text-amber-400 border border-amber-500/20', icon: 'text-amber-400' },
     Free: { badge: 'bg-slate-800 text-slate-400 border border-white/5', icon: 'text-slate-500' },
     Basic: { badge: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20', icon: 'text-emerald-400' },
     Standard: { badge: 'bg-blue-500/10 text-blue-400 border border-blue-500/20', icon: 'text-blue-400' },
@@ -147,7 +164,7 @@ export const SubscriptionPlans = () => {
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Trial Users</span>
               <span className="text-2xl font-extrabold text-amber-400 font-mono">{billingStats.trialSubs || 0}</span>
-              <span className="text-[10px] text-slate-500">In 14-day trial period</span>
+              <span className="text-[10px] text-slate-500">In 1-month trial period</span>
             </div>
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-amber-400" />
@@ -166,36 +183,73 @@ export const SubscriptionPlans = () => {
         </div>
       )}
 
+      {/* Billing Cycle Switcher */}
+      <div className="flex items-center gap-1 bg-slate-900 border border-white/5 rounded-xl p-1 w-fit">
+        {['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'].map(cycle => (
+          <button
+            key={cycle}
+            onClick={() => setViewCycle(cycle)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              viewCycle === cycle ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {cycle}
+            {CYCLE_DISCOUNT[cycle] > 0 && (
+              <span className="ml-1 text-[9px] text-emerald-400">-{Math.round(CYCLE_DISCOUNT[cycle] * 100)}%</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* Plan Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {plans.map((plan) => (
-          <div
-            key={plan._id || plan.name}
-            onClick={() => handleSelectPlan(plan)}
-            className={`bg-slate-900 border p-5 rounded-2xl flex flex-col justify-between shadow-sm cursor-pointer transition-all duration-300 relative overflow-hidden group ${selectedPlan?._id === plan._id ? 'border-indigo-500 bg-indigo-500/[0.02] shadow-indigo-500/5' : 'border-white/5 hover:border-white/10'
+        {plans.map((plan) => {
+          const effPerMonth = getEffectivePrice(plan, viewCycle);
+          const billedTotal = getBilledTotal(plan, viewCycle);
+          const disc = CYCLE_DISCOUNT[viewCycle];
+          return (
+            <div
+              key={plan._id || plan.name}
+              onClick={() => handleSelectPlan(plan)}
+              className={`bg-slate-900 border p-5 rounded-2xl flex flex-col justify-between shadow-sm cursor-pointer transition-all duration-300 relative overflow-hidden group ${
+                selectedPlan?._id === plan._id ? 'border-indigo-500 bg-indigo-500/[0.02] shadow-indigo-500/5' : 'border-white/5 hover:border-white/10'
               }`}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${planColors[plan.name]?.badge || 'bg-slate-800 text-slate-400 border border-white/5'
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                    planColors[plan.name]?.badge || 'bg-slate-800 text-slate-400 border border-white/5'
                   }`}>
-                  {plan.name}
-                </span>
-                <div className="text-2xl font-extrabold text-slate-100 mt-3 font-mono">₹{plan.priceMonthly}/mo</div>
+                    {plan.name}
+                  </span>
+                  {disc > 0 && (
+                    <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      -{Math.round(disc * 100)}% off
+                    </span>
+                  )}
+                  <div className="text-2xl font-extrabold text-slate-100 mt-3 font-mono">
+                    ₹{effPerMonth}<span className="text-sm text-slate-500 font-normal">/mo</span>
+                  </div>
+                  {viewCycle !== 'Monthly' && (
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      Billed <span className="font-semibold text-slate-200">₹{billedTotal.toLocaleString()}</span> {viewCycle.toLowerCase()}
+                    </div>
+                  )}
+                </div>
+                <Award className={`w-5 h-5 ${selectedPlan?._id === plan._id ? 'text-indigo-400' : planColors[plan.name]?.icon || 'text-slate-500'}`} />
               </div>
-              <Award className={`w-5 h-5 ${selectedPlan?._id === plan._id ? 'text-indigo-400' : planColors[plan.name]?.icon || 'text-slate-500'}`} />
-            </div>
-            <div className="flex flex-col gap-2 mt-4 text-xs text-slate-400">
-              <div className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-slate-500" /> {plan.userLimit} User Capacity</div>
-              <div className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-slate-500" /> {plan.storageGB} GB Cloud Storage</div>
-            </div>
-            {billingStats?.planDistribution?.[plan.name] > 0 && (
-              <div className="mt-3 pt-3 border-t border-white/5">
-                <span className="text-[10px] text-slate-500">{billingStats.planDistribution[plan.name]} tenant{billingStats.planDistribution[plan.name] !== 1 ? 's' : ''} on this plan</span>
+              <div className="flex flex-col gap-2 mt-4 text-xs text-slate-400">
+                <div className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-slate-500" /> {plan.userLimit} User Capacity</div>
+                <div className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-slate-500" /> {plan.storageGB} GB Cloud Storage</div>
               </div>
-            )}
-          </div>
-        ))}
+              {billingStats?.planDistribution?.[plan.name] > 0 && (
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <span className="text-[10px] text-slate-500">{billingStats.planDistribution[plan.name]} tenant{billingStats.planDistribution[plan.name] !== 1 ? 's' : ''} on this plan</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Plan Details & Limit Config */}
@@ -220,14 +274,24 @@ export const SubscriptionPlans = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40 text-slate-300">
-                <tr>
-                  <td className="py-3 pr-4 font-semibold text-slate-400">Monthly Licensing Fee</td>
-                  {plans.map(p => (
-                    <td key={p._id || p.name} className={`py-3 px-4 font-mono ${selectedPlan?._id === p._id ? 'text-indigo-400' : ''}`}>
-                      ₹{p.priceMonthly?.toLocaleString() || '0'}.00
+                {['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'].map(cycle => (
+                  <tr key={cycle}>
+                    <td className="py-3 pr-4 font-semibold text-slate-400">
+                      {cycle} Price
+                      {CYCLE_DISCOUNT[cycle] > 0 && (
+                        <span className="ml-2 text-[9px] font-bold text-emerald-400">(-{Math.round(CYCLE_DISCOUNT[cycle] * 100)}%)</span>
+                      )}
                     </td>
-                  ))}
-                </tr>
+                    {plans.map(p => (
+                      <td key={p._id || p.name} className={`py-3 px-4 font-mono ${selectedPlan?._id === p._id ? 'text-indigo-400' : ''}`}>
+                        ₹{getEffectivePrice(p, cycle)}/mo
+                        {cycle !== 'Monthly' && (
+                          <span className="block text-[10px] text-slate-500">₹{getBilledTotal(p, cycle).toLocaleString()} total</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
                 <tr>
                   <td className="py-3 pr-4 font-semibold text-slate-400">Total User Capacity limit</td>
                   {plans.map(p => (
@@ -268,8 +332,9 @@ export const SubscriptionPlans = () => {
             </div>
 
             <form onSubmit={handleUpdateLimit} className="flex flex-col gap-4 mt-2">
+              <p className="text-[10px] text-slate-500 -mb-2">Discounts (Q 10%, HY 20%, Y 30%) are auto-calculated from monthly price.</p>
               <label className="flex flex-col gap-1 text-xs text-slate-400">
-                <span className="font-medium text-slate-300">Monthly Licensing Cost (₹)</span>
+                <span className="font-medium text-slate-300">Monthly Base Price (₹)</span>
                 <input
                   type="number"
                   value={editForm.priceMonthly}
@@ -277,6 +342,19 @@ export const SubscriptionPlans = () => {
                   className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
                 />
               </label>
+
+              {/* Auto-derived discount preview */}
+              {editForm.priceMonthly > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {[['Quarterly', 0.10, 3], ['Half-Yearly', 0.20, 6], ['Yearly', 0.30, 12]].map(([label, disc, months]) => (
+                    <div key={label} className="rounded-lg bg-slate-800/60 border border-white/5 px-2 py-1.5 text-center">
+                      <p className="text-[9px] text-slate-400 font-bold">{label}</p>
+                      <p className="text-xs font-mono text-emerald-400">₹{Math.round(editForm.priceMonthly * (1 - disc))}/mo</p>
+                      <p className="text-[9px] text-slate-500">₹{(Math.round(editForm.priceMonthly * (1 - disc)) * months).toLocaleString()} total</p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <label className="flex flex-col gap-1 text-xs text-slate-400">
                 <span className="font-medium text-slate-300">User Account Quota</span>

@@ -12,15 +12,12 @@ const initialTenantForm = {
   companyWebsite: '',
   companyEmail: '',
   companyPhone: '',
-  employeeCapacity: '',
-  branchCapacity: '',
-  storageLimit: '',
+  employeeCapacity: '20',
+  branchCapacity: '1',
+  storageLimit: '5',
   monthlyExpenseLimit: '',
-  subscriptionPlan: 'Basic',
-  planStartDate: '',
-  planExpiryDate: '',
+  subscriptionPlan: 'Trial',
   billingCycle: 'Monthly',
-  subscriptionStatus: 'Trial',
   addressLine1: '',
   addressLine2: '',
   city: '',
@@ -64,7 +61,17 @@ export const TenantManagement = () => {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      // If switching to Trial plan, auto-set 20 users capacity and 5GB storage
+      if (name === 'subscriptionPlan' && value === 'Trial') {
+        updated.employeeCapacity = '20';
+        updated.storageLimit = '5';
+      }
+
+      return updated;
+    });
   };
 
   const handleCreateTenant = async (e) => {
@@ -91,11 +98,9 @@ export const TenantManagement = () => {
         storageLimitGb: Number(formData.storageLimit) || 0,
         monthlyExpenseLimit: Number(formData.monthlyExpenseLimit) || 0,
 
-        subscriptionPlan: formData.subscriptionPlan,
-        planStartDate: formData.planStartDate ? new Date(formData.planStartDate).toISOString() : new Date().toISOString(),
-        planExpiryDate: formData.planExpiryDate ? new Date(formData.planExpiryDate).toISOString() : new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-        billingCycle: formData.billingCycle,
-        subscriptionStatus: formData.subscriptionStatus,
+        subscriptionPlan: formData.subscriptionPlan || 'Trial',
+        billingCycle: formData.billingCycle || 'Monthly',
+        // planStartDate and planExpiryDate are auto-calculated by the backend
 
         address: {
           line1: formData.addressLine1 || undefined,

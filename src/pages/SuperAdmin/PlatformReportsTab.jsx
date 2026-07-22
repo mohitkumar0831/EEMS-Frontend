@@ -15,6 +15,7 @@ export const PlatformReportsTab = () => {
   const { currentUser } = useAppState();
   const [plans, setPlans] = useState([]);
   const [stats, setStats] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [payments, setPayments] = useState([]);
   const [expandedCompanies, setExpandedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,13 @@ export const PlatformReportsTab = () => {
           setStats(statsData.data);
         }
 
+        // Fetch all platform subscriptions
+        const subsRes = await fetch(BILLING_ENDPOINTS.GET_ALL_SUBSCRIPTIONS, { headers });
+        const subsData = await subsRes.json();
+        if (subsData.success && subsData.data) {
+          setSubscriptions(subsData.data);
+        }
+
         // Fetch all platform payments
         const paymentsRes = await fetch(BILLING_ENDPOINTS.GET_ALL_PAYMENTS, { headers });
         const paymentsData = await paymentsRes.json();
@@ -60,7 +68,9 @@ export const PlatformReportsTab = () => {
 
   const tenantsList = stats?.tenants || [];
   const totalCompanies = tenantsList.length;
-  const activeSubscriptions = tenantsList.filter(t => t.subscriptionStatus === 'Active').length;
+  const activeSubscriptions = subscriptions.length > 0
+    ? subscriptions.filter(s => ['Active', 'Trial'].includes(s.status)).length
+    : tenantsList.filter(t => t.status === 'Active').length;
   const suspendedCompanies = tenantsList.filter(t => t.status === 'Suspended').length;
   const totalUsers = Object.values(stats?.usersPerTenantMap || {}).reduce((acc, count) => acc + count, 0);
 
@@ -90,11 +100,12 @@ export const PlatformReportsTab = () => {
     }
   };
 
-  // Group payments by company slug/ID
+  // Group payments by company slug/ID (only include completed/paid payments)
   const groupedPayments = tenantsList.map(t => {
-    const companyPayments = payments.filter(p => p.tenantId === t._id || p.tenantSlug === t.slug);
+    const companyPayments = payments.filter(
+      p => (p.tenantId === t._id || p.tenantSlug === t.slug) && ['Captured', 'Paid'].includes(p.status)
+    );
     const totalPaid = companyPayments
-      .filter(p => p.status === 'Captured')
       .reduce((sum, p) => sum + (p.totalAmount || 0), 0);
 
     return {
@@ -212,12 +223,13 @@ export const PlatformReportsTab = () => {
             </thead>
             <tbody className="divide-y divide-slate-800/40 text-xs">
               {tenantsList.map((t) => {
-                const plan = getTenantPlan(t);
-                const status = t.status || 'Active'; // Company status
-                const subStatus = t.subscriptionStatus || 'Trial'; // Subscription status
+                const sub = subscriptions.find(s => s.tenantId === (t._id?.toString() || t._id) || s.tenantSlug === t.slug);
+                const plan = sub?.planName || t.subscriptionPlan || 'Trial';
+                const subStatus = sub?.status || 'Active';
                 const rate = getTenantBillingRate(plan);
                 const tenantUsers = stats?.usersPerTenantMap?.[t._id] || 0;
                 const capacity = t.employeeCapacity || 0;
+                const nextRenewal = sub?.nextBillingDate || sub?.endDate || sub?.trialEndDate;
 
                 return (
                   <tr key={t._id} className="transition-all hover:bg-white/[0.01]">
@@ -255,8 +267,8 @@ export const PlatformReportsTab = () => {
                     <td className="px-6 py-4 font-bold text-slate-200 font-mono">
                       ₹{rate.toLocaleString()}/mo
                     </td>
-                    <td className="px-6 py-4 text-slate-400 font-mono">
-                      {t.planExpiryDate ? new Date(t.planExpiryDate).toLocaleDateString() : '-'}
+                    <td className="px-6 py-4 text-slate-300 font-mono">
+                      {nextRenewal ? new Date(nextRenewal).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                   </tr>
                 );
@@ -367,13 +379,8 @@ export const PlatformReportsTab = () => {
 
                                       <div className="flex flex-col gap-0.5">
                                         <span className="text-[9px] uppercase font-bold text-slate-500">Status</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border w-max ${p.status === 'Captured'
-                                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                          : p.status === 'Failed'
-                                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                          }`}>
-                                          {p.status}
+                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border w-max bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                          Paid
                                         </span>
                                       </div>
 

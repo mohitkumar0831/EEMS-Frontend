@@ -18,6 +18,19 @@ export const Billing = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [userCount, setUserCount] = useState(0);
+  const [viewCycle, setViewCycle] = useState('Monthly');
+
+  const CYCLE_DISCOUNT = { Monthly: 0, Quarterly: 0.10, 'Half-Yearly': 0.20, Yearly: 0.30 };
+  const CYCLE_MONTHS = { Monthly: 1, Quarterly: 3, 'Half-Yearly': 6, Yearly: 12 };
+
+  const getEffectivePrice = (plan, cycle) => {
+    const disc = CYCLE_DISCOUNT[cycle] ?? 0;
+    return Math.round((plan.priceMonthly || 0) * (1 - disc));
+  };
+
+  const getBilledTotal = (plan, cycle) => {
+    return getEffectivePrice(plan, cycle) * (CYCLE_MONTHS[cycle] ?? 1);
+  };
 
   const headers = {
     'Content-Type': 'application/json',
@@ -181,7 +194,7 @@ export const Billing = () => {
 
     // Check if it is an upgrade
     const isUpgrade = targetPlan.priceMonthly > (subscription.currentAmount || 0);
-    
+
     if (!isUpgrade) {
       showToast('For downgrades or custom contracts, please contact platform support.', 'info');
       return;
@@ -237,10 +250,10 @@ export const Billing = () => {
             if (verifyData.success) {
               showToast(`Plan successfully upgraded to ${planName}!`, 'success');
               setSubscription(verifyData.data.subscription);
-              
+
               // Switch to Overview tab to show updated details
               setActiveTab('overview');
-              
+
               // Refresh payments & invoices
               const [pRes, iRes] = await Promise.all([
                 fetch(BILLING_ENDPOINTS.GET_PAYMENT_HISTORY(tenantId), { headers }),
@@ -280,6 +293,7 @@ export const Billing = () => {
     switch (status) {
       case 'Active': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'Trial': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'Payment Pending': return 'bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse';
       case 'PastDue': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
       case 'Expired': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
       case 'Suspended': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
@@ -291,18 +305,28 @@ export const Billing = () => {
 
   if (loading) return <PageSkeleton />;
 
-  const needsPayment = subscription && ['Trial', 'PastDue', 'Expired'].includes(subscription.status);
-  const currentPlan = plans.find(p => p._id === subscription?.planId?._id || p._id === subscription?.planId);
+  // Derived subscription status
+  const isTrial = subscription?.planName === 'Trial';
+  const isUnpaid = subscription && !subscription.lastPaymentDate && !isTrial;
+  const isExpired = subscription && subscription.endDate && new Date(subscription.endDate) < new Date() && subscription.status !== 'Active';
+
+  const displayStatus = isExpired
+    ? 'Expired'
+    : isUnpaid
+      ? 'Payment Pending'
+      : (subscription?.status || 'Active');
+
+  const currentPlan = plans.find(p => p.name === subscription?.planName) || null;
 
   return (
     <div className="flex flex-col gap-6">
       {/* Subscription Status Banner */}
       {subscription && (
-        <div className={`rounded-2xl border p-6 relative overflow-hidden ${subscription.status === 'Active'
-          ? 'bg-gradient-to-r from-emerald-600/10 via-emerald-500/5 to-slate-900 border-emerald-500/10'
-          : subscription.status === 'Trial'
-            ? 'bg-gradient-to-r from-amber-600/10 via-amber-500/5 to-slate-900 border-amber-500/10'
-            : 'bg-gradient-to-r from-rose-600/10 via-rose-500/5 to-slate-900 border-rose-500/10'
+        <div className={`rounded-2xl border p-6 relative overflow-hidden ${displayStatus === 'Active'
+          ? 'bg-gradient-to-r from-emerald-600/10 via-emerald-500/5 to-slate-900 border-emerald-500/20'
+          : displayStatus === 'Payment Pending' || displayStatus === 'Trial'
+            ? 'bg-gradient-to-r from-amber-600/15 via-amber-500/10 to-slate-900 border-amber-500/30'
+            : 'bg-gradient-to-r from-rose-600/10 via-rose-500/5 to-slate-900 border-rose-500/20'
           }`}>
           <div className="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
           <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -310,32 +334,41 @@ export const Billing = () => {
               <div className="flex items-center gap-3 mb-2">
                 <Crown className="w-5 h-5 text-indigo-400" />
                 <h3 className="text-lg font-bold text-slate-100">{subscription.planName} Plan</h3>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(subscription.status)}`}>
-                  {subscription.status}
+                <span className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border ${getStatusColor(displayStatus)}`}>
+                  {displayStatus}
                 </span>
               </div>
-              <p className="text-sm text-slate-400">
-                {subscription.status === 'Trial' && `Trial ends ${formatDate(subscription.trialEndDate)}`}
-                {subscription.status === 'Active' && `Next billing: ${formatDate(subscription.nextBillingDate)}`}
+              <p className="text-sm text-slate-300">
+                {isUnpaid && `First payment of ₹${subscription.currentAmount?.toLocaleString()} + 18% GST is pending for your ${subscription.planName} plan.`}
+                {!isUnpaid && isTrial && `Free trial (20 Users & 5GB Storage) — Trial ends ${formatDate(subscription.trialEndDate || subscription.endDate)}`}
+                {!isUnpaid && subscription.status === 'Active' && !isTrial && `Active subscription — Next billing date: ${formatDate(subscription.nextBillingDate || subscription.endDate)}`}
                 {subscription.status === 'PastDue' && `Grace period ends: ${formatDate(subscription.graceEndDate)}`}
                 {subscription.status === 'Expired' && 'Your subscription has expired. Please pay to continue.'}
                 {subscription.status === 'Suspended' && 'Workspace suspended. Contact support or pay to reactivate.'}
               </p>
-              <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Billing: {subscription.billingCycle}</span>
-                <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> ₹{subscription.currentAmount}/{subscription.billingCycle === 'Monthly' ? 'mo' : subscription.billingCycle === 'Quarterly' ? 'qtr' : 'yr'}</span>
+              <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Billing Cycle: <strong className="text-slate-200">{subscription.billingCycle}</strong></span>
+                <span className="flex items-center gap-1">
+                  <CreditCard className="w-3.5 h-3.5" />
+                  {isTrial
+                    ? '₹0 (Free Trial)'
+                    : `₹${subscription.currentAmount?.toLocaleString()} / ${subscription.billingCycle}`}
+                </span>
               </div>
             </div>
-            {needsPayment && subscription.currentAmount > 0 && (
+
+            {/* Primary Pay Now button (unpaid plan, trial conversion, or expired) */}
+            {(isUnpaid || isTrial || ['PastDue', 'Expired'].includes(subscription.status)) && (
               <button
                 onClick={handlePayNow}
                 disabled={paymentLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:from-indigo-600 hover:to-purple-700 transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 text-white rounded-xl text-sm font-extrabold shadow-xl hover:shadow-indigo-500/25 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50 shrink-0"
               >
-                {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                {paymentLoading ? 'Processing...' : `Pay ₹${(subscription.currentAmount * 1.18).toFixed(0)} Now`}
+                {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
+                {paymentLoading ? 'Processing...' : `Pay ₹${Math.round((subscription.currentAmount || 0) * 1.18).toLocaleString()} Now`}
               </button>
             )}
+
           </div>
         </div>
       )}
@@ -366,12 +399,12 @@ export const Billing = () => {
             <div className="space-y-3">
               {[
                 { label: 'Plan', value: subscription.planName, icon: Crown },
-                { label: 'Status', value: subscription.status, icon: CheckCircle2 },
+                { label: 'Status', value: displayStatus, icon: CheckCircle2 },
                 { label: 'Billing Cycle', value: subscription.billingCycle, icon: Calendar },
-                { label: 'Amount', value: `₹${subscription.currentAmount} + GST`, icon: CreditCard },
+                { label: 'Amount', value: isTrial ? '₹0 (Free Trial)' : `₹${subscription.currentAmount?.toLocaleString()} + 18% GST`, icon: CreditCard },
                 { label: 'Start Date', value: formatDate(subscription.startDate), icon: Clock },
-                { label: 'End Date', value: formatDate(subscription.endDate), icon: Clock },
-                { label: 'Last Payment', value: formatDate(subscription.lastPaymentDate), icon: Receipt },
+                { label: 'End Date / Next Renewal', value: formatDate(subscription.endDate), icon: Clock },
+                { label: 'Last Payment', value: subscription.lastPaymentDate ? formatDate(subscription.lastPaymentDate) : 'Unpaid (Payment Pending)', icon: Receipt },
               ].map(({ label, value, icon: Icon }) => (
                 <div key={label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                   <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -440,107 +473,153 @@ export const Billing = () => {
           <div className="px-6 py-4 border-b border-white/5">
             <h4 className="text-sm font-bold text-slate-200">Payment History & Invoices</h4>
           </div>
-          {payments.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <Receipt className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-400">No payments yet</p>
-              <p className="text-xs text-slate-500 mt-1">Your payment history will appear here after your first payment.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                    <th className="px-6 py-3">Date</th>
-                    <th className="px-6 py-3">Description</th>
-                    <th className="px-6 py-3">Amount</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-right">Invoice</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/40 text-xs">
-                  {payments.map(p => (
-                    <tr key={p._id} className="hover:bg-white/[0.01] transition-all">
-                      <td className="px-6 py-4 text-slate-300">{formatDate(p.paidAt || p.createdAt)}</td>
-                      <td className="px-6 py-4 text-slate-200 font-medium">{p.description}</td>
-                      <td className="px-6 py-4 text-slate-100 font-mono font-semibold">₹{p.totalAmount?.toFixed(2)}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${p.status === 'Captured' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                          p.status === 'Failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                          }`}>
-                          {p.status === 'Captured' ? 'Paid' : p.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {p.invoiceId && (
-                          <button
-                            onClick={() => handleDownloadInvoice(p.invoiceId._id || p.invoiceId)}
-                            className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors ml-auto"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            PDF
-                          </button>
-                        )}
-                      </td>
+          {(() => {
+            const paidPayments = payments.filter(p => ['Captured', 'Paid'].includes(p.status));
+            if (paidPayments.length === 0) {
+              return (
+                <div className="px-6 py-12 text-center">
+                  <Receipt className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <p className="text-sm text-slate-400">No payments yet</p>
+                  <p className="text-xs text-slate-500 mt-1">Your payment history will appear here after your first payment.</p>
+                </div>
+              );
+            }
+            return (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                      <th className="px-6 py-3">Date</th>
+                      <th className="px-6 py-3">Description</th>
+                      <th className="px-6 py-3">Amount</th>
+                      <th className="px-6 py-3">Status</th>
+                      <th className="px-6 py-3 text-right">Invoice</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/40 text-xs">
+                    {paidPayments.map(p => (
+                      <tr key={p._id} className="hover:bg-white/[0.01] transition-all">
+                        <td className="px-6 py-4 text-slate-300">{formatDate(p.paidAt || p.createdAt)}</td>
+                        <td className="px-6 py-4 text-slate-200 font-medium">{p.description}</td>
+                        <td className="px-6 py-4 text-slate-100 font-mono font-semibold">₹{p.totalAmount?.toFixed(2)}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            Paid
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {p.invoiceId && (
+                            <button
+                              onClick={() => handleDownloadInvoice(p.invoiceId._id || p.invoiceId)}
+                              className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors ml-auto"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              PDF
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 
       {/* Plans Tab */}
       {activeTab === 'plans' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {plans.map(plan => {
-            const isCurrent = subscription?.planName === plan.name;
-            return (
-              <div key={plan._id} className={`bg-slate-900 border p-5 rounded-2xl flex flex-col gap-4 transition-all ${isCurrent ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-white/5 hover:border-white/10'
-                }`}>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{plan.name}</span>
-                    {isCurrent && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded font-bold">CURRENT</span>}
-                  </div>
-                  <div className="text-2xl font-extrabold text-slate-100 font-mono">
-                    ₹{plan.priceMonthly}<span className="text-sm text-slate-500 font-normal">/mo</span>
-                  </div>
-                  {plan.description && <p className="text-xs text-slate-500 mt-1">{plan.description}</p>}
-                </div>
+        <div className="flex flex-col gap-5">
+          {/* Billing cycle switcher */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-white/5 rounded-xl p-1 w-fit">
+            {['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'].map(cycle => (
+              <button
+                key={cycle}
+                onClick={() => setViewCycle(cycle)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewCycle === cycle ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                {cycle}
+                {CYCLE_DISCOUNT[cycle] > 0 && (
+                  <span className="ml-1 text-[9px] text-emerald-400">-{Math.round(CYCLE_DISCOUNT[cycle] * 100)}%</span>
+                )}
+              </button>
+            ))}
+          </div>
 
-                <div className="flex flex-col gap-2 text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-slate-500" /> {plan.userLimit} Users</div>
-                  <div className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-slate-500" /> {plan.storageGB} GB Storage</div>
-                  <div className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-slate-500" /> {plan.supportLevel}</div>
-                </div>
-
-                {(plan.features || []).length > 0 && (
-                  <div className="flex flex-col gap-1.5 pt-3 border-t border-white/5">
-                    {plan.features.slice(0, 4).map((f, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                        {f}
+          {/* Plan cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {plans.map(plan => {
+              const isCurrent = subscription?.planName === plan.name;
+              const effPerMonth = getEffectivePrice(plan, viewCycle);
+              const billedTotal = getBilledTotal(plan, viewCycle);
+              const disc = CYCLE_DISCOUNT[viewCycle];
+              return (
+                <div key={plan._id} className={`bg-slate-900 border p-5 rounded-2xl flex flex-col gap-4 transition-all ${isCurrent ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-white/5 hover:border-white/10'}`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{plan.name}</span>
+                      {isCurrent && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded font-bold">CURRENT</span>}
+                    </div>
+                    <div className="text-2xl font-extrabold text-slate-100 font-mono">
+                      ₹{effPerMonth}<span className="text-sm text-slate-500 font-normal">/mo</span>
+                    </div>
+                    {viewCycle !== 'Monthly' && (
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        Billed <span className="font-semibold text-slate-200">₹{billedTotal.toLocaleString()}</span> {viewCycle.toLowerCase()}
                       </div>
-                    ))}
+                    )}
+                    {disc > 0 && (
+                      <span className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        {Math.round(disc * 100)}% off vs monthly
+                      </span>
+                    )}
+                    {plan.description && <p className="text-xs text-slate-500 mt-1">{plan.description}</p>}
                   </div>
-                )}
 
-                {!isCurrent && plan.priceMonthly > (subscription?.currentAmount || 0) && (
-                  <button
-                    onClick={() => handleUpgradePlan(plan._id)}
-                    disabled={paymentLoading}
-                    className="mt-auto w-full py-2.5 px-4 border border-indigo-500/30 text-indigo-400 rounded-xl text-xs font-semibold hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-1 disabled:opacity-50"
-                  >
-                    Upgrade
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
+                  <div className="flex flex-col gap-2 text-xs text-slate-400">
+                    <div className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-slate-500" /> {plan.userLimit} Users</div>
+                    <div className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-slate-500" /> {plan.storageGB} GB Storage</div>
+                    <div className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-slate-500" /> {plan.supportLevel}</div>
+                  </div>
+
+                  {(plan.features || []).length > 0 && (
+                    <div className="flex flex-col gap-1.5 pt-3 border-t border-white/5">
+                      {plan.features.slice(0, 4).map((f, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {isCurrent && isUnpaid && (
+                    <button
+                      onClick={handlePayNow}
+                      disabled={paymentLoading}
+                      className="mt-auto w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-white" />
+                      Pay ₹{Math.round((subscription.currentAmount || 0) * 1.18).toLocaleString()} Now
+                    </button>
+                  )}
+
+                  {!isCurrent && (
+                    <button
+                      onClick={() => handleUpgradePlan(plan._id)}
+                      disabled={paymentLoading}
+                      className="mt-auto w-full py-2.5 px-4 border border-indigo-500/30 text-indigo-400 rounded-xl text-xs font-semibold hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                    >
+                      Select Plan
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
